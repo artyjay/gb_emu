@@ -1,3 +1,5 @@
+image: Visual Studio 2017
+
 environment:
   matrix:
     - GENERATOR: "Visual Studio 15 2017"
