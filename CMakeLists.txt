@@ -8,8 +8,8 @@ cmake_minimum_required(VERSION 3.7 FATAL_ERROR)
 #-------------------------------------------------------------------------------
 option(GB_ENABLE_FRONTEND_DESKTOP	"Enable building the Game Boy desktop application"	ON)
 option(GB_ENABLE_FRONTEND_ANDROID 	"Enable building the Android application"			OFF)
-option(GB_ENABLE_DEBUGGER			"Enable building the Game Boy debugger application"	ON)
-option(GB_ENABLE_TESTS				"Enable building the unit tests"					ON)
+option(GB_ENABLE_DEBUGGER			"Enable building the Game Boy debugger application"	OFF)
+option(GB_ENABLE_TESTS				"Enable building the unit tests"					OFF)
 
 #-------------------------------------------------------------------------------
 # CMake configuration
