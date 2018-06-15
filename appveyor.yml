@@ -1,5 +1,12 @@
 image: Visual Studio 2017
 
+install:
+  - cmmd: echo "Downloading conan..."
+  - cmmd: set PATH=%PATH%;%PYTHON%/Scripts/
+  - cmmd: pip.exe install conan
+  - cmmd: conan user # Create the conan data directory
+  - cmmd: conan --version
+
 environment:
   matrix:
     - GENERATOR: "Visual Studio 15 2017"
@@ -14,9 +21,8 @@ environment:
     - GENERATOR: "Visual Studio 15 2017 Win64"
       CONFIG: Release
 
-before_build:
-  - cmake "-G%GENERATOR%" .
-  - cmake --build _builds --config "%CONFIG%"
-
-build:
-  project: $(APPVEYOR_BUILD_FOLDER)\$(APPVEYOR_PROJECT_NAME).sln
+before_script:
+  - cmmd: mkdir build_cmake
+  - cmmd: cd build_cmake
+  - cmmd: cmake ../ "-G%GENERATOR%" .
+  - cmmd: cmake --build . --config "%CONFIG%"
