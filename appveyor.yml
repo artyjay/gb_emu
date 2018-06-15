@@ -14,5 +14,5 @@ install:
 build_script:
   - cmmd: mkdir build_cmake
   - cmmd: cd build_cmake
-  - cmmd: cmake ../ -DBUILD_TEST=TRUE  -G "Visual Studio 15 2017 Win64"
+  - cmmd: cmake ../ -G "Visual Studio 15 2017 Win64"
   - cmmd: cmake --build . --config Release
