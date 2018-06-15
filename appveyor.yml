@@ -1,18 +1,24 @@
-image: Visual Studio 2017
-
 version: 1.0.0
-platform:
-  - x64
+image: Visual Studio 2017
+init:
+- cmd: >-
+    echo "Downloading conan..."
 
+    set PATH=%PATH%;%PYTHON%/Scripts/
+
+    pip.exe install conan
+
+    conan user # Create the conan data directory
+
+    conan --version
 install:
-  - cmmd: echo "Downloading conan..."
-  - cmmd: set PATH=%PATH%;%PYTHON%/Scripts/
-  - cmmd: pip.exe install conan
-  - cmmd: conan user # Create the conan data directory
-  - cmmd: conan --version
-
+- cmd: 
 build_script:
-  - cmmd: mkdir build_cmake
-  - cmmd: cd build_cmake
-  - cmmd: cmake ../ -G "Visual Studio 15 2017 Win64"
-  - cmmd: cmake --build . --config Release
+- cmd: >-
+    mkdir build_cmake
+
+    cd build_cmake
+
+    cmake ../ -G "Visual Studio 15 2017 Win64"
+
+    cmake --build . --config Release
