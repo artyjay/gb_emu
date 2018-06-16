@@ -46,7 +46,7 @@ namespace gbd
 				{
 					// Nearest upsample the tile-data.
 					const gbhw::GPUTileData* tileData = &tilePatternData->m_tiles[tileY * 16 + tileX];
-					
+
 					for(uint32_t pixelY = 0; pixelY < 16; ++pixelY)
 					{
 						QRgb* destTileLine = destLineStart + (pixelY * 256) + (tileX * 16);

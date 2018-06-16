@@ -110,25 +110,12 @@ endmacro()
 # Helper for setting up the QT dependency
 #-------------------------------------------------------------------------------
 macro(rj_prepare_qt)
-	if(WINDOWS)
-		set(CMAKE_INCLUDE_CURRENT_DIR ON)
-		set(CMAKE_AUTOMOC OFF)
-		set(CMAKE_AUTOUIC OFF)
+	set(CMAKE_INCLUDE_CURRENT_DIR ON)
+	set(CMAKE_AUTOMOC ON)
+	set(CMAKE_AUTOUIC ON)
 
-		if(NOT $ENV{QT_DEV_PATH})
-			message(FATAL_ERROR "QT_DEV_PATH environment variable must be specified")
-		endif()
-
-		message($ENV{QT_DEV_PATH})
-
-		if(X64)
-			set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};$ENV{QT_DEV_PATH}/msvc2017_64")
-		else()
-			set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};$ENV{QT_DEV_PATH}/msvc2017")
-		endif()
-	else()
-		message(WARNING "Skipping qt setup, unsupported environment")
-	endif()
+	find_package(Qt5Core)
+	find_package(Qt5Widgets)
 endmacro()
 
 #-------------------------------------------------------------------------------
@@ -144,7 +131,9 @@ function(rj_gather_sources SOURCES PATH)
 			"${ABSPATH}/*.cc"
 			"${ABSPATH}/*.h"
 			"${ABSPATH}/*.hpp"
-			"${ABSPATH}/*.inl")
+			"${ABSPATH}/*.inl"
+			"${ABSPATH}/*.qrc"
+			"${ABSPATH}/*.ui")
 
 	if(WIN32)
 		file(GLOB_RECURSE FOUND_FILES_WIN32 "${ABSPATH}/*.rc")
