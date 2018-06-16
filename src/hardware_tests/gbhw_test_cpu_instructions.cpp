@@ -1,6 +1,6 @@
 #include <gtest/gtest.h>
 
-#include "gbe_test_cpu.h"
+#include "gbhw_test_cpu.h"
 
 //~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 // Misc

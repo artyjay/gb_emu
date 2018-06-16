@@ -1,4 +1,10 @@
-# Robert Johnson - Copyright 2016
+#-------------------------------------------------------------------------------
+# Author: Robert Johnson (artyjay)
+# 
+# Desc: This is the entry point for the CMake build system.
+# 
+# Copyright 2018
+#-------------------------------------------------------------------------------
 project("gb_emu" C CXX)
 
 cmake_minimum_required(VERSION 3.7 FATAL_ERROR)
@@ -30,17 +36,13 @@ rj_setup_platform()
 #-------------------------------------------------------------------------------
 # Conan configuration
 #-------------------------------------------------------------------------------
-conan_cmake_run(CONANFILE conanfile.txt
+conan_cmake_run(CONANFILE conanfile.py
 				BASIC_SETUP CMAKE_TARGETS
 				BUILD missing)
 
-if(MSVC)
-conan_set_vs_runtime()
-endif()
-
-	set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
-	set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
-	set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
 
 #-------------------------------------------------------------------------------
 # Project configuration
@@ -61,6 +63,5 @@ if(GB_ENABLE_DEBUGGER)
 endif()
 
 if(GB_ENABLE_TESTS)
-	add_subdirectory(contrib/gtest)
 	add_subdirectory(src/hardware_tests)
 endif()

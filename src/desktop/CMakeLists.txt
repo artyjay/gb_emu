@@ -4,7 +4,7 @@
 # Desc: This file contains the configuration for building the desktop frontend
 #		application. It exports these targets:
 # 
-# 		1. desktop: 		This builds an executable.
+# 		1. desktop: This builds an executable.
 # 
 # Copyright 2018
 #-------------------------------------------------------------------------------
@@ -16,5 +16,5 @@ target_compile_definitions(desktop
 	PRIVATE SDL_MAIN_HANDLED)
 
 target_link_libraries(desktop
-	gb::hardware
-	CONAN_PKG::sdl2)
+	PRIVATE gb::hardware
+			CONAN_PKG::sdl2)
