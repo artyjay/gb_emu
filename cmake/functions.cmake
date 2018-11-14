@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Author: Robert Johnson (artyjay)
+# Author: R.Johnson (artyjay)
 # 
 # Desc: This file contains several helper functions utilised by the rest of the
 #		build system.
@@ -11,7 +11,7 @@
 # Helper for generating source code hierarchy in the IDE by grouping based upon
 # folder hierarchy
 #-------------------------------------------------------------------------------
-macro(rj_group_sources SOURCE_DIR ROOT_DIR)
+macro(gb_group_sources SOURCE_DIR ROOT_DIR)
 	file(GLOB CHILDREN RELATIVE ${PROJECT_SOURCE_DIR}/${SOURCE_DIR}	${PROJECT_SOURCE_DIR}/${SOURCE_DIR}/*)
 
 	if(${ROOT_DIR} STREQUAL ${SOURCE_DIR})
@@ -23,7 +23,7 @@ macro(rj_group_sources SOURCE_DIR ROOT_DIR)
 
 	foreach(CHILD ${CHILDREN})
 		if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/${SOURCE_DIR}/${CHILD})
-			rj_group_sources(${SOURCE_DIR}/${CHILD} ${ROOT_DIR})
+			gb_group_sources(${SOURCE_DIR}/${CHILD} ${ROOT_DIR})
 		else()
 			source_group(${GROUP_NAME} FILES ${PROJECT_SOURCE_DIR}/${SOURCE_DIR}/${CHILD})
 		endif()
@@ -33,7 +33,7 @@ endmacro()
 #-------------------------------------------------------------------------------
 # Detects the chosen platform architecture for selecting the correct libraries.
 #-------------------------------------------------------------------------------
-macro(rj_detect_architecture)
+macro(gb_detect_architecture)
 	set(ARCH_NAME "x86")
 
 	if(ANDROID)
@@ -59,7 +59,7 @@ endmacro()
 # Detects the chosen os, this provides some override behaviour for when the OS
 # is agnostic based upon toolchain and arch.
 #-------------------------------------------------------------------------------
-macro(rj_detect_os)
+macro(gb_detect_os)
 	if(EMSCRIPTEN)
 		set(OS_NAME "generic")
 	elseif(WIN32)
@@ -76,7 +76,7 @@ endmacro()
 #-------------------------------------------------------------------------------
 # Sets up the compiler based upon the detected local architecture/OS.
 #-------------------------------------------------------------------------------
-macro(rj_detect_compiler)
+macro(gb_detect_compiler)
 	if (${CMAKE_CXX_COMPILER_ID} STREQUAL MSVC)
 		include(${PROJECT_SOURCE_DIR}/cmake/compilers/msvc.cmake)
 	elseif (${CMAKE_CXX_COMPILER_ID} STREQUAL GNU)
@@ -93,14 +93,13 @@ endmacro()
 #-------------------------------------------------------------------------------
 # Setups the platfrom variables needed by project.
 #-------------------------------------------------------------------------------
-macro(rj_setup_platform)
-	rj_detect_architecture()
-	rj_detect_os()
-	rj_detect_compiler()
+macro(gb_setup_platform)
+	gb_detect_architecture()
+	gb_detect_os()
+	gb_detect_compiler()
 
 	set(PLATFORM_TRIPLET ${ARCH_NAME}-${OS_NAME}-${COMPILER_NAME})
 	set(PLATFORM_BINARIES_PATH ${PROJECT_SOURCE_DIR}/build/${PLATFORM_TRIPLET})
-
 
 	message(STATUS "Target platform: ${PLATFORM_TRIPLET}")
 	message(STATUS "Binaries path: ${PLATFORM_BINARIES_PATH}")
@@ -109,7 +108,7 @@ endmacro()
 #-------------------------------------------------------------------------------
 # Helper for setting up the QT dependency
 #-------------------------------------------------------------------------------
-macro(rj_prepare_qt)
+macro(gb_prepare_qt)
 	set(CMAKE_INCLUDE_CURRENT_DIR ON)
 	set(CMAKE_AUTOMOC ON)
 	set(CMAKE_AUTOUIC ON)
@@ -122,7 +121,7 @@ endmacro()
 # Helper that gathers all the common source files in a given folder tree and
 # outputs them on the SOURCES variable in the callers scope.
 #-------------------------------------------------------------------------------
-function(rj_gather_sources SOURCES PATH)
+function(gb_gather_sources SOURCES PATH)
 	set(ABSPATH "${PROJECT_SOURCE_DIR}/${PATH}")
 
 	file(GLOB_RECURSE FOUND_FILES 
@@ -139,7 +138,7 @@ function(rj_gather_sources SOURCES PATH)
 		file(GLOB_RECURSE FOUND_FILES_WIN32 "${ABSPATH}/*.rc")
 	endif()
 
-	rj_group_sources(${PATH} ${PATH})
+	gb_group_sources(${PATH} ${PATH})
 
 	set(${SOURCES} ${FOUND_FILES} ${FOUND_FILES_WIN32} PARENT_SCOPE)
 endfunction()
@@ -147,7 +146,7 @@ endfunction()
 #-------------------------------------------------------------------------------
 # Helper macro used for setting up common properties of a target.
 #-------------------------------------------------------------------------------
-macro(rj_common_props NAME BINARY LANG)
+macro(gb_common_props NAME BINARY LANG)
 	target_compile_options (${NAME} PRIVATE ${COMPILER_FLAGS})
 	target_compile_definitions(${NAME} PRIVATE ${COMPILER_DEFS})
 	set_target_properties(${NAME}
@@ -161,21 +160,21 @@ endmacro()
 #-------------------------------------------------------------------------------
 # Helper that adds a library to the system and sets up common properties.
 #-------------------------------------------------------------------------------
-function(rj_add_library NAME BINARY TYPE SOURCES LANG)
+function(gb_add_library NAME BINARY TYPE SOURCES LANG)
 	message(STATUS "${NAME} (${BINARY})")
 
 	set(SOURCE_FILES "${${SOURCES}}")	## Evaluate list of source files
 	add_library(${NAME} ${TYPE} ${SOURCE_FILES})
-	rj_common_props(${NAME} ${BINARY} ${LANG})
+	gb_common_props(${NAME} ${BINARY} ${LANG})
 endfunction()
 
 #-------------------------------------------------------------------------------
 # Helper that adds an executable to the system and sets up common properties.
 #-------------------------------------------------------------------------------
-function(rj_add_executable NAME BINARY SOURCES LANG)
+function(gb_add_executable NAME BINARY SOURCES LANG)
 	message(STATUS "${NAME} (${BINARY})")
 
 	set(SOURCE_FILES "${${SOURCES}}")	## Evaluate list of source files
 	add_executable(${NAME} ${SOURCE_FILES})
-	rj_common_props(${NAME} ${BINARY} ${LANG})
+	gb_common_props(${NAME} ${BINARY} ${LANG})
 endfunction()

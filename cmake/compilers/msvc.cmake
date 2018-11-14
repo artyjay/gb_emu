@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Author: Robert Johnson (artyjay)
+# Author: R.Johnson (artyjay)
 # 
 # Desc: This file is used to specify the global compiler settings for all targets
 #		when building with MSVC.
@@ -16,7 +16,7 @@ set(COMPILER_DEFS
 	MSVC)
 
 set(COMPILER_FLAGS
-	#/MT$<$<CONFIG:Debug>:d>			# Use multi-threaded runtime, choosing either /MT or /MTd depending on the config.
+	#/MT$<$<CONFIG:Debug>:d>		# Use multi-threaded runtime, choosing either /MT or /MTd depending on the config.
 	/nologo
 	/Zc:wchar_t
 	/Zc:forScope

@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Author: Robert Johnson (artyjay)
+# Author: R.Johnson (artyjay)
 # 
 # Desc: This file is used to specify the global compiler settings for all targets
 #		when building with GCC.

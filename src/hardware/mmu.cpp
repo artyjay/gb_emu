@@ -1,6 +1,6 @@
-#include "gbhw_gpu.h"
+#include "gpu.h"
 #include "gbhw_mbc.h"
-#include "gbhw_mmu.h"
+#include "mmu.h"
 #include "gbhw_rom.h"
 
 #include <memory>
@@ -78,11 +78,18 @@ namespace gbhw
 		}
 	}
 
-	void MMU::Initialise(CPU* cpu, GPU* gpu, Rom* rom)
+	void MMU::initialise(CPU_ptr cpu, GPU_ptr gpu, Rom_ptr rom)
 	{
 		m_cpu = cpu;
 		m_gpu = gpu;
 		m_rom = rom;
+	}
+
+	void MMU::release()
+	{
+		m_cpu = nullptr;
+		m_gpu = nullptr;
+		m_rom = nullptr;
 	}
 
 	void MMU::Reset(CartridgeType::Type cartridgeType)

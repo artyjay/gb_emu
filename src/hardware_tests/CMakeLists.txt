@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Author: Robert Johnson (artyjay)
+# Author: R.Johnson (artyjay)
 # 
 # Desc: This file contains the configuration for building the hardware unit tests
 #		application. It exports these targets:
@@ -9,8 +9,8 @@
 # Copyright 2018
 #-------------------------------------------------------------------------------
 
-rj_gather_sources(HWT_SOURCES "src/hardware_tests")
-rj_add_executable(hardware_tests gbhw_tests HWT_SOURCES CXX)
+gb_gather_sources(HWT_SOURCES "src/hardware_tests")
+gb_add_executable(hardware_tests gbhw_tests HWT_SOURCES CXX)
 
 target_include_directories(hardware_tests
 	PUBLIC "${PROJECT_SOURCE_DIR}/src/hardware_tests")

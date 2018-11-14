@@ -190,6 +190,6 @@ namespace gbhw
 
 } // gbhw
 
-#include "gbhw_registers.inl"
+#include "registers.inl"
 
 #undef GBHW_MAKE_REGISTER_PAIR

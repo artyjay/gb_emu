@@ -29,4 +29,4 @@ namespace gbe
 		return log;
 	}
 
-} // gbe
+}

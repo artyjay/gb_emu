@@ -83,7 +83,9 @@ namespace gbhw
 		MMU();
 		~MMU();
 
-		void Initialise(CPU* cpu, GPU* gpu, Rom* rom);
+		void initialise(CPU_ptr cpu, GPU_ptr gpu, Rom_ptr rom);
+		void release();
+
 		void Reset(CartridgeType::Type cartridgeType);
 
 		bool CheckResetBreakpoint();
@@ -119,9 +121,9 @@ namespace gbhw
 		uint8_t					m_memory[kMemorySize];
 		Region					m_regions[static_cast<uint32_t>(RegionType::Count)];
 		Region*					m_regionsLUT[kRegionLutCount];
-		GPU*					m_gpu;
-		CPU*					m_cpu;
-		Rom*					m_rom;
+		GPU_ptr					m_gpu;
+		CPU_ptr					m_cpu;
+		Rom_ptr					m_rom;
 		MBC*					m_mbc;
 		std::vector<MemoryBank> m_ramBanks;
 

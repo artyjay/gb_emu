@@ -1,8 +1,9 @@
 #pragma once
 
+#include "context.h"
+#include "registers.h"	// @todo: This can live in this file
+
 #include "gbhw_log.h"
-#include "gbhw_mmu.h"
-#include "gbhw_registers.h"
 
 #include <assert.h>
 #include <vector>
@@ -46,6 +47,7 @@ namespace gbhw
 	typedef std::vector<Instruction> InstructionList;
 
 	// CPU implements the processors instruction-set.
+
 	class CPU
 	{
 		friend class Instruction;
@@ -54,7 +56,8 @@ namespace gbhw
 		CPU();
 		virtual ~CPU();
 
-		void Initialise(MMU* mmu);
+		void initialise(MMU_ptr mmu);
+		void release();
 
 		uint16_t Update(uint16_t maxcycles);
 		void UpdateStalled();
@@ -287,7 +290,7 @@ namespace gbhw
 
 		static const uint32_t kInstructionCount = 256;
 
-		MMU*					m_mmu;
+		MMU_ptr					m_mmu;
 		Registers				m_registers;
 
 		bool					m_bStopped;
@@ -311,4 +314,4 @@ namespace gbhw
 
 } // gbhw
 
-#include "gbhw_cpu.inl"
+#include "cpu.inl"

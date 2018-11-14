@@ -54,8 +54,7 @@ namespace gbhw
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 	CPU::CPU()
-		: m_mmu(nullptr)
-		, m_bStopped(false)
+		: m_bStopped(false)
 		, m_bHalted(false)
 		, m_bBreakpoint(false)
 		, m_bBreakpointSkip(false)
@@ -70,9 +69,14 @@ namespace gbhw
 	{
 	}
 
-	void CPU::Initialise(MMU* mmu)
+	void CPU::initialise(MMU_ptr mmu)
 	{
 		m_mmu = mmu;
+	}
+
+	void CPU::release()
+	{
+		m_mmu = nullptr;
 	}
 
 	uint16_t CPU::Update(uint16_t maxcycles)
@@ -127,17 +131,17 @@ namespace gbhw
 
 	Byte CPU::ReadIO(HWRegs::Type reg)
 	{
-		return m_mmu->ReadByte(static_cast<Address>(reg));
+		return m_context->mmu->ReadByte(static_cast<Address>(reg));
 	}
 
 	void CPU::WriteIO(HWRegs::Type reg, Byte val)
 	{
-		m_mmu->WriteIO(reg, val);
+		m_context->mmu->WriteIO(reg, val);
 	}
 
 	void CPU::GenerateInterrupt(HWInterrupts::Type interrupt)
 	{
-		m_mmu->WriteByte(HWRegs::IF, m_mmu->ReadByte(HWRegs::IF) | static_cast<Byte>(interrupt));
+		m_context->mmu->WriteByte(HWRegs::IF, m_context->mmu->ReadByte(HWRegs::IF) | static_cast<Byte>(interrupt));
 	}
 
 	bool CPU::IsBreakpoint() const
@@ -173,7 +177,7 @@ namespace gbhw
 		}
 		else
 		{
-			if (m_mmu->CheckResetBreakpoint())
+			if (m_context->mmu->CheckResetBreakpoint())
 			{
 				m_bBreakpoint = true;
 			}
@@ -193,8 +197,8 @@ namespace gbhw
 
 	void CPU::HandleInterrupts()
 	{
-		Byte regif = m_mmu->ReadByte(HWRegs::IF);
-		Byte regie = m_mmu->ReadByte(HWRegs::IE);
+		Byte regif = m_context->mmu->ReadByte(HWRegs::IF);
+		Byte regie = m_context->mmu->ReadByte(HWRegs::IE);
 
 		if(regif == 0)
 		{
@@ -223,10 +227,10 @@ namespace gbhw
 					Message("Handling timer interrupt\n");
 				}
 
-				m_mmu->WriteByte(HWRegs::IF, regif & ~(inter));			// Remove flag, indicating handled.
-				m_registers.ime = false;								// Disable interrupts.
-				StackPushWord(m_registers.pc);							// Push current instruction onto the stack.
-				m_registers.pc = static_cast<Word>(routine);			// Jump to interrupt routine.
+				m_context->mmu->WriteByte(HWRegs::IF, regif & ~(inter));	// Remove flag, indicating handled.
+				m_registers.ime = false;									// Disable interrupts.
+				StackPushWord(m_registers.pc);								// Push current instruction onto the stack.
+				m_registers.pc = static_cast<Word>(routine);				// Jump to interrupt routine.
 			}
 
 			if ((interrupt == HWInterrupts::Button) && m_bStopped)
@@ -403,7 +407,7 @@ namespace gbhw
 		m_instructions[0xF0].Set(&CPU::Instruction_LDH_A_IMM_PTR);
 		m_instructions[0xE2].Set(&CPU::Instruction_LD_C_PTR_A);
 		m_instructions[0xF2].Set(&CPU::Instruction_LD_A_C_PTR);
-		
+
 		// 16-bit Loads
 		m_instructions[0x01].Set(&CPU::Instruction_LD_NN_IMM<RT::BC>);
 		m_instructions[0x11].Set(&CPU::Instruction_LD_NN_IMM<RT::DE>);

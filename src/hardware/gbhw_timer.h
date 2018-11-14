@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gbhw_cpu.h"
+#include "cpu.h"
 
 namespace gbhw
 {

@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Author: Robert Johnson (artyjay)
+# Author: R.Johnson (artyjay)
 # 
 # Desc: This is the entry point for the CMake build system.
 # 
@@ -31,7 +31,7 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)		# Used by the IDEs for grouping so
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/functions.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/conan.cmake)
 
-rj_setup_platform()
+gb_setup_platform()
 
 #-------------------------------------------------------------------------------
 # Conan configuration

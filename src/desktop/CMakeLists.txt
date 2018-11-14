@@ -1,5 +1,5 @@
 #-------------------------------------------------------------------------------
-# Author: Robert Johnson (artyjay)
+# Author: R.Johnson (artyjay)
 # 
 # Desc: This file contains the configuration for building the desktop frontend
 #		application. It exports these targets:
@@ -9,8 +9,8 @@
 # Copyright 2018
 #-------------------------------------------------------------------------------
 
-rj_gather_sources(DT_SOURCES "src/desktop")
-rj_add_executable(desktop gb_desktop DT_SOURCES CXX)
+gb_gather_sources(DT_SOURCES "src/desktop")
+gb_add_executable(desktop gb_desktop DT_SOURCES CXX)
 
 target_compile_definitions(desktop
 	PRIVATE SDL_MAIN_HANDLED)

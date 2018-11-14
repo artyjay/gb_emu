@@ -1,4 +1,8 @@
-#include "gbhw_gpu.h"
+#include "gpu.h"
+#include "cpu.h"
+#include "mmu.h"
+
+
 #include "gbhw_log.h"
 
 #include <assert.h>
@@ -94,7 +98,6 @@ namespace gbhw
 	}
 
 	GPU::GPU()
-		: m_cpu(nullptr)
 	{
 		// Setup tile patterns.
 		m_tilePatterns[0].m_bSignedIndex = true;
@@ -105,10 +108,16 @@ namespace gbhw
 		Reset();
 	}
 
-	void GPU::Initialise(CPU* cpu, MMU* mmu)
+	void GPU::initialise(CPU_ptr cpu, MMU_ptr mmu)
 	{
 		m_cpu = cpu;
 		m_mmu = mmu;
+	}
+
+	void GPU::release()
+	{
+		m_cpu = nullptr;
+		m_mmu = nullptr;
 	}
 
 	void GPU::Update(uint32_t cycles)

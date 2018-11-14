@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gbhw_cpu.h"
+#include "cpu.h"
 #include "gbhw_types.h"
 
 #include <string>
@@ -17,6 +17,7 @@ namespace gbhw
 		Rom();
 		~Rom();
 
+		// @todo: We shouldn't do this, cpu/mmu is only used for instruction generation.
 		void Initialise(CPU* cpu, MMU* mmu);
 
 		void Reset();
