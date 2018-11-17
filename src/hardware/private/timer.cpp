@@ -1,4 +1,5 @@
-#include "gbhw_timer.h"
+#include "timer.h"
+#include "cpu.h"
 
 namespace gbhw
 {
@@ -9,15 +10,20 @@ namespace gbhw
 
 	Timer::Timer()
 	{
-		Reset();
+		reset();
 	}
 
-	void Timer::Initialise(CPU* cpu)
+	void Timer::initialise(CPU_ptr cpu)
 	{
 		m_cpu = cpu;
 	}
 
-	void Timer::Update(uint32_t cycles)
+	void Timer::release()
+	{
+		m_cpu = nullptr;
+	}
+
+	void Timer::update(uint32_t cycles)
 	{
 		uint32_t timaPeriod = kTimaPeriods[m_cpu->ReadIO(HWRegs::TAC) & 0x03];
 
@@ -35,7 +41,7 @@ namespace gbhw
 				if(newTima == 0)
 				{
 					m_cpu->WriteIO(HWRegs::TIMA, m_cpu->ReadIO(HWRegs::TMA));	// Reset tima.
-					m_cpu->GenerateInterrupt(HWInterrupts::Timer);			// Generate an interrupt.
+					m_cpu->GenerateInterrupt(HWInterrupts::Timer);				// Generate an interrupt.
 				}
 
 				m_tima -= timaPeriod;
@@ -55,9 +61,9 @@ namespace gbhw
 		}
 	}
 
-	void Timer::Reset()
+	void Timer::reset()
 	{
 		m_tima = 0;
 		m_divt = 0;
 	}
-} // gbhw
+}

@@ -18,7 +18,7 @@ namespace gbhw
 	public:
 		Instruction();
 
-		void Set(Byte opcode, Byte extended, Byte byteSize, Byte cycles0, Byte cycles1, RFB::Type behaviour0, RFB::Type behaviour1, RFB::Type behaviour2, RFB::Type behaviour3, RTD::Type args0, RTD::Type args1, const char* assembly);
+		void Set(Byte opcode, Byte extended, Byte byteSize, Byte cycles0, Byte cycles1, RFB::Enum behaviour0, RFB::Enum behaviour1, RFB::Enum behaviour2, RFB::Enum behaviour3, RTD::Enum args0, RTD::Enum args1, const char* assembly);
 		void Set(InstructionFunction fn);
 		void Set(Address address);
 
@@ -26,8 +26,8 @@ namespace gbhw
 		inline Byte						GetExtended() const;
 		inline Byte						GetByteSize() const;
 		inline Byte						GetCycles(bool bActionPerformed) const;
-		inline RFB::Type				GetFlagBehaviour(RF::Type flag) const;
-		inline RTD::Type				GetArgType(uint32_t argIndex) const;
+		inline RFB::Enum				GetFlagBehaviour(RF::Enum flag) const;
+		inline RTD::Enum				GetArgType(uint32_t argIndex) const;
 		inline const char*				GetAssembly() const;
 		inline InstructionFunction&		GetFunction();
 		inline Address					GetAddress() const;
@@ -38,8 +38,8 @@ namespace gbhw
 		Byte					m_extended;
 		Byte					m_byteSize;
 		Byte					m_cycles[2];	// 0 for normal behaviour, 1 for failed execution (i.e. branch failed, etc...)
-		RFB::Type				m_flagBehaviour[RF::kCount];
-		RTD::Type				m_args[2];
+		RFB::Enum				m_flagBehaviour[RF::kCount];
+		RTD::Enum				m_args[2];
 		const char*				m_assembly;
 		Address					m_address;
 	};

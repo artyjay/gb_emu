@@ -28,12 +28,12 @@ namespace gbhw
 		return m_cycles[bActionPerformed ? 0 : 1];
 	}
 
-	inline RFB::Type Instruction::GetFlagBehaviour(RF::Type flag) const
+	inline RFB::Enum Instruction::GetFlagBehaviour(RF::Enum flag) const
 	{
 		return m_flagBehaviour[flag];
 	}
 
-	inline RTD::Type Instruction::GetArgType(uint32_t argIndex) const
+	inline RTD::Enum Instruction::GetArgType(uint32_t argIndex) const
 	{
 		if(argIndex < 2)
 		{
@@ -126,43 +126,43 @@ namespace gbhw
 	{
 		Word val = m_registers.a;
 
-		if(!m_registers.IsFlagSet(RF::Negative))
+		if(!m_registers.is_flag_set(RF::Negative))
 		{
-			if(m_registers.IsFlagSet(RF::HalfCarry) || ((val & 0xF) > 9))
+			if(m_registers.is_flag_set(RF::HalfCarry) || ((val & 0xF) > 9))
 			{
 				val += 0x06;
 			}
 
-			if(m_registers.IsFlagSet(RF::Carry) || (val > 0x9F))
+			if(m_registers.is_flag_set(RF::Carry) || (val > 0x9F))
 			{
 				val += 0x60;
 			}
 		}
 		else
 		{
-			if(m_registers.IsFlagSet(RF::HalfCarry))
+			if(m_registers.is_flag_set(RF::HalfCarry))
 			{
 				val = (val - 6) & 0xFF;
 			}
 
-			if(m_registers.IsFlagSet(RF::Carry))
+			if(m_registers.is_flag_set(RF::Carry))
 			{
 				val -= 0x60;
 			}
 		}
 
-		m_registers.ClearFlags(RF::HalfCarry | RF::Zero);
+		m_registers.clear_flags(RF::HalfCarry | RF::Zero);
 
 		if ((val & 0x100) == 0x100)
 		{
-			m_registers.SetFlag(RF::Carry);
+			m_registers.set_flag(RF::Carry);
 		}
 
 		val &= 0xFF;
 
 		if(val == 0)
 		{
-			m_registers.SetFlag(RF::Zero);
+			m_registers.set_flag(RF::Zero);
 		}
 
 		m_registers.a = static_cast<Byte>(val);
@@ -173,22 +173,22 @@ namespace gbhw
 	inline bool CPU::Instruction_CPL()
 	{
 		m_registers.a = ~m_registers.a;
-		m_registers.SetFlag(RF::Negative);
-		m_registers.SetFlag(RF::HalfCarry);
+		m_registers.set_flag(RF::Negative);
+		m_registers.set_flag(RF::HalfCarry);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
 
 	inline bool CPU::Instruction_CCF()
 	{
-		m_registers.SetFlagIf<RF::Carry>(!m_registers.IsFlagSet(RF::Carry));
-		m_registers.ClearFlags(RF::Negative | RF::HalfCarry);
+		m_registers.set_flag_if<RF::Carry>(!m_registers.is_flag_set(RF::Carry));
+		m_registers.clear_flags(RF::Negative | RF::HalfCarry);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
 
 	inline bool CPU::Instruction_SCF()
 	{
-		m_registers.SetFlag(RF::Carry);
-		m_registers.ClearFlags(RF::Negative | RF::HalfCarry);
+		m_registers.set_flag(RF::Carry);
+		m_registers.clear_flags(RF::Negative | RF::HalfCarry);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
 
@@ -236,7 +236,7 @@ namespace gbhw
 		Word address = ImmediateWord();
 
 		// Jump only if condition is met.
-		if (m_registers.IsFlagSet(FlagType) == IsSet)
+		if (m_registers.is_flag_set(FlagType) == IsSet)
 		{
 			m_registers.pc = address;
 			GBHW_CPU_ACTION_PERFORMED;
@@ -276,7 +276,7 @@ namespace gbhw
 		Byte amount = ImmediateByte();
 
 		// Jump only if condition is met.
-		if (m_registers.IsFlagSet(FlagType) == IsSet)
+		if (m_registers.is_flag_set(FlagType) == IsSet)
 		{
 			if ((amount & 0x80) == 0x80)
 			{
@@ -311,7 +311,7 @@ namespace gbhw
 	{
 		Word address = ImmediateWord(); // Read new address always, this will move PC along.
 
-		if (m_registers.IsFlagSet(FlagType) == IsSet)
+		if (m_registers.is_flag_set(FlagType) == IsSet)
 		{
 			StackPushWord(m_registers.pc);	// Push next instruction address onto the stack.
 			m_registers.pc = address;		// Jump to new address.
@@ -346,7 +346,7 @@ namespace gbhw
 	template<RF::Type FlagType, bool IsSet>
 	bool CPU::Instruction_RET_CC()
 	{
-		if (m_registers.IsFlagSet(FlagType) == IsSet)
+		if (m_registers.is_flag_set(FlagType) == IsSet)
 		{
 			m_registers.pc = StackPopWord();
 			GBHW_CPU_ACTION_PERFORMED;
@@ -369,34 +369,30 @@ namespace gbhw
 	template<RT::Type DstRegister, RT::Type SrcRegister>
 	bool CPU::Instruction_LD_N_N()
 	{
-		Byte& dst = m_registers.GetRegisterByte<DstRegister>();
-		Byte& src = m_registers.GetRegisterByte<SrcRegister>();
-		dst = src;
+		m_registers.set_register<DstRegister>(m_registers.get_register<SrcRegister>());
 		GBHW_CPU_ACTION_PERFORMED;
 	}
 
 	template<RT::Type DstRegister, RT::Type SrcRegisterPtr>
 	bool CPU::Instruction_LD_N_N_PTR()
 	{
-		Byte& dst = m_registers.GetRegisterByte<DstRegister>();
-		Byte src = m_mmu->ReadByte(m_registers.GetRegisterWord<SrcRegisterPtr>());
-		dst = src;
+		Byte val = m_mmu->ReadByte(m_registers.get_register_word<SrcRegisterPtr>());
+		m_registers.set_register<DstRegister>(val);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
 
 	template<RT::Type DstRegisterPtr, RT::Type SrcRegister>
 	bool CPU::Instruction_LD_N_PTR_N()
 	{
-		Byte& src = m_registers.GetRegisterByte<SrcRegister>();
-		m_mmu->WriteByte(m_registers.GetRegisterWord<DstRegisterPtr>(), src);
+		m_mmu->WriteByte(m_registers.get_register_word<DstRegisterPtr>(),
+						 m_registers.get_register<SrcRegister>());
 		GBHW_CPU_ACTION_PERFORMED;
 	}
 
 	template<RT::Type DstRegister>
 	bool CPU::Instruction_LD_N_IMM()
 	{
-		Byte& dst = m_registers.GetRegisterByte<DstRegister>();
-		dst = ImmediateByte();
+		m_registers.set_register<DstRegister>(ImmediateByte());
 		GBHW_CPU_ACTION_PERFORMED;
 	}
 
@@ -405,13 +401,13 @@ namespace gbhw
 		m_registers.a = m_mmu->ReadByte(ImmediateWord());
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-	
+
 	inline bool CPU::Instruction_LD_IMM_PTR_A()
 	{
 		m_mmu->WriteByte(ImmediateWord(), m_registers.a);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-	
+
 	inline bool CPU::Instruction_LD_HL_PTR_IMM()
 	{
 		m_mmu->WriteByte(m_registers.hl, ImmediateByte());
@@ -438,7 +434,7 @@ namespace gbhw
 		m_registers.hl = Instruction_INC_W(m_registers.hl);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-	
+
 	inline bool CPU::Instruction_LDI_HL_PTR_A()
 	{
 		m_mmu->WriteByte(m_registers.hl, m_registers.a);
@@ -477,8 +473,7 @@ namespace gbhw
 	template<RT::Type DstRegister>
 	bool CPU::Instruction_LD_NN_IMM()
 	{
-		Word& dst = m_registers.GetRegisterWord<DstRegister>();
-		dst = ImmediateWord();
+		m_registers.set_register_word<DstRegister>(ImmediateWord());
 		GBHW_CPU_ACTION_PERFORMED;
 	}
 
@@ -490,13 +485,13 @@ namespace gbhw
 
 	inline bool CPU::Instruction_LD_HL_SP_IMM()
 	{
-		SByte amount = static_cast<SByte>(ImmediateByte());
-		int32_t res = m_registers.sp + amount;
-		int32_t temp = m_registers.sp ^ amount ^ res;
+		const SByte amount = static_cast<SByte>(ImmediateByte());
+		const int32_t res  = m_registers.sp + amount;
+		const int32_t temp = m_registers.sp ^ amount ^ res;
 
-		m_registers.SetFlagIf<RF::Carry>((temp & 0x100) == 0x100);
-		m_registers.SetFlagIf<RF::HalfCarry>((temp & 0x10) == 0x10);
-		m_registers.ClearFlags(RF::Zero | RF::Negative);
+		m_registers.set_flag_if<RF::Carry>((temp & 0x100) == 0x100);
+		m_registers.set_flag_if<RF::HalfCarry>((temp & 0x10) == 0x10);
+		m_registers.clear_flags(RF::Zero | RF::Negative);
 		m_registers.hl = res;
 
 		GBHW_CPU_ACTION_PERFORMED;
@@ -511,22 +506,21 @@ namespace gbhw
 	template<RT::Type SrcRegister>
 	bool CPU::Instruction_PUSH_NN()
 	{
-		StackPushWord(m_registers.GetRegisterWord<SrcRegister>());
+		StackPushWord(m_registers.get_register_word<SrcRegister>());
 		GBHW_CPU_ACTION_PERFORMED;
 	}
 
 	template<RT::Type DstRegister>
 	bool CPU::Instruction_POP_NN()
 	{
-		Word& dst = m_registers.GetRegisterWord<DstRegister>();
-		dst = StackPopWord();
+		m_registers.set_register_word<DstRegister>(StackPopWord());
 		GBHW_CPU_ACTION_PERFORMED;
 	}
 
 	inline bool CPU::Instruction_POP_AF()
 	{
-		Word& dst = m_registers.GetRegisterWord<RT::AF>();
-		dst = (StackPopWord() & 0xFFF0);	// Lower nibble of F register is always 0.
+		// Lower nibble of F register is always 0.
+		m_registers.af = (StackPopWord() & 0xFFF0);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
 
@@ -536,11 +530,11 @@ namespace gbhw
 
 	inline bool CPU::Instruction_ADD(Byte val)
 	{
-		Byte calc = m_registers.a + val; 
-		m_registers.SetFlagIf<RF::Zero>((calc & 0xFF) == 0);
-		m_registers.ClearFlag(RF::Negative);
-		m_registers.SetFlagIf<RF::Carry>((0xFF - m_registers.a) < val);
-		m_registers.SetFlagIf<RF::HalfCarry>(0x0F - (m_registers.a & 0x0F) < (val & 0x0F));
+		Byte calc = m_registers.a + val;
+		m_registers.set_flag_if<RF::Zero>((calc & 0xFF) == 0);
+		m_registers.clear_flag(RF::Negative);
+		m_registers.set_flag_if<RF::Carry>((0xFF - m_registers.a) < val);
+		m_registers.set_flag_if<RF::HalfCarry>(0x0F - (m_registers.a & 0x0F) < (val & 0x0F));
 		m_registers.a = calc;
 		GBHW_CPU_ACTION_PERFORMED;
 	}
@@ -548,9 +542,9 @@ namespace gbhw
 	template<RT::Type SrcRegister>
 	bool CPU::Instruction_ADD_N()
 	{
-		return Instruction_ADD(m_registers.GetRegisterByte<SrcRegister>());
+		return Instruction_ADD(m_registers.get_register<SrcRegister>());
 	}
-	
+
 	inline bool CPU::Instruction_ADD_HL_PTR()
 	{
 		return Instruction_ADD(m_mmu->ReadByte(m_registers.hl));
@@ -567,41 +561,29 @@ namespace gbhw
 
 	inline bool CPU::Instruction_ADC(Byte val)
 	{
-		Byte carryval = m_registers.IsFlagSet(RF::Carry) ? 1 : 0;
+		Byte carryval = m_registers.is_flag_set(RF::Carry) ? 1 : 0;
 		Word calc = static_cast<Word>(m_registers.a) + static_cast<Word>(val) + carryval;
 
-		m_registers.ClearFlag(RF::Negative);
-		m_registers.SetFlagIf<RF::HalfCarry>(((m_registers.a & 0x0F) + (val & 0x0F) + carryval) > 0x0F);
-		m_registers.SetFlagIf<RF::Carry>(calc > 0xFF);
+		m_registers.clear_flag(RF::Negative);
+		m_registers.set_flag_if<RF::HalfCarry>(((m_registers.a & 0x0F) + (val & 0x0F) + carryval) > 0x0F);
+		m_registers.set_flag_if<RF::Carry>(calc > 0xFF);
 		m_registers.a = static_cast<Byte>(calc & 0x00FF);
-		m_registers.SetFlagIf<RF::Zero>(m_registers.a == 0);
+		m_registers.set_flag_if<RF::Zero>(m_registers.a == 0);
 
 		GBHW_CPU_ACTION_PERFORMED;
-
-#if 0
-
-		let cy = if use_carry && self.regs.f.contains(CARRY) { 1 }
-		else { 0 };
-		let result = self.regs.a.wrapping_add(value).wrapping_add(cy);
-		self.regs.f = ZERO.test(result == 0) |
-			CARRY.test(self.regs.a as u16 + value as u16 + cy as u16 > 0xff) |
-			HALF_CARRY.test((self.regs.a & 0xf) + (value & 0xf) + cy > 0xf);
-		self.regs.a = result;
-
-#endif
 	}
-	
+
 	template<RT::Type SrcRegister>
 	bool CPU::Instruction_ADC_N()
 	{
-		return Instruction_ADC(m_registers.GetRegisterByte<SrcRegister>());
+		return Instruction_ADC(m_registers.get_register<SrcRegister>());
 	}
-	
+
 	inline bool CPU::Instruction_ADC_HL_PTR()
 	{
 		return Instruction_ADC(m_mmu->ReadByte(m_registers.hl));
 	}
-	
+
 	inline bool CPU::Instruction_ADC_IMM()
 	{
 		return Instruction_ADC(ImmediateByte());
@@ -613,24 +595,24 @@ namespace gbhw
 
 	inline bool CPU::Instruction_SUB(Byte val)
 	{
-		m_registers.SetFlag(RF::Negative);
-		m_registers.SetFlagIf<RF::Carry>(m_registers.a < val);
-		m_registers.SetFlagIf<RF::HalfCarry>((m_registers.a & 0x0F) < (val & 0x0F));
+		m_registers.set_flag(RF::Negative);
+		m_registers.set_flag_if<RF::Carry>(m_registers.a < val);
+		m_registers.set_flag_if<RF::HalfCarry>((m_registers.a & 0x0F) < (val & 0x0F));
 		m_registers.a -= val;
-		m_registers.SetFlagIf<RF::Zero>(m_registers.a  == 0);
+		m_registers.set_flag_if<RF::Zero>(m_registers.a  == 0);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-	
+
 	template<RT::Type SrcRegister> bool CPU::Instruction_SUB_N()
 	{
-		return Instruction_SUB(m_registers.GetRegisterByte<SrcRegister>());
+		return Instruction_SUB(m_registers.get_register<SrcRegister>());
 	}
 
 	inline bool CPU::Instruction_SUB_HL_PTR()
 	{
 		return Instruction_SUB(m_mmu->ReadByte(m_registers.hl));
 	}
-	
+
 	inline bool CPU::Instruction_SUB_IMM()
 	{
 		return Instruction_SUB(ImmediateByte());
@@ -642,13 +624,13 @@ namespace gbhw
 
 	inline bool CPU::Instruction_SBC(Byte val)
 	{
-		Word carryval	= m_registers.IsFlagSet(RF::Carry) ? 1 : 0;
-		Word subamount	= (val + carryval);
-		Byte calc		= m_registers.a - subamount;
+		const Word carryval		= m_registers.is_flag_set(RF::Carry) ? 1 : 0;
+		const Word subamount	= (val + carryval);
+		const Byte calc			= m_registers.a - subamount;
 
-		m_registers.SetFlagIf<RF::Zero>(calc == 0);
-		m_registers.SetFlag(RF::Negative);
-		m_registers.SetFlagIf<RF::Carry>(m_registers.a < subamount);
+		m_registers.set_flag_if<RF::Zero>(calc == 0);
+		m_registers.set_flag(RF::Negative);
+		m_registers.set_flag_if<RF::Carry>(m_registers.a < subamount);
 
 		// @todo Understand this better, not convinced...
 		if(((m_registers.a & 0x0F) < (val & 0x0F)) ||
@@ -656,29 +638,29 @@ namespace gbhw
 		   (((m_registers.a & 0x0F) == (val & 0x0F)) && ((val & 0x0F) == 0x0F) && (carryval == 1))
 		   )
 		{
-			m_registers.SetFlag(RF::HalfCarry);
+			m_registers.set_flag(RF::HalfCarry);
 		}
 		else
 		{
-			m_registers.ClearFlag(RF::HalfCarry);
+			m_registers.clear_flag(RF::HalfCarry);
 		}
 
 		m_registers.a = calc;
 
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-	
+
 	template<RT::Type SrcRegister>
 	bool CPU::Instruction_SBC_N()
 	{
-		return Instruction_SBC(m_registers.GetRegisterByte<SrcRegister>());
+		return Instruction_SBC(m_registers.get_register<SrcRegister>());
 	}
-	
+
 	inline bool CPU::Instruction_SBC_HL_PTR()
 	{
 		return Instruction_SBC(m_mmu->ReadByte(m_registers.hl));
 	}
-	
+
 	inline bool CPU::Instruction_SBC_IMM()
 	{
 		return Instruction_SBC(ImmediateByte());
@@ -691,23 +673,23 @@ namespace gbhw
 	inline bool CPU::Instruction_AND(Byte val)
 	{
 		m_registers.a &= val;
-		m_registers.ClearFlags(RF::Negative | RF::Carry);
-		m_registers.SetFlag(RF::HalfCarry);
-		m_registers.SetFlagIf<RF::Zero>(m_registers.a == 0);
+		m_registers.clear_flags(RF::Negative | RF::Carry);
+		m_registers.set_flag(RF::HalfCarry);
+		m_registers.set_flag_if<RF::Zero>(m_registers.a == 0);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
 
 	template<RT::Type SrcRegister>
 	bool CPU::Instruction_AND_N()
 	{
-		return Instruction_AND(m_registers.GetRegisterByte<SrcRegister>());
+		return Instruction_AND(m_registers.get_register<SrcRegister>());
 	}
-	
+
 	inline bool CPU::Instruction_AND_HL_PTR()
 	{
 		return Instruction_AND(m_mmu->ReadByte(m_registers.hl));
 	}
-	
+
 	inline bool CPU::Instruction_AND_IMM()
 	{
 		return Instruction_AND(ImmediateByte());
@@ -720,22 +702,22 @@ namespace gbhw
 	inline bool CPU::Instruction_OR(Byte val)
 	{
 		m_registers.a |= val;
-		m_registers.ClearFlags(RF::Negative | RF::HalfCarry | RF::Carry);
-		m_registers.SetFlagIf<RF::Zero>(m_registers.a == 0);
+		m_registers.clear_flags(RF::Negative | RF::HalfCarry | RF::Carry);
+		m_registers.set_flag_if<RF::Zero>(m_registers.a == 0);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-	
+
 	template<RT::Type SrcRegister>
 	bool CPU::Instruction_OR_N()
 	{
-		return Instruction_OR(m_registers.GetRegisterByte<SrcRegister>());
+		return Instruction_OR(m_registers.get_register<SrcRegister>());
 	}
 
 	inline bool CPU::Instruction_OR_HL_PTR()
 	{
 		return Instruction_OR(m_mmu->ReadByte(m_registers.hl));
 	}
-	
+
 	inline bool CPU::Instruction_OR_IMM()
 	{
 		return Instruction_OR(ImmediateByte());
@@ -748,17 +730,17 @@ namespace gbhw
 	inline bool CPU::Instruction_XOR(Byte val)
 	{
 		m_registers.a = m_registers.a ^ val;
-		m_registers.ClearFlags(RF::Negative | RF::HalfCarry | RF::Carry);
-		m_registers.SetFlagIf<RF::Zero>(m_registers.a == 0);
+		m_registers.clear_flags(RF::Negative | RF::HalfCarry | RF::Carry);
+		m_registers.set_flag_if<RF::Zero>(m_registers.a == 0);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
 
 	template<RT::Type SrcRegister>
 	bool CPU::Instruction_XOR_N()
 	{
-		return Instruction_XOR(m_registers.GetRegisterByte<SrcRegister>());
+		return Instruction_XOR(m_registers.get_register<SrcRegister>());
 	}
-	
+
 	inline bool CPU::Instruction_XOR_HL_PTR()
 	{
 		return Instruction_XOR(m_mmu->ReadByte(m_registers.hl));
@@ -775,19 +757,19 @@ namespace gbhw
 
 	inline bool CPU::Instruction_CP(Byte val)
 	{
-		m_registers.SetFlagIf<RF::Zero>(m_registers.a == val);
-		m_registers.SetFlagIf<RF::Carry>(val > m_registers.a);
-		m_registers.SetFlagIf<RF::HalfCarry>((val & 0x0F) > (m_registers.a & 0x0F));
-		m_registers.SetFlag(RF::Negative);
+		m_registers.set_flag_if<RF::Zero>(m_registers.a == val);
+		m_registers.set_flag_if<RF::Carry>(val > m_registers.a);
+		m_registers.set_flag_if<RF::HalfCarry>((val & 0x0F) > (m_registers.a & 0x0F));
+		m_registers.set_flag(RF::Negative);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-	
+
 	template<RT::Type SrcRegister>
 	bool CPU::Instruction_CP_N()
 	{
-		return Instruction_CP(m_registers.GetRegisterByte<SrcRegister>());
+		return Instruction_CP(m_registers.get_register<SrcRegister>());
 	}
-	
+
 	inline bool CPU::Instruction_CP_HL_PTR()
 	{
 		return Instruction_CP(m_mmu->ReadByte(m_registers.hl));
@@ -805,16 +787,16 @@ namespace gbhw
 	inline Byte CPU::Instruction_INC(Byte val)
 	{
 		val++;
-		m_registers.SetFlagIf<Registers::Flags::HalfCarry>((val & 0x0F) == 0x00);
-		m_registers.SetFlagIf<Registers::Flags::Zero>(val == 0);
-		m_registers.ClearFlag(Registers::Flags::Negative);
+		m_registers.set_flag_if<RegisterFlag::HalfCarry>((val & 0x0F) == 0x00);
+		m_registers.set_flag_if<RegisterFlag::Zero>(val == 0);
+		m_registers.clear_flag(RegisterFlag::Negative);
 		return val;
 	}
-	
+
 	template<RT::Type DstRegister>
 	bool CPU::Instruction_INC_N()
 	{
-		Byte& dst = m_registers.GetRegisterByte<DstRegister>();
+		Byte& dst = m_registers.get_register<DstRegister>();
 		dst = Instruction_INC(dst);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
@@ -832,20 +814,20 @@ namespace gbhw
 	inline Byte CPU::Instruction_DEC(Byte val)
 	{
 		val--;
-		m_registers.SetFlagIf<Registers::Flags::HalfCarry>((val & 0x0F) == 0x0F);
-		m_registers.SetFlagIf<Registers::Flags::Zero>(val == 0);
-		m_registers.SetFlag(Registers::Flags::Negative);
+		m_registers.set_flag_if<RegisterFlag::HalfCarry>((val & 0x0F) == 0x0F);
+		m_registers.set_flag_if<RegisterFlag::Zero>(val == 0);
+		m_registers.set_flag(RegisterFlag::Negative);
 		return val;
 	}
 
 	template<RT::Type DstRegister>
 	bool CPU::Instruction_DEC_N()
 	{
-		Byte& dst = m_registers.GetRegisterByte<DstRegister>();
+		Byte& dst = m_registers.get_register<DstRegister>();
 		dst = Instruction_DEC(dst);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-	
+
 	inline bool CPU::Instruction_DEC_HL_PTR()
 	{
 		m_mmu->WriteByte(m_registers.hl, Instruction_DEC(m_mmu->ReadByte(m_registers.hl)));
@@ -859,26 +841,26 @@ namespace gbhw
 	template<RT::Type SrcRegister>
 	bool CPU::Instruction_ADD_HL_NN()
 	{
-		Word& src = m_registers.GetRegisterWord<SrcRegister>();
+		Word& src = m_registers.get_register_word()<SrcRegister>();
 
-		m_registers.SetFlagIf<RF::Carry>((0xFFFF - m_registers.hl) < src);
-		m_registers.SetFlagIf<RF::HalfCarry>((0x0FFF - (m_registers.hl & 0x0FFF)) < (src & 0x0FFF));
-		m_registers.ClearFlag(RF::Negative);
+		m_registers.set_flag_if<RF::Carry>((0xFFFF - m_registers.hl) < src);
+		m_registers.set_flag_if<RF::HalfCarry>((0x0FFF - (m_registers.hl & 0x0FFF)) < (src & 0x0FFF));
+		m_registers.clear_flag(RF::Negative);
 
 		m_registers.hl += src;
 
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-	
+
 	inline bool CPU::Instruction_ADD_SP_IMM()
 	{
 		// Sign extend.
 		Byte immb = ImmediateByte();
 		SWord imm = static_cast<SWord>(static_cast<SByte>(immb));
 
-		m_registers.SetFlagIf<RF::Carry>((0xFF - (m_registers.sp & 0x00FF)) < immb);
-		m_registers.SetFlagIf<RF::HalfCarry>((0x0F - (m_registers.sp & 0x0F)) < (immb & 0x0F));
-		m_registers.ClearFlags(RF::Zero | RF::Negative);
+		m_registers.set_flag_if<RF::Carry>((0xFF - (m_registers.sp & 0x00FF)) < immb);
+		m_registers.set_flag_if<RF::HalfCarry>((0x0F - (m_registers.sp & 0x0F)) < (immb & 0x0F));
+		m_registers.clear_flags(RF::Zero | RF::Negative);
 
 		m_registers.sp += static_cast<Word>(imm);
 
@@ -891,14 +873,14 @@ namespace gbhw
 
 	inline Word CPU::Instruction_INC_W(Word val)
 	{
-		// No flags modifiied in 16-bit mode
+		// No flags modified in 16-bit mode
 		return val + 1;
 	}
 
 	template<RT::Type DstRegister>
 	bool CPU::Instruction_INC_NN()
 	{
-		Word& dst = m_registers.GetRegisterWord<DstRegister>();
+		Word& dst = m_registers.get_register_word<DstRegister>();
 		dst = Instruction_INC_W(dst);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
@@ -915,7 +897,7 @@ namespace gbhw
 	template<RT::Type DstRegister>
 	bool CPU::Instruction_DEC_NN()
 	{
-		Word& dst = m_registers.GetRegisterWord<DstRegister>();
+		Word& dst = m_registers.get_register_word<DstRegister>();
 		dst = Instruction_DEC_W(dst);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
@@ -926,10 +908,10 @@ namespace gbhw
 
 	inline bool CPU::Instruction_RLCA()
 	{
-		Byte& dst = m_registers.GetRegisterByte<RT::A>();
+		Byte& dst = m_registers.a;
 		Byte carry = (dst & 0x80) >> 7;
-		m_registers.SetFlagIf<RF::Carry>(carry == 1);
-		m_registers.ClearFlags(RF::Negative | RF::Zero | RF::HalfCarry);
+		m_registers.set_flag_if<RF::Carry>(carry == 1);
+		m_registers.clear_flags(RF::Negative | RF::Zero | RF::HalfCarry);
 
 		dst <<= 1;
 		dst |= carry;
@@ -938,22 +920,22 @@ namespace gbhw
 
 	inline bool CPU::Instruction_RLA()
 	{
-		Byte& dst = m_registers.GetRegisterByte<RT::A>();
-		Byte carry = m_registers.IsFlagSet(RF::Carry) ? 1 : 0;
+		Byte& dst = m_registers.a;
+		Byte carry = m_registers.is_flag_set(RF::Carry) ? 1 : 0;
 
-		m_registers.SetFlagIf<RF::Carry>((dst & 0x80) != 0);
-		m_registers.ClearFlags(RF::Negative | RF::Zero | RF::HalfCarry);
+		m_registers.set_flag_if<RF::Carry>((dst & 0x80) != 0);
+		m_registers.clear_flags(RF::Negative | RF::Zero | RF::HalfCarry);
 		dst <<= 1;
 		dst |= carry;
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-	
+
 	inline bool CPU::Instruction_RRCA()
 	{
-		Byte& dst = m_registers.GetRegisterByte<RT::A>();
+		Byte& dst = m_registers.a;
 		Byte carry = (dst & 0x01);
-		m_registers.SetFlagIf<RF::Carry>(carry != 0);
-		m_registers.ClearFlags(RF::Negative | RF::Zero | RF::HalfCarry);
+		m_registers.set_flag_if<RF::Carry>(carry != 0);
+		m_registers.clear_flags(RF::Negative | RF::Zero | RF::HalfCarry);
 
 		dst >>= 1;
 
@@ -965,11 +947,11 @@ namespace gbhw
 
 	inline bool CPU::Instruction_RRA()
 	{
-		Byte& dst = m_registers.GetRegisterByte<RT::A>();
-		Byte carry = m_registers.IsFlagSet(RF::Carry) ? 0x80 : 0;
+		Byte& dst = m_registers.a;
+		Byte carry = m_registers.is_flag_set(RF::Carry) ? 0x80 : 0;
 
-		m_registers.SetFlagIf<RF::Carry>((dst & 0x01) != 0);
-		m_registers.ClearFlags(RF::Negative | RF::Zero | RF::HalfCarry);
+		m_registers.set_flag_if<RF::Carry>((dst & 0x01) != 0);
+		m_registers.clear_flags(RF::Negative | RF::Zero | RF::HalfCarry);
 		dst >>= 1;
 		dst |= carry;
 		GBHW_CPU_ACTION_PERFORMED;
@@ -981,8 +963,6 @@ namespace gbhw
 
 	inline bool CPU::Instruction_EXT()
 	{
-		// do the extended instruction...
-		// unbounded cycling
 		m_currentExtendedInstruction = ImmediateByte();
 
 		Instruction& extendedInstruction = m_instructionsExtended[m_currentExtendedInstruction];
@@ -998,35 +978,35 @@ namespace gbhw
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 	// Extended - RLC
 	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-	
+
 	inline Byte CPU::Instruction_EXT_RLC(Byte val)
 	{
 		if((val & 0x80) != 0)
 		{
-			m_registers.SetFlag(RF::Carry);
+			m_registers.set_flag(RF::Carry);
 			val <<= 1;
 			val += 1;
 		}
 		else
 		{
-			m_registers.ClearFlag(RF::Carry);
+			m_registers.clear_flag(RF::Carry);
 			val <<= 1;
 		}
 
-		m_registers.SetFlagIf<RF::Zero>(val == 0);
-		m_registers.ClearFlags(RF::HalfCarry | RF::Negative);
+		m_registers.set_flag_if<RF::Zero>(val == 0);
+		m_registers.clear_flags(RF::HalfCarry | RF::Negative);
 
 		return val;
 	}
-	
+
 	template<RT::Type Register>
 	bool CPU::Instruction_EXT_RLC_N()
 	{
-		Byte& reg = m_registers.GetRegisterByte<Register>();
+		Byte& reg = m_registers.get_register<Register>();
 		reg = Instruction_EXT_RLC(reg);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-	
+
 	inline bool CPU::Instruction_EXT_RLC_HL_ADDR()
 	{
 		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_RLC(m_mmu->ReadByte(m_registers.hl)));
@@ -1044,21 +1024,21 @@ namespace gbhw
 		val >>= 1;
 		val |= ((carry != 0) ? 0x80 : 0);
 
-		m_registers.SetFlagIf<RF::Carry>(carry == 1);
-		m_registers.SetFlagIf<RF::Zero>(val == 0);
-		m_registers.ClearFlags(RF::Negative | RF::HalfCarry);
+		m_registers.set_flag_if<RF::Carry>(carry == 1);
+		m_registers.set_flag_if<RF::Zero>(val == 0);
+		m_registers.clear_flags(RF::Negative | RF::HalfCarry);
 
 		return val;
 	}
-	
+
 	template<RT::Type Register>
 	bool CPU::Instruction_EXT_RRC_N()
 	{
-		Byte& reg = m_registers.GetRegisterByte<Register>();
+		Byte& reg = m_registers.get_register<Register>();
 		reg = Instruction_EXT_RRC(reg);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-	
+
 	inline bool CPU::Instruction_EXT_RRC_HL_ADDR()
 	{
 		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_RRC(m_mmu->ReadByte(m_registers.hl)));
@@ -1071,26 +1051,26 @@ namespace gbhw
 
 	inline Byte CPU::Instruction_EXT_RL(Byte val)
 	{
-		Byte carry = m_registers.IsFlagSet(RF::Carry) ? 1 : 0;
-		m_registers.SetFlagIf<RF::Carry>((val & 0x80) != 0);
+		Byte carry = m_registers.is_flag_set(RF::Carry) ? 1 : 0;
+		m_registers.set_flag_if<RF::Carry>((val & 0x80) != 0);
 
 		val <<= 1;
 		val += carry;
 
-		m_registers.SetFlagIf<RF::Zero>(val == 0);
-		m_registers.ClearFlags(RF::Negative | RF::HalfCarry);
+		m_registers.set_flag_if<RF::Zero>(val == 0);
+		m_registers.clear_flags(RF::Negative | RF::HalfCarry);
 
 		return val;
 	}
-	
+
 	template<RT::Type Register>
 	bool CPU::Instruction_EXT_RL_N()
 	{
-		Byte& reg = m_registers.GetRegisterByte<Register>();
+		Byte& reg = m_registers.get_register<Register>();
 		reg = Instruction_EXT_RL(reg);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-	
+
 	inline bool CPU::Instruction_EXT_RL_HL_ADDR()
 	{
 		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_RL(m_mmu->ReadByte(m_registers.hl)));
@@ -1107,14 +1087,14 @@ namespace gbhw
 
 		val >>= 1;
 
-		if (m_registers.IsFlagSet(RF::Carry))
+		if (m_registers.is_flag_set(RF::Carry))
 		{
 			val |= 0x80;
 		}
 
-		m_registers.SetFlagIf<RF::Carry>(bSetCarry);
-		m_registers.SetFlagIf<RF::Zero>(val == 0);
-		m_registers.ClearFlags(RF::Negative | RF::HalfCarry);
+		m_registers.set_flag_if<RF::Carry>(bSetCarry);
+		m_registers.set_flag_if<RF::Zero>(val == 0);
+		m_registers.clear_flags(RF::Negative | RF::HalfCarry);
 
 		return val;
 	}
@@ -1122,7 +1102,7 @@ namespace gbhw
 	template<RT::Type Register>
 	bool CPU::Instruction_EXT_RR_N()
 	{
-		Byte& reg = m_registers.GetRegisterByte<Register>();
+		Byte& reg = m_registers.get_register<Register>();
 		reg = Instruction_EXT_RR(reg);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
@@ -1139,17 +1119,17 @@ namespace gbhw
 
 	inline Byte CPU::Instruction_EXT_SLA(Byte val)
 	{
-		m_registers.SetFlagIf<RF::Carry>((val & 0x80) != 0);
+		m_registers.set_flag_if<RF::Carry>((val & 0x80) != 0);
 		val <<= 1;
-		m_registers.SetFlagIf<RF::Zero>(val == 0);
-		m_registers.ClearFlags(RF::Negative | RF::HalfCarry);
+		m_registers.set_flag_if<RF::Zero>(val == 0);
+		m_registers.clear_flags(RF::Negative | RF::HalfCarry);
 		return val;
 	}
 
 	template<RT::Type Register>
 	bool CPU::Instruction_EXT_SLA_N()
 	{
-		Byte& reg = m_registers.GetRegisterByte<Register>();
+		Byte& reg = m_registers.get_register<Register>();
 		reg = Instruction_EXT_SLA(reg);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
@@ -1166,23 +1146,23 @@ namespace gbhw
 
 	inline Byte CPU::Instruction_EXT_SRA(Byte val)
 	{
-		m_registers.SetFlagIf<RF::Carry>((val & 0x01) != 0);
+		m_registers.set_flag_if<RF::Carry>((val & 0x01) != 0);
 
 		val = (val & 0x80) | (val >> 1);
 
-		m_registers.SetFlagIf<RF::Zero>(val == 0);
-		m_registers.ClearFlags(RF::Negative | RF::HalfCarry);
+		m_registers.set_flag_if<RF::Zero>(val == 0);
+		m_registers.clear_flags(RF::Negative | RF::HalfCarry);
 
 		return val;
 	}
-	
+
 	template<RT::Type Register> bool CPU::Instruction_EXT_SRA_N()
 	{
-		Byte& reg = m_registers.GetRegisterByte<Register>();
+		Byte& reg = m_registers.get_register<Register>();
 		reg = Instruction_EXT_SRA(reg);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-	
+
 	inline bool CPU::Instruction_EXT_SRA_HL_ADDR()
 	{
 		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_SRA(m_mmu->ReadByte(m_registers.hl)));
@@ -1197,15 +1177,15 @@ namespace gbhw
 	{
 		// Swap top 4 bits with bottom 4 bits.
 		Byte res = (((val & 0xF0) >> 4) | ((val & 0x0F) << 4));
-		m_registers.ClearFlags(RF::Negative | RF::HalfCarry | RF::Carry);
-		m_registers.SetFlagIf<RF::Zero>(res == 0);
+		m_registers.clear_flags(RF::Negative | RF::HalfCarry | RF::Carry);
+		m_registers.set_flag_if<RF::Zero>(res == 0);
 		return res;
 	}
 
 	template<RT::Type DstRegister>
 	bool CPU::Instruction_EXT_SWAP_N()
 	{
-		Byte& dst = m_registers.GetRegisterByte<DstRegister>();
+		Byte& dst = m_registers.get_register<DstRegister>();
 		dst = Instruction_EXT_SWAP(dst);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
@@ -1222,17 +1202,17 @@ namespace gbhw
 
 	inline Byte CPU::Instruction_EXT_SRL(Byte val)
 	{
-		m_registers.SetFlagIf<RF::Carry>((val & 0x01) != 0);
+		m_registers.set_flag_if<RF::Carry>((val & 0x01) != 0);
 		val >>= 1;
-		m_registers.SetFlagIf<RF::Zero>(val == 0);
-		m_registers.ClearFlags(RF::Negative | RF::HalfCarry);
+		m_registers.set_flag_if<RF::Zero>(val == 0);
+		m_registers.clear_flags(RF::Negative | RF::HalfCarry);
 		return val;
 	}
 
 	template<RT::Type Register>
 	bool CPU::Instruction_EXT_SRL_N()
 	{
-		Byte& reg = m_registers.GetRegisterByte<Register>();
+		Byte& reg = m_registers.get_register<Register>();
 		reg = Instruction_EXT_SRL(reg);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
@@ -1253,15 +1233,15 @@ namespace gbhw
 		static_assert(Bit >= 0 && Bit <= 7, "Bit is invalid, must be between 0 and 7 inclusive");
 		static const Byte kBitMask = 1 << Bit;
 
-		m_registers.SetFlagIf<RF::Zero>((val & kBitMask) == 0); // Set if Bit is set on value, otherwise reset.
-		m_registers.ClearFlag(RF::Negative);
-		m_registers.SetFlag(RF::HalfCarry);
+		m_registers.set_flag_if<RF::Zero>((val & kBitMask) == 0); // Set if Bit is set on value, otherwise reset.
+		m_registers.clear_flag(RF::Negative);
+		m_registers.set_flag(RF::HalfCarry);
 	}
 
 	template<Byte Bit, RT::Type Register>
 	bool CPU::Instruction_EXT_BIT_B_N()
 	{
-		Instruction_EXT_BIT<Bit>(m_registers.GetRegisterByte<Register>());
+		Instruction_EXT_BIT<Bit>(m_registers.get_register<Register>());
 		GBHW_CPU_ACTION_PERFORMED;
 	}
 
@@ -1287,7 +1267,7 @@ namespace gbhw
 	template<Byte Bit, RT::Type Register>
 	bool CPU::Instruction_EXT_RESET_B_N()
 	{
-		Byte& reg = m_registers.GetRegisterByte<Register>();
+		Byte& reg = m_registers.get_register<Register>();
 		reg = Instruction_EXT_RESET<Bit>(reg);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
@@ -1314,7 +1294,7 @@ namespace gbhw
 	template<Byte Bit, RT::Type Register>
 	bool CPU::Instruction_EXT_SET_B_N()
 	{
-		Byte& reg = m_registers.GetRegisterByte<Register>();
+		Byte& reg = m_registers.get_register<Register>();
 		reg = Instruction_EXT_SET<Bit>(reg);
 		GBHW_CPU_ACTION_PERFORMED;
 	}
@@ -1325,5 +1305,4 @@ namespace gbhw
 		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_SET<Bit>(m_mmu->ReadByte(m_registers.hl)));
 		GBHW_CPU_ACTION_PERFORMED;
 	}
-
-} // gbhw
+}

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "gbhw_types.h"
+#include "types.h"
 
 #include <memory>
 

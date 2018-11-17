@@ -1,28 +1,18 @@
 #pragma once
 
-#include "cpu.h"
-#include "gbhw_types.h"
-
-#include <string>
-#include <vector>
+#include "context.h"
 
 namespace gbhw
 {
-	class CPU;
-	class MMU;
-
 	class Rom
 	{
 	public:
 		Rom();
 		~Rom();
 
-		// @todo: We shouldn't do this, cpu/mmu is only used for instruction generation.
-		void Initialise(CPU* cpu, MMU* mmu);
-
 		void Reset();
 		void Load(uint8_t* romData, uint32_t romLength);
-		void GetInstructions(const Address& address, InstructionList& instructions, int32_t instructionCount);
+
 		uint8_t* GetBank(Byte bankIndex);
 		CartridgeType::Type GetCartridgeType() const;
 
@@ -32,10 +22,6 @@ namespace gbhw
 		void LoadHeader();
 		void LoadBanks();
 
-		void GenerateInstructions(Address address, InstructionList& instructions, const uint8_t* instructionAddress, int32_t instructionCount);
-
-		CPU*						m_cpu;
-		MMU*						m_mmu;
 		std::vector<uint8_t>		m_romData;
 		std::string					m_title;
 		CartridgeType::Type			m_cartridgeType;

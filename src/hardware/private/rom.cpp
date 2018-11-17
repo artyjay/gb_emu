@@ -1,6 +1,7 @@
 #include "gbhw_log.h"
-#include "gbhw_mbc.h"
-#include "gbhw_rom.h"
+
+#include "mbc.h"
+#include "rom.h"
 
 namespace gbhw
 {
@@ -32,12 +33,6 @@ namespace gbhw
 	{
 	}
 
-	void Rom::Initialise(CPU* cpu, MMU* mmu)
-	{
-		m_cpu = cpu;
-		m_mmu = mmu;
-	}
-
 	void Rom::Reset()
 	{
 		m_romData.resize(0);
@@ -51,7 +46,7 @@ namespace gbhw
 		m_banks.resize(0);
 	}
 
-	void Rom::Load( uint8_t* romData, uint32_t romLength)
+	void Rom::Load(uint8_t* romData, uint32_t romLength)
 	{
 		Reset();
 
@@ -61,12 +56,6 @@ namespace gbhw
 		// Perform actual load.
 		LoadHeader();
 		LoadBanks();
-	}
-
-	void Rom::GetInstructions(const Address& address, InstructionList& instructions, int32_t instructionCount)
-	{
-		const uint8_t* instructionsAddress = m_mmu->GetMemoryPtrFromAddress(address);
-		GenerateInstructions(address, instructions, instructionsAddress, instructionCount);
 	}
 
 	uint8_t* Rom::GetBank(Byte bankIndex)
@@ -136,6 +125,14 @@ namespace gbhw
 		}
 	}
 
+#if 0
+	// deprecated: Move to more appropriate location
+	void Rom::GetInstructions(const Address& address, InstructionList& instructions, int32_t instructionCount)
+	{
+		const uint8_t* instructionsAddress = m_mmu->GetMemoryPtrFromAddress(address);
+		GenerateInstructions(address, instructions, instructionsAddress, instructionCount);
+	}
+
 	void Rom::GenerateInstructions(Address address, InstructionList& instructions, const uint8_t* instructionAddress, int32_t instructionCount)
 	{
 		const uint8_t* baseInstruction = m_mmu->GetMemoryPtrFromAddress(0);
@@ -176,5 +173,6 @@ namespace gbhw
 			}
 		}
 	}
+#endif
 
 } // gbhw

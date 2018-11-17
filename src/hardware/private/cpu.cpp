@@ -1,6 +1,6 @@
-#include "gbhw_cpu.h"
-#include "gbhw_instructions.h"
-#include "gbhw_instructions_extended.h"
+#include "cpu.h"
+#include "instructions.h"
+#include "instructions_extended.h"
 
 #include <algorithm>
 #include <iostream>
@@ -17,7 +17,7 @@ namespace gbhw
 	{
 	}
 
-	void Instruction::Set(Byte opcode, Byte extended, Byte byteSize, Byte cycles0, Byte cycles1, RFB::Type behaviour0, RFB::Type behaviour1, RFB::Type behaviour2, RFB::Type behaviour3, RTD::Type args0, RTD::Type args1, const char* assembly)
+	void Instruction::Set(Byte opcode, Byte extended, Byte byteSize, Byte cycles0, Byte cycles1, RFB::Enum behaviour0, RFB::Enum behaviour1, RFB::Enum behaviour2, RFB::Enum behaviour3, RTD::Enum args0, RTD::Enum args1, const char* assembly)
 	{
 		m_opcode = opcode;
 		m_extended = extended;
@@ -131,17 +131,17 @@ namespace gbhw
 
 	Byte CPU::ReadIO(HWRegs::Type reg)
 	{
-		return m_context->mmu->ReadByte(static_cast<Address>(reg));
+		return m_mmu->ReadByte(static_cast<Address>(reg));
 	}
 
 	void CPU::WriteIO(HWRegs::Type reg, Byte val)
 	{
-		m_context->mmu->WriteIO(reg, val);
+		m_mmu->WriteIO(reg, val);
 	}
 
 	void CPU::GenerateInterrupt(HWInterrupts::Type interrupt)
 	{
-		m_context->mmu->WriteByte(HWRegs::IF, m_context->mmu->ReadByte(HWRegs::IF) | static_cast<Byte>(interrupt));
+		m_mmu->WriteByte(HWRegs::IF, m_mmu->ReadByte(HWRegs::IF) | static_cast<Byte>(interrupt));
 	}
 
 	bool CPU::IsBreakpoint() const
@@ -177,7 +177,7 @@ namespace gbhw
 		}
 		else
 		{
-			if (m_context->mmu->CheckResetBreakpoint())
+			if (m_mmu->CheckResetBreakpoint())
 			{
 				m_bBreakpoint = true;
 			}
@@ -197,8 +197,8 @@ namespace gbhw
 
 	void CPU::HandleInterrupts()
 	{
-		Byte regif = m_context->mmu->ReadByte(HWRegs::IF);
-		Byte regie = m_context->mmu->ReadByte(HWRegs::IE);
+		Byte regif = m_mmu->ReadByte(HWRegs::IF);
+		Byte regie = m_mmu->ReadByte(HWRegs::IE);
 
 		if(regif == 0)
 		{
@@ -227,7 +227,7 @@ namespace gbhw
 					Message("Handling timer interrupt\n");
 				}
 
-				m_context->mmu->WriteByte(HWRegs::IF, regif & ~(inter));	// Remove flag, indicating handled.
+				m_mmu->WriteByte(HWRegs::IF, regif & ~(inter));	// Remove flag, indicating handled.
 				m_registers.ime = false;									// Disable interrupts.
 				StackPushWord(m_registers.pc);								// Push current instruction onto the stack.
 				m_registers.pc = static_cast<Word>(routine);				// Jump to interrupt routine.

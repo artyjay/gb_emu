@@ -237,14 +237,14 @@ class Generator():
 
 			output_file.write("#pragma once\n\n")
 
-			output_file.write("#include \"gbhw_cpu.h\"\n\n")
+			output_file.write("#include \"cpu.h\"\n\n")
 
 			output_file.write("namespace gbhw\n{\n")
 
 			if self._is_extended_opcodes:
-				output_file.write("\tFORCE_INLINE void SetupInstructionsExtended(Instruction* instructions)\n")
+				output_file.write("\tinline void initialise_instructions_ext(Instruction* instructions)\n")
 			else:
-				output_file.write("\tFORCE_INLINE void SetupInstructions(Instruction* instructions)\n")
+				output_file.write("\tinline void initialise_instructions(Instruction* instructions)\n")
 
 			output_file.write("\t{\n")
 
@@ -256,9 +256,9 @@ class Generator():
 				else:
 					opcode = instruction._opcode
 
-				output_file.write("\t\tinstructions[{0:>4}].Set{1};\n".format(opcode, instruction_str))
+				output_file.write("\t\tinstructions[{0:>4}].set{1};\n".format(opcode, instruction_str))
 
 			output_file.write("\t}\n} // gbhw")
 	
-Generator("instructions.txt", "../src/hardware/gbhw_instructions.h", False);
-Generator("instructions_extended.txt", "../src/hardware/gbhw_instructions_extended.h", True);
+Generator("instructions.txt", "../src/hardware/private/instructions.h", False);
+Generator("instructions_extended.txt", "../src/hardware/private/instructions_extended.h", True);

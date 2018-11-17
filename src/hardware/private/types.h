@@ -5,6 +5,10 @@
 #include <stdint.h>
 #include <inttypes.h>
 #include <type_traits>
+#include <array>
+#include <functional>
+#include <string>
+#include <vector>
 
 #ifdef WIN32
 #include <Windows.h>
@@ -12,11 +16,12 @@
 
 namespace gbhw
 {
-	typedef uint8_t		Byte;
-	typedef  int8_t		SByte;
-	typedef uint16_t	Word;
-	typedef  int16_t	SWord;
-	typedef uint16_t	Address;
+	using Buffer	= std::vector<uint8_t>;
+	using Byte		= uint8_t;
+	using SByte		= int8_t;
+	using Word		= uint16_t;
+	using SWord		= int16_t;
+	using Address	= uint16_t;
 
 	typedef void(*LogCallback)(const char*);
 

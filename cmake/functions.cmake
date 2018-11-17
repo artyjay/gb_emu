@@ -14,17 +14,20 @@
 macro(gb_group_sources SOURCE_DIR ROOT_DIR)
 	file(GLOB CHILDREN RELATIVE ${PROJECT_SOURCE_DIR}/${SOURCE_DIR}	${PROJECT_SOURCE_DIR}/${SOURCE_DIR}/*)
 
-	if(${ROOT_DIR} STREQUAL ${SOURCE_DIR})
-		set(GROUP_NAME " ")
-	else()
-		string(REPLACE "${RELATIVE_DIR}/" "" RELATIVE_SOURCE_DIR ${SOURCE_DIR})
-		string(REPLACE "/" "\\" GROUP_NAME ${RELATIVE_SOURCE_DIR})
-	endif()
-
 	foreach(CHILD ${CHILDREN})
 		if(IS_DIRECTORY ${PROJECT_SOURCE_DIR}/${SOURCE_DIR}/${CHILD})
 			gb_group_sources(${SOURCE_DIR}/${CHILD} ${ROOT_DIR})
 		else()
+			if(${ROOT_DIR} STREQUAL ${SOURCE_DIR})
+				set(GROUP_NAME " ")
+			else()
+				string(REPLACE "${ROOT_DIR}/" "" RELATIVE_SOURCE_DIR ${SOURCE_DIR})
+				string(REPLACE "/" "\\" GROUP_NAME ${RELATIVE_SOURCE_DIR})
+			endif()
+
+			set(CHILD_FILE ${PROJECT_SOURCE_DIR}/${SOURCE_DIR}/${CHILD})
+
+			# Add file to source group
 			source_group(${GROUP_NAME} FILES ${PROJECT_SOURCE_DIR}/${SOURCE_DIR}/${CHILD})
 		endif()
 	endforeach()

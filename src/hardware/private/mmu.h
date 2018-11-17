@@ -1,9 +1,7 @@
 #pragma once
 
-#include "gbhw_mbc.h"
-#include "gbhw_types.h"
-
-#include <vector>
+#include "context.h"
+#include "mbc.h"
 
 namespace gbhw
 {
@@ -118,18 +116,23 @@ namespace gbhw
 		static const uint32_t	kLutShiftGranularity	= 7;	// Shift right for / 128.
 		static const uint32_t	kRegionLutCount			= kMemorySize >> kLutShiftGranularity;
 
-		uint8_t					m_memory[kMemorySize];
-		Region					m_regions[static_cast<uint32_t>(RegionType::Count)];
-		Region*					m_regionsLUT[kRegionLutCount];
 		GPU_ptr					m_gpu;
 		CPU_ptr					m_cpu;
 		Rom_ptr					m_rom;
+
+
+
+
+
+		uint8_t					m_memory[kMemorySize];
+		Region					m_regions[static_cast<uint32_t>(RegionType::Count)];
+		Region*					m_regionsLUT[kRegionLutCount];
 		MBC*					m_mbc;
 		std::vector<MemoryBank> m_ramBanks;
 
+
 		std::vector<Breakpoint>	m_writeBreakpoints;
 		bool					m_bBreakpoint;
-
 		Byte					m_buttonColumn;
 		Byte					m_buttonsDirection;
 		Byte					m_buttonsFace;

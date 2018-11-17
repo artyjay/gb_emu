@@ -3,10 +3,8 @@
 #include "cpu.h"
 #include "gpu.h"
 #include "mmu.h"
-
-
-#include "gbhw_rom.h"
-#include "gbhw_timer.h"
+#include "rom.h"
+#include "timer.h"
 
 namespace gbhw
 {
@@ -34,6 +32,7 @@ namespace gbhw
 		m_cpu->initialise(m_mmu);
 		m_gpu->initialise(m_cpu, m_mmu);
 		m_mmu->initialise(m_cpu, m_gpu, m_rom);
+		m_timer->initialise(m_cpu);
 	}
 
 	//--------------------------------------------------------------------------
