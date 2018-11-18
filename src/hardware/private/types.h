@@ -23,8 +23,6 @@ namespace gbhw
 	using SWord		= int16_t;
 	using Address	= uint16_t;
 
-	typedef void(*LogCallback)(const char*);
-
 	struct CartridgeType
 	{
 		enum Type

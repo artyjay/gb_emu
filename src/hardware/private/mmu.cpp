@@ -1,7 +1,7 @@
 #include "gpu.h"
-#include "gbhw_mbc.h"
+#include "mbc.h"
 #include "mmu.h"
-#include "gbhw_rom.h"
+#include "rom.h"
 
 #include <memory>
 #include <iostream>
@@ -199,7 +199,7 @@ namespace gbhw
 		// certain address ranges that manipulate the MMU in
 		// some way (i.e. Load ROM bank, enable eram, load eram
 		// bank, etc...).
-		if (m_mbc->HandleWrite(address, byte))
+		if (m_mbc->write(address, byte))
 		{
 			return;
 		}

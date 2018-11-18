@@ -1,31 +1,30 @@
-#include "gbhw_mbc.h"
-#include "gbhw_mmu.h"
-#include "gbhw_log.h"
+#include "mbc.h"
+#include "mmu.h"
+#include "log.h"
 
 namespace gbhw
 {
 	namespace
 	{
-		static GBInline bool RangeCheck(const Address& address, uint32_t range)
+		static inline bool range_check(const Address& address, uint32_t range)
 		{
 			return ((address & range) == range);
 		}
 
 		template<typename... Args>
-		static GBInline void MBCMessage(const char* msg, Args... parameters)
+		static inline void mbc_debug(const char* msg, Args... parameters)
 		{
-#if 1
-#else
-			Message(msg, std::forward<Args>(parameters)...);
+#if 0
+			log_debug(msg, std::forward<Args>(parameters)...);
 #endif
 		}
 	}
 
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// MBC
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	MBC::MBC(MMU* mmu)
+	MBC::MBC(MMU_ptr mmu)
 		: m_mmu(mmu)
 	{
 	}
@@ -34,39 +33,38 @@ namespace gbhw
 	{
 	}
 
-	bool MBC::HandleWrite(const Address& address, Byte value)
+	bool MBC::write(const Address& address, Byte value)
 	{
-		// Default ignored.
 		return false;
 	}
 
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// MBC1
-	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
 	class MBC1 : public MBC
 	{
 	public:
-		MBC1(MMU* mmu, bool bDefaultMode0)
+		MBC1(MMU_ptr mmu, bool bDefaultMode0)
 		: MBC(mmu)
 		, m_bMode0(bDefaultMode0)
 		, m_romBank(0)
 		{
 		}
 
-		bool MBC1::HandleWrite(const Address& address, Byte value)
+		bool MBC1::write(const Address& address, Byte value)
 		{
 			// Mode 0 = Rom banking mode (8kB none-switchable ram, 2mB switchable rom)
 			// Mode 1 = Ram banking mode, (32kB switchable ram, 512kB switchable rom)
 
 			if(address < 0x8000)
 			{
-				if(RangeCheck(address, 0x6000))
+				if(range_check(address, 0x6000))
 				{
 					m_bMode0 = (value == 0);
-					MBCMessage("MBC1: Swapped mode: %s\n", m_bMode0 ? "ROM banking" : "RAM banking");
+					mbc_debug("MBC1: Swapped mode: %s\n", m_bMode0 ? "ROM banking" : "RAM banking");
 				}
-				else if(RangeCheck(address, 0x4000))
+				else if(range_check(address, 0x4000))
 				{
 					// 2-bit value representing either Ram bank number or bits 5:6 of rom bank number.
 					if(m_bMode0)
@@ -75,17 +73,17 @@ namespace gbhw
 						m_romBank &= ~0x60;
 						m_romBank |= ((value & 0x03) << 5);
 
-						MBCMessage("MBC1: Loading Rom bank: %d\n", m_romBank);
+						mbc_debug("MBC1: Loading Rom bank: %d\n", m_romBank);
 						m_mmu->LoadRomBank(m_romBank);
 
 					}
 					else
 					{
-						MBCMessage("MBC1: Loading ERam bank: %d\n", value);
+						mbc_debug("MBC1: Loading ERam bank: %d\n", value);
 						m_mmu->LoadERamBank(value & 0x03);
 					}
 				}
-				else if(RangeCheck(address, 0x2000))
+				else if(range_check(address, 0x2000))
 				{
 					// Lower 5 bits of the ROM bank number (0x01->0x1F).
 					if(value == 0)
@@ -100,13 +98,13 @@ namespace gbhw
 						m_romBank |= (value & 0x1F);
 					}
 
-					MBCMessage("MBC1: Loading Rom bank: %d\n", m_romBank);
+					mbc_debug("MBC1: Loading Rom bank: %d\n", m_romBank);
 					m_mmu->LoadRomBank(m_romBank);
 				}
 				else
 				{
 					// External-ram enable.
-					MBCMessage("MBC1: Enabling ERam: %s\n", value == 0 ? "false" : "true");
+					mbc_debug("MBC1: Enabling ERam: %s\n", value == 0 ? "false" : "true");
 					m_mmu->SetEnableERam(value != 0);
 				}
 
@@ -128,27 +126,27 @@ namespace gbhw
 	class MBC3 : public MBC
 	{
 	public:
-		MBC3(MMU* mmu)
+		MBC3(MMU_ptr mmu)
 		: MBC(mmu)
 		{
 		}
 
-		bool MBC3::HandleWrite(const Address& address, Byte value)
+		bool MBC3::write(const Address& address, Byte value)
 		{
 			if (address < 0x8000)
 			{
-				if(RangeCheck(address, 0x6000))
+				if(range_check(address, 0x6000))
 				{
 					// Ignored, used by RTC when timer is present in the cartridge.
-					Error("MBC with timer unsupported\n");
+					log_error("MBC with timer unsupported\n");
 				}
-				else if(RangeCheck(address, 0x4000))
+				else if(range_check(address, 0x4000))
 				{
 					Byte ramBank = value & 0x03;
-					MBCMessage("MBC3: Loading ERam bank: %d\n", ramBank);
+					mbc_debug("MBC3: Loading ERam bank: %d\n", ramBank);
 					m_mmu->LoadERamBank(ramBank);
 				}
-				else if(RangeCheck(address, 0x2000))
+				else if(range_check(address, 0x2000))
 				{
 					Byte romBank;
 
@@ -162,13 +160,13 @@ namespace gbhw
 						romBank = value & 0x7F;
 					}
 
-					MBCMessage("MBC3: Loading Rom bank: %d\n", romBank);
+					mbc_debug("MBC3: Loading Rom bank: %d\n", romBank);
 					m_mmu->LoadRomBank(romBank);
 				}
 				else
 				{
 					// External-ram enable.
-					MBCMessage("MBC3: Enabling ERam: %s\n", value == 0x0 ? "false" : "true");
+					mbc_debug("MBC3: Enabling ERam: %s\n", value == 0x0 ? "false" : "true");
 					m_mmu->SetEnableERam(value != 0x0);
 				}
 
@@ -186,37 +184,37 @@ namespace gbhw
 	class MBC5 : public MBC
 	{
 	public:
-		MBC5(MMU* mmu)
+		MBC5(MMU_ptr mmu)
 			: MBC(mmu)
 			, m_romBankLow(0)
 			, m_romBankHigh(0)
 		{
 		}
 
-		bool HandleWrite(const Address& address, Byte value)
+		bool write(const Address& address, Byte value)
 		{
 			if (address < 0x6000)
 			{
-				if(RangeCheck(address, 0x4000))
+				if(range_check(address, 0x4000))
 				{
 					Byte ramBank = value & 0x0F;
-					MBCMessage("MBC5: Loading ERam bank: %d\n", ramBank);
+					mbc_debug("MBC5: Loading ERam bank: %d\n", ramBank);
 					m_mmu->LoadERamBank(ramBank);
 				}
-				else if(RangeCheck(address, 0x3000))
+				else if(range_check(address, 0x3000))
 				{
 					m_romBankHigh = value;
-					LoadROMBank();
+					load_rom_bank();
 				}
-				else if(RangeCheck(address, 0x2000))
+				else if(range_check(address, 0x2000))
 				{
 					m_romBankLow = value;
-					LoadROMBank();
+					load_rom_bank();
 				}
 				else
 				{
 					// External-ram enable.
-					MBCMessage("MBC5: Enabling ERam: %s\n", value == 0x0 ? "false" : "true");
+					mbc_debug("MBC5: Enabling ERam: %s\n", value == 0x0 ? "false" : "true");
 					m_mmu->SetEnableERam(value != 0x0);
 				}
 
@@ -227,10 +225,10 @@ namespace gbhw
 		}
 
 	private:
-		void LoadROMBank()
+		void load_rom_bank()
 		{
 			uint32_t romBank = (static_cast<uint32_t>(m_romBankHigh) << 8) | m_romBankLow;
-			MBCMessage("MBC5: Loading Rom bank: %u\n", romBank);
+			mbc_debug("MBC5: Loading Rom bank: %u\n", romBank);
 			m_mmu->LoadRomBank(romBank);
 		}
 
@@ -240,9 +238,9 @@ namespace gbhw
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	MBC* CreateMBC(MMU* mmu, CartridgeType::Type cartridgeType)
+	MBC* MBC::create(MMU_ptr mmu, CartridgeType::Type cartridge)
 	{
-		switch (cartridgeType)
+		switch (cartridge)
 		{
 			case CartridgeType::RomOnly:
 			{
@@ -290,7 +288,7 @@ namespace gbhw
 			case CartridgeType::HudsonHuC1:
 			default:
 			{
-				Error("Unsupported MBC\n");
+				log_error("Unsupported MBC\n");
 				break;
 			}
 		}

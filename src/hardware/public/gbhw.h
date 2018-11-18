@@ -22,14 +22,6 @@ extern "C" {
 
 typedef void* gbhw_context_t;
 
-typedef struct gbhw_settings
-{
-	const uint8_t*	rom;
-	uint32_t		rom_size;
-	void			(*log_callback)(void* userdata, int32_t level, const char* msg);
-	void*			log_userdata;
-} gbhw_settings_t;
-
 typedef enum gbhw_step_mode
 {
 	step_vsync		= 0,
@@ -60,6 +52,25 @@ typedef enum gbhw_errorcode
 	e_failed		= -1,
 	e_invalidparam	= -2
 } gbhw_errorcode_t;
+
+typedef enum gbhw_log_level
+{
+	l_debug = 0,
+	l_warning,
+	l_error,
+	l_disabled
+} gbhw_log_level_t;
+
+typedef void(*gbhw_log_callback_t)(void* userdata, gbhw_log_level_t level, const char* msg);
+
+typedef struct gbhw_settings
+{
+	const uint8_t*		rom;
+	uint32_t			rom_size;
+	gbhw_log_level_t	log_level;
+	gbhw_log_callback_t	log_callback;
+	void*				log_userdata;
+} gbhw_settings_t;
 
 /*----------------------------------------------------------------------------*/
 

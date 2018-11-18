@@ -3,34 +3,45 @@
 #include "context.h"
 #include "registers.h"	// @todo: This can live in this file
 
-#include "gbhw_log.h"
-
 #include <assert.h>
 #include <vector>
 
 namespace gbhw
 {
+	//--------------------------------------------------------------------------
+	// Instruction
+	//--------------------------------------------------------------------------
+
+	struct InstructionResult
+	{
+		enum Enum
+		{
+			Passed = 0,
+			Failed
+		};
+	};
+
 	class CPU;
-	typedef bool(CPU::*InstructionFunction)();
+	using InstructionFunction = InstructionResult::Enum (CPU::*)();
 
 	class Instruction
 	{
 	public:
 		Instruction();
 
-		void Set(Byte opcode, Byte extended, Byte byteSize, Byte cycles0, Byte cycles1, RFB::Enum behaviour0, RFB::Enum behaviour1, RFB::Enum behaviour2, RFB::Enum behaviour3, RTD::Enum args0, RTD::Enum args1, const char* assembly);
-		void Set(InstructionFunction fn);
-		void Set(Address address);
+		void set(Byte opcode, Byte extended, Byte byteSize, Byte cycles0, Byte cycles1, RFB::Enum behaviour0, RFB::Enum behaviour1, RFB::Enum behaviour2, RFB::Enum behaviour3, RTD::Enum args0, RTD::Enum args1, const char* assembly);
+		void set(InstructionFunction fn);
+		void set(Address address);
 
-		inline Byte						GetOpcode() const;
-		inline Byte						GetExtended() const;
-		inline Byte						GetByteSize() const;
-		inline Byte						GetCycles(bool bActionPerformed) const;
-		inline RFB::Enum				GetFlagBehaviour(RF::Enum flag) const;
-		inline RTD::Enum				GetArgType(uint32_t argIndex) const;
-		inline const char*				GetAssembly() const;
-		inline InstructionFunction&		GetFunction();
-		inline Address					GetAddress() const;
+		inline Byte						opcode() const;
+		inline Byte						is_extended() const;
+		inline Byte						byte_size() const;
+		inline Byte						cycles(InstructionResult::Enum result) const;
+		inline RFB::Enum				flag_behaviour(RF::Enum flag) const;
+		inline RTD::Enum				arg_type(uint32_t argIndex) const;
+		inline const char*				assembly() const;
+		inline InstructionFunction&		function();
+		inline Address					address() const;
 
 	private:
 		InstructionFunction		m_function;
@@ -46,7 +57,9 @@ namespace gbhw
 
 	typedef std::vector<Instruction> InstructionList;
 
-	// CPU implements the processors instruction-set.
+	//--------------------------------------------------------------------------
+	// CPU
+	//--------------------------------------------------------------------------
 
 	class CPU
 	{
@@ -59,234 +72,222 @@ namespace gbhw
 		void initialise(MMU_ptr mmu);
 		void release();
 
-		uint16_t Update(uint16_t maxcycles);
-		void UpdateStalled();
-		bool IsStalled() const;
+		uint16_t update(uint16_t maxcycles);
+		void update_stalled();
+		bool is_stalled() const;
 
-		const Registers& GetRegisters() const;
-
-		// Instructions
-		inline const Instruction& GetInstruction(Byte opcode) const;
-		inline const Instruction& GetInstructionExtended(Byte opcode) const;
-
-		// I/O - external interface for interrupt handling and such.
-		Byte ReadIO(HWRegs::Type reg);
-		void WriteIO(HWRegs::Type reg, Byte val);
-		void GenerateInterrupt(HWInterrupts::Type interrupt);
-
-		// Breakpoints
-		bool IsBreakpoint() const;
-		void BreakpointSet(Address address);
-		void BreakpointRemove(Address address);
-		void BreakpointSkip(); // Set a latch to skip the break-point we're currently on.
+		// I/O - external interface for interrupt handling and i/o.
+		Byte read_io(HWRegs::Type reg);
+		void write_io(HWRegs::Type reg, Byte val);
+		void generate_interrupt(HWInterrupts::Type interrupt);
 
 	protected:
-		void HandleBreakpoints();
-		void HandleInterrupts();
-		void HandleInterrupt(HWInterrupts::Type interrupt, HWInterruptRoutines::Type routine, Byte regif, Byte regie);
+		void handle_interrupts();
+		void handle_interrupt(HWInterrupts::Type interrupt, HWInterruptRoutines::Type routine, Byte regif, Byte regie);
 
-		void InitialiseInstructions();
-		bool InstructionNotImplemented();
-		bool InstructionNotImplementedExt();
+		void load_instructions();
+		InstructionResult::Enum instruction_not_implemented();
+		InstructionResult::Enum instruction_not_implemented_ext();
 
 		// Helpers
-		inline Byte ImmediateByte(bool steppc = true);
-		inline Word ImmediateWord(bool steppc = true);
+		inline Byte immediate_byte(bool steppc = true);
+		inline Word immediate_word(bool steppc = true);
 
 		// Stack management
-		inline void StackPushWord(Word word);
-		inline Word StackPopWord();
+		inline void stack_push(Word word);
+		inline Word stack_pop();
 
 		// Misc.
-		inline bool Instruction_NOP();															// NOP
-		inline bool Instruction_DAA();															// DAA
-		inline bool Instruction_CPL();															// CPL
-		inline bool Instruction_CCF();															// CCF
-		inline bool Instruction_SCF();															// SCF
+		inline InstructionResult::Enum inst_nop();																	// NOP
+		inline InstructionResult::Enum inst_daa();																	// DAA
+		inline InstructionResult::Enum inst_cpl();																	// CPL
+		inline InstructionResult::Enum inst_ccf();																	// CCF
+		inline InstructionResult::Enum inst_scf();																	// SCF
+
 		// scf
-		inline bool Instruction_HALT();															// HALT
-		inline bool Instruction_STOP();															// STOP
-		inline bool Instruction_DI();															// DI
-		inline bool Instruction_EI();															// EI
+		inline InstructionResult::Enum inst_halt();																	// HALT
+		inline InstructionResult::Enum inst_stop();																	// STOP
+		inline InstructionResult::Enum inst_di();																	// DI
+		inline InstructionResult::Enum inst_ei();																	// EI
 
 		// Jumps
-		inline bool Instruction_JP();															// JP nn
-		template<RF::Type FlagType, bool IsSet> bool Instruction_JP_CC();						// JP cc,nn
-		inline bool Instruction_JP_HL();														// JP (HL)
-		inline bool Instruction_JR();															// JR n
-		template<RF::Type FlagType, bool IsSet> bool Instruction_JR_CC();						// JR cc,n
+		inline InstructionResult::Enum inst_jp();																	// JP nn
+		template<RF::Enum FlagType, bool IsSet> inline InstructionResult::Enum inst_jp_cc();						// JP cc,nn
+		inline InstructionResult::Enum inst_jp_hl();																// JP (HL)
+		inline InstructionResult::Enum inst_jr();																	// JR n
+		template<RF::Enum FlagType, bool IsSet> inline InstructionResult::Enum inst_jr_cc();						// JR cc,n
 
 		// Calls
-		inline bool Instruction_CALL();															// CALL nn
-		template<RF::Type FlagType, bool IsSet> bool Instruction_CALL_CC();						// CALL cc,nn
+		inline InstructionResult::Enum inst_call();																	// CALL nn
+		template<RF::Enum FlagType, bool IsSet> inline InstructionResult::Enum inst_call_cc();						// CALL cc,nn
 
 		// Restarts
-		template<Byte Offset> bool Instruction_RST();											// RST n
+		template<Byte Offset> InstructionResult::Enum inst_rst();													// RST n
 
 		// Returns
-		inline bool Instruction_RET();															// RET
-		template<RF::Type FlagType, bool IsSet> bool Instruction_RET_CC();						// RET cc
-		inline bool Instruction_RETI();															// RETI
+		inline InstructionResult::Enum inst_ret();																	// RET
+		template<RF::Enum FlagType, bool IsSet> inline InstructionResult::Enum inst_ret_cc();						// RET cc
+		inline InstructionResult::Enum inst_reti();																	// RETI
 
 		// 8-bit Loads
-		template<RT::Type DstRegister, RT::Type SrcRegister> bool Instruction_LD_N_N();			// LD r1,r2
-		template<RT::Type DstRegister, RT::Type SrcRegisterPtr> bool Instruction_LD_N_N_PTR();	// LD r1,(NN)
-		template<RT::Type DstRegisterPtr, RT::Type SrcRegister> bool Instruction_LD_N_PTR_N();	// LD (NN),r2
-		template<RT::Type DstRegister> bool Instruction_LD_N_IMM();								// LD nn,n
-		inline bool Instruction_LD_A_IMM_PTR();													// LD A, (nn)
-		inline bool Instruction_LD_IMM_PTR_A();													// LD (nn), A
-		inline bool Instruction_LD_HL_PTR_IMM();												// LD (HL), n
-		inline bool Instruction_LDD_A_HL_PTR();													// LDD A, (HL)
-		inline bool Instruction_LDD_HL_PTR_A();													// LDD (HL), A
-		inline bool Instruction_LDI_A_HL_PTR();													// LDI A, (HL)
-		inline bool Instruction_LDI_HL_PTR_A();													// LDI (HL), A
-		inline bool Instruction_LDH_IMM_PTR_A();												// LDH (n), A
-		inline bool Instruction_LDH_A_IMM_PTR();												// LDH A, (n)
-		inline bool Instruction_LD_C_PTR_A();													// LD (C), A or LDH (C), A
-		inline bool Instruction_LD_A_C_PTR();													// LD A, (C) or LDH A, (C)
+		template<RT::Enum DstRegister, RT::Enum SrcRegister> inline InstructionResult::Enum inst_ld_n_n();			// LD r1,r2
+		template<RT::Enum DstRegister, RT::Enum SrcRegisterPtr> inline InstructionResult::Enum inst_ld_n_n_ptr();	// LD r1,(NN)
+		template<RT::Enum DstRegisterPtr, RT::Enum SrcRegister> inline InstructionResult::Enum inst_ld_n_ptr_n();	// LD (NN),r2
+		template<RT::Enum DstRegister> inline InstructionResult::Enum inst_ld_n_imm();								// LD nn,n
+		inline InstructionResult::Enum inst_ld_a_imm_ptr();															// LD A, (nn)
+		inline InstructionResult::Enum inst_ld_imm_ptr_a();															// LD (nn), A
+		inline InstructionResult::Enum inst_ld_hl_ptr_imm();														// LD (HL), n
+		inline InstructionResult::Enum inst_ldd_a_hl_ptr();															// LDD A, (HL)
+		inline InstructionResult::Enum inst_ldd_hl_ptr_a();															// LDD (HL), A
+		inline InstructionResult::Enum inst_ldi_a_hl_ptr();															// LDI A, (HL)
+		inline InstructionResult::Enum inst_ldi_hl_ptr_a();															// LDI (HL), A
+		inline InstructionResult::Enum inst_ldh_imm_ptr_a();														// LDH (n), A
+		inline InstructionResult::Enum inst_ldh_a_imm_ptr();														// LDH A, (n)
+		inline InstructionResult::Enum inst_ld_c_ptr_a();															// LD (C), A or LDH (C), A
+		inline InstructionResult::Enum inst_ld_a_c_ptr();															// LD A, (C) or LDH A, (C)
 
 		// 16-bit Loads
-		template<RT::Type DstRegister> bool Instruction_LD_NN_IMM();							// LD n,nn
-		inline bool Instruction_LD_SP_HL();														// LD SP, HL
-		inline bool Instruction_LD_HL_SP_IMM();													// LD HL, SP+n
-		inline bool Instruction_IMM_PTR_SP();													// LD (nn), SP
-		template<RT::Type SrcRegister> bool Instruction_PUSH_NN();								// PUSH NN
-		template<RT::Type DstRegister> bool Instruction_POP_NN();								// POP NN
-		inline bool Instruction_POP_AF();														// POP AF
+		template<RT::Enum DstRegister> inline InstructionResult::Enum inst_ld_nn_imm();								// LD n,nn
+		inline InstructionResult::Enum inst_ld_sp_hl();																// LD SP, HL
+		inline InstructionResult::Enum inst_ld_hl_sp_imm();															// LD HL, SP+n
+		inline InstructionResult::Enum inst_imm_ptr_sp();															// LD (nn), SP
+		template<RT::Enum SrcRegister> InstructionResult::Enum inst_push_nn();										// PUSH NN
+		template<RT::Enum DstRegister> InstructionResult::Enum inst_pop_nn();										// POP NN
+		inline InstructionResult::Enum inst_pop_af();																// POP AF
 
 		// 8-bit ALU - ADD
-		inline bool Instruction_ADD(Byte val);
-		template<RT::Type SrcRegister> bool Instruction_ADD_N();								// ADD A, N
-		inline bool Instruction_ADD_HL_PTR();													// ADD A, (HL)
-		inline bool Instruction_ADD_IMM();														// ADD A, n
+		inline InstructionResult::Enum inst_add(Byte val);
+		template<RT::Enum SrcRegister> inline InstructionResult::Enum inst_add_n();									// ADD A, N
+		inline InstructionResult::Enum inst_add_hl_ptr();															// ADD A, (HL)
+		inline InstructionResult::Enum inst_add_imm();																// ADD A, n
 
 		// 8-bit ALU - ADC
-		inline bool Instruction_ADC(Byte val);
-		template<RT::Type SrcRegister> bool Instruction_ADC_N();								// ADC A, N
-		inline bool Instruction_ADC_HL_PTR();													// ADC A, (HL)
-		inline bool Instruction_ADC_IMM();														// ADC A, n
+		inline InstructionResult::Enum inst_adc(Byte val);
+		template<RT::Enum SrcRegister> inline InstructionResult::Enum inst_adc_n();									// ADC A, N
+		inline InstructionResult::Enum inst_adc_hl_ptr();															// ADC A, (HL)
+		inline InstructionResult::Enum inst_adc_imm();																// ADC A, n
 
 		// 8-bit ALU - SUB
-		inline bool Instruction_SUB(Byte val);
-		template<RT::Type SrcRegister> bool Instruction_SUB_N();								// SUB A, N
-		inline bool Instruction_SUB_HL_PTR();													// SUB A, (HL)
-		inline bool Instruction_SUB_IMM();														// SUB A, n
+		inline InstructionResult::Enum inst_sub(Byte val);
+		template<RT::Enum SrcRegister> inline InstructionResult::Enum inst_sub_n();									// SUB A, N
+		inline InstructionResult::Enum inst_sub_hl_ptr();															// SUB A, (HL)
+		inline InstructionResult::Enum inst_sub_imm();																// SUB A, n
 
 		// 8-bit ALU - SBC
-		inline bool Instruction_SBC(Byte val);
-		template<RT::Type SrcRegister> bool Instruction_SBC_N();								// SBC A, N
-		inline bool Instruction_SBC_HL_PTR();													// SBC A, (HL)
-		inline bool Instruction_SBC_IMM();														// SBC A, n
+		inline InstructionResult::Enum inst_sbc(Byte val);
+		template<RT::Enum SrcRegister> inline InstructionResult::Enum inst_sbc_n();									// SBC A, N
+		inline InstructionResult::Enum inst_sbc_hl_ptr();															// SBC A, (HL)
+		inline InstructionResult::Enum inst_sbc_imm();																// SBC A, n
 
 		// 8-bit ALU - AND
-		inline bool Instruction_AND(Byte val);
-		template<RT::Type SrcRegister> bool Instruction_AND_N();								// AND A, N
-		inline bool Instruction_AND_HL_PTR();													// AND A, (HL)
-		inline bool Instruction_AND_IMM();														// AND A, n
+		inline InstructionResult::Enum inst_and(Byte val);
+		template<RT::Enum SrcRegister> inline InstructionResult::Enum inst_and_n();									// AND A, N
+		inline InstructionResult::Enum inst_and_hl_ptr();															// AND A, (HL)
+		inline InstructionResult::Enum inst_and_imm();																// AND A, n
 
 		// 8-bit ALU - OR
-		inline bool Instruction_OR(Byte val);
-		template<RT::Type SrcRegister> bool Instruction_OR_N();									// OR A, N
-		inline bool Instruction_OR_HL_PTR();													// OR A, (HL)
-		inline bool Instruction_OR_IMM();														// OR A, n
+		inline InstructionResult::Enum inst_or(Byte val);
+		template<RT::Enum SrcRegister> inline InstructionResult::Enum inst_or_n();									// OR A, N
+		inline InstructionResult::Enum inst_or_hl_ptr();															// OR A, (HL)
+		inline InstructionResult::Enum inst_or_imm();																// OR A, n
 
 		// 8-bit ALU - XOR
-		inline bool Instruction_XOR(Byte val);
-		template<RT::Type SrcRegister> bool Instruction_XOR_N();								// XOR A, N
-		inline bool Instruction_XOR_HL_PTR();													// XOR A, (HL)
-		inline bool Instruction_XOR_IMM();														// XOR A, n
+		inline InstructionResult::Enum inst_xor(Byte val);
+		template<RT::Enum SrcRegister> inline InstructionResult::Enum inst_xor_n();									// XOR A, N
+		inline InstructionResult::Enum inst_xor_hl_ptr();															// XOR A, (HL)
+		inline InstructionResult::Enum inst_xor_imm();																// XOR A, n
 
 		// 8-bit ALU - CP
-		inline bool Instruction_CP(Byte val);
-		template<RT::Type SrcRegister> bool Instruction_CP_N();									// CP N
-		inline bool Instruction_CP_HL_PTR();													// CP (HL)
-		inline bool Instruction_CP_IMM();														// CP n
+		inline InstructionResult::Enum inst_cp(Byte val);
+		template<RT::Enum SrcRegister> inline InstructionResult::Enum inst_cp_n();									// CP N
+		inline InstructionResult::Enum inst_cp_hl_ptr();															// CP (HL)
+		inline InstructionResult::Enum inst_cp_imm();																// CP n
 
 		// 8-bit ALU - INC
-		inline Byte Instruction_INC(Byte val);
-		template<RT::Type DstRegister> bool Instruction_INC_N();								// INC N
-		inline bool Instruction_INC_HL_PTR();													// INC (HL)
+		inline Byte inst_inc(Byte val);
+		template<RT::Enum DstRegister> inline InstructionResult::Enum inst_inc_n();									// INC N
+		inline InstructionResult::Enum inst_inc_hl_ptr();															// INC (HL)
 
 		// 8-bit ALU - DEC
-		inline Byte Instruction_DEC(Byte val);
-		template<RT::Type DstRegister> bool Instruction_DEC_N();								// DEC N
-		inline bool Instruction_DEC_HL_PTR();													// DEC (HL)
+		inline Byte inst_dec(Byte val);
+		template<RT::Enum DstRegister> inline InstructionResult::Enum inst_dec_n();									// DEC N
+		inline InstructionResult::Enum inst_dec_hl_ptr();															// DEC (HL)
 
 		// 16-bit ALU - ADD
-		template<RT::Type SrcRegister> bool Instruction_ADD_HL_NN();							// ADD HL, NN
-		inline bool Instruction_ADD_SP_IMM();													// ADD SP, n
+		template<RT::Enum SrcRegister> inline InstructionResult::Enum inst_add_hl_nn();								// ADD HL, NN
+		inline InstructionResult::Enum inst_add_sp_imm();															// ADD SP, n
 
 		// 16-bit ALU - INC
-		inline Word Instruction_INC_W(Word val);
-		template<RT::Type DstRegister> bool Instruction_INC_NN();								// INC NN
+		inline Word inst_inc_w(Word val);
+		template<RT::Enum DstRegister> inline InstructionResult::Enum inst_inc_nn();								// INC NN
 
 		// 16-bit ALU - DEC
-		inline Word Instruction_DEC_W(Word val);
-		template<RT::Type DstRegister> bool Instruction_DEC_NN();								// DEC NN
+		inline Word inst_dec_w(Word val);
+		template<RT::Enum DstRegister> inline InstructionResult::Enum inst_dec_nn();								// DEC NN
 
 		// Rotates & Shifts
-		inline bool Instruction_RLCA();
-		inline bool Instruction_RLA();
-		inline bool Instruction_RRCA();
-		inline bool Instruction_RRA();
+		inline InstructionResult::Enum inst_rlca();
+		inline InstructionResult::Enum inst_rla();
+		inline InstructionResult::Enum inst_rrca();
+		inline InstructionResult::Enum inst_rra();
 
 		// Extended Instructions
-		inline bool Instruction_EXT();
+		inline InstructionResult::Enum inst_ext();
 
 		// Extended - RLC
-		inline Byte Instruction_EXT_RLC(Byte val);
-		template<RT::Type Register> bool Instruction_EXT_RLC_N();								// RLC N
-		inline bool Instruction_EXT_RLC_HL_ADDR();												// RLC (HL)
+		inline Byte inst_ext_rlc(Byte val);
+		template<RT::Enum Register> inline InstructionResult::Enum inst_ext_rlc_n();								// RLC N
+		inline InstructionResult::Enum inst_ext_rlc_hl_addr();														// RLC (HL)
 
 		// Extended - RRC
-		inline Byte Instruction_EXT_RRC(Byte val);
-		template<RT::Type Register> bool Instruction_EXT_RRC_N();								// RRC N
-		inline bool Instruction_EXT_RRC_HL_ADDR();												// RRC (HL)
+		inline Byte inst_ext_rrc(Byte val);
+		template<RT::Enum Register> inline InstructionResult::Enum inst_ext_rrc_n();								// RRC N
+		inline InstructionResult::Enum inst_ext_rrc_hl_addr();														// RRC (HL)
 
 		// Extended - RL
-		inline Byte Instruction_EXT_RL(Byte val);
-		template<RT::Type Register> bool Instruction_EXT_RL_N();								// RL N
-		inline bool Instruction_EXT_RL_HL_ADDR();												// RL (HL)
+		inline Byte inst_ext_rl(Byte val);
+		template<RT::Enum Register> inline InstructionResult::Enum inst_ext_rl_n();									// RL N
+		inline InstructionResult::Enum inst_ext_rl_hl_addr();														// RL (HL)
 
 		// Extended - RR
-		inline Byte Instruction_EXT_RR(Byte val);
-		template<RT::Type Register> bool Instruction_EXT_RR_N();								// RR N
-		inline bool Instruction_EXT_RR_HL_ADDR();												// RR (HL)
+		inline Byte inst_ext_rr(Byte val);
+		template<RT::Enum Register> inline InstructionResult::Enum inst_ext_rr_n();									// RR N
+		inline InstructionResult::Enum inst_ext_rr_hl_addr();														// RR (HL)
 
 		// Extended - SLA
-		inline Byte Instruction_EXT_SLA(Byte val);
-		template<RT::Type Register> bool Instruction_EXT_SLA_N();								// SLA N
-		inline bool Instruction_EXT_SLA_HL_ADDR();												// SLA (HL)
+		inline Byte inst_ext_sla(Byte val);
+		template<RT::Enum Register> inline InstructionResult::Enum inst_ext_sla_n();								// SLA N
+		inline InstructionResult::Enum inst_ext_sla_hl_addr();														// SLA (HL)
 
 		// Extended - SRA
-		inline Byte Instruction_EXT_SRA(Byte val);
-		template<RT::Type Register> bool Instruction_EXT_SRA_N();								// SRA N
-		inline bool Instruction_EXT_SRA_HL_ADDR();												// SRA (HL)
+		inline Byte inst_ext_sra(Byte val);
+		template<RT::Enum Register> inline InstructionResult::Enum inst_ext_sra_n();								// SRA N
+		inline InstructionResult::Enum inst_ext_sra_hl_addr();														// SRA (HL)
 
 		// Extended - SWAP
-		inline Byte Instruction_EXT_SWAP(Byte val);
-		template<RT::Type DstRegister> bool Instruction_EXT_SWAP_N();							// SWAP N
-		inline bool Instruction_EXT_SWAP_HL_PTR();												// SWAP (HL)
+		inline Byte inst_ext_swap(Byte val);
+		template<RT::Enum DstRegister> inline InstructionResult::Enum inst_ext_swap_n();							// SWAP N
+		inline InstructionResult::Enum inst_ext_swap_hl_ptr();														// SWAP (HL)
 
 		// Extended - SRL
-		inline Byte Instruction_EXT_SRL(Byte val);
-		template<RT::Type Register> bool Instruction_EXT_SRL_N();								// SRL N
-		inline bool Instruction_EXT_SRL_HL_ADDR();												// SRL (HL)
+		inline Byte inst_ext_srl(Byte val);
+		template<RT::Enum Register> inline InstructionResult::Enum inst_ext_srl_n();								// SRL N
+		inline InstructionResult::Enum inst_ext_srl_hl_addr();														// SRL (HL)
 
 		// Extended - BIT
-		template<Byte Bit> void Instruction_EXT_BIT(Byte val);
-		template<Byte Bit, RT::Type Register> bool Instruction_EXT_BIT_B_N();					// BIT B,N
-		template<Byte Bit> bool Instruction_EXT_BIT_B_HL_ADDR();								// BIT B,(HL)
+		template<Byte Bit> void inst_ext_bit(Byte val);
+		template<Byte Bit, RT::Enum Register> inline InstructionResult::Enum inst_ext_bit_b_n();					// BIT B,N
+		template<Byte Bit> InstructionResult::Enum inst_ext_bit_b_hl_addr();										// BIT B,(HL)
 
 		// Extended - RES
-		template<Byte Bit> Byte Instruction_EXT_RESET(Byte val);
-		template<Byte Bit, RT::Type Register> bool Instruction_EXT_RESET_B_N();					// RES B,N
-		template<Byte Bit> bool Instruction_EXT_RESET_B_HL_ADDR();								// RES B,N
+		template<Byte Bit> Byte inst_ext_reset(Byte val);
+		template<Byte Bit, RT::Enum Register> inline InstructionResult::Enum inst_ext_reset_b_n();					// RES B,N
+		template<Byte Bit> InstructionResult::Enum inst_ext_reset_b_hl_addr();										// RES B,N
 
 		// Extended - SET
-		template<Byte Bit> Byte Instruction_EXT_SET(Byte val);
-		template<Byte Bit, RT::Type Register> bool Instruction_EXT_SET_B_N();					// SET B,N
-		template<Byte Bit> bool Instruction_EXT_SET_B_HL_ADDR();								// SET B,(HL)
+		template<Byte Bit> Byte inst_ext_set(Byte val);
+		template<Byte Bit, RT::Enum Register> inline InstructionResult::Enum inst_ext_set_b_n();					// SET B,N
+		template<Byte Bit> InstructionResult::Enum inst_ext_set_b_hl_addr();										// SET B,(HL)
 
 		static const uint32_t kInstructionCount = 256;
 
@@ -295,23 +296,14 @@ namespace gbhw
 
 		bool					m_bStopped;
 		bool					m_bHalted;
-		bool					m_bBreakpoint;
-		bool					m_bBreakpointSkip;
 
-		Byte					m_currentInstruction;
-		Byte					m_currentExtendedInstruction;
-		uint16_t				m_currentInstructionCycles;	// Normal or extended.
+		Byte					m_currentOpcode;
+		Byte					m_currentOpcodeExt;
+		uint16_t				m_instructionCycles;	// Normal or extended.
 
 		Instruction				m_instructions[kInstructionCount];
-		Instruction				m_instructionsExtended[kInstructionCount];
-		std::vector<Address>	m_breakpoints;
-
-		// @todo timers
+		Instruction				m_instructionsExt[kInstructionCount];
 	};
-
-	#define GBHW_CPU_ACTION_PERFORMED	return true
-	#define GBHW_CPU_ACTION_FAILED		return false
-
-} // gbhw
+}
 
 #include "cpu.inl"

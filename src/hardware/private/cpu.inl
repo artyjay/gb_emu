@@ -4,36 +4,36 @@
 
 namespace gbhw
 {
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Instruction
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline Byte Instruction::GetOpcode() const
+	inline Byte Instruction::opcode() const
 	{
 		return m_opcode;
 	}
 
-	inline Byte Instruction::GetExtended() const
+	inline Byte Instruction::is_extended() const
 	{
 		return m_extended;
 	}
 
-	inline Byte Instruction::GetByteSize() const
+	inline Byte Instruction::byte_size() const
 	{
 		return m_byteSize;
 	}
 
-	inline Byte Instruction::GetCycles(bool bActionPerformed) const
+	inline Byte Instruction::cycles(InstructionResult::Enum result) const
 	{
-		return m_cycles[bActionPerformed ? 0 : 1];
+		return m_cycles[result];
 	}
 
-	inline RFB::Enum Instruction::GetFlagBehaviour(RF::Enum flag) const
+	inline RFB::Enum Instruction::flag_behaviour(RF::Enum flag) const
 	{
 		return m_flagBehaviour[flag];
 	}
 
-	inline RTD::Enum Instruction::GetArgType(uint32_t argIndex) const
+	inline RTD::Enum Instruction::arg_type(uint32_t argIndex) const
 	{
 		if(argIndex < 2)
 		{
@@ -43,36 +43,26 @@ namespace gbhw
 		return RTD::None;
 	}
 
-	inline const char* Instruction::GetAssembly() const
+	inline const char* Instruction::assembly() const
 	{
 		return m_assembly;
 	}
 
-	inline InstructionFunction& Instruction::GetFunction()
+	inline InstructionFunction& Instruction::function()
 	{
 		return m_function;
 	}
 
-	inline Address Instruction::GetAddress() const
+	inline Address Instruction::address() const
 	{
 		return m_address;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Helpers
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline const Instruction& CPU::GetInstruction(Byte opcode) const
-	{
-		return m_instructions[opcode];
-	}
-
-	inline const Instruction& CPU::GetInstructionExtended(Byte opcode) const
-	{
-		return m_instructionsExtended[opcode];
-	}
-
-	inline Byte CPU::ImmediateByte(bool steppc)
+	inline Byte CPU::immediate_byte(bool steppc)
 	{
 		Byte res = m_mmu->ReadByte(m_registers.pc);
 
@@ -84,7 +74,7 @@ namespace gbhw
 		return res;
 	}
 
-	inline Word CPU::ImmediateWord(bool steppc)
+	inline Word CPU::immediate_word(bool steppc)
 	{
 		Word res = m_mmu->ReadWord(m_registers.pc);
 
@@ -96,33 +86,32 @@ namespace gbhw
 		return res;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Stack management
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline void CPU::StackPushWord(Word word)
+	inline void CPU::stack_push(Word word)
 	{
 		m_registers.sp -= 2;
 		m_mmu->WriteWord(m_registers.sp, word);
 	}
 
-	inline Word CPU::StackPopWord()
+	inline Word CPU::stack_pop()
 	{
 		m_registers.sp += 2;
 		return m_mmu->ReadWord(m_registers.sp - 2);
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Misc.
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline bool CPU::Instruction_NOP()
+	inline InstructionResult::Enum CPU::inst_nop()
 	{
-		// Empty.
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_DAA()
+	inline InstructionResult::Enum CPU::inst_daa()
 	{
 		Word val = m_registers.a;
 
@@ -167,93 +156,93 @@ namespace gbhw
 
 		m_registers.a = static_cast<Byte>(val);
 
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_CPL()
+	inline InstructionResult::Enum CPU::inst_cpl()
 	{
 		m_registers.a = ~m_registers.a;
 		m_registers.set_flag(RF::Negative);
 		m_registers.set_flag(RF::HalfCarry);
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_CCF()
+	inline InstructionResult::Enum CPU::inst_ccf()
 	{
 		m_registers.set_flag_if<RF::Carry>(!m_registers.is_flag_set(RF::Carry));
 		m_registers.clear_flags(RF::Negative | RF::HalfCarry);
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_SCF()
+	inline InstructionResult::Enum CPU::inst_scf()
 	{
 		m_registers.set_flag(RF::Carry);
 		m_registers.clear_flags(RF::Negative | RF::HalfCarry);
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_HALT()
+	inline InstructionResult::Enum CPU::inst_halt()
 	{
 		//Message("Halting CPU until interrupt is generated\n");
 		//m_bHalted = true;
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_STOP()
+	inline InstructionResult::Enum CPU::inst_stop()
 	{
-		Byte empty = ImmediateByte();
+		Byte empty = immediate_byte();
 		Message("Stopping CPU until input is detected, following byte = 0x%02x\n", empty);
 		m_bStopped = true;
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_DI()
+	inline InstructionResult::Enum CPU::inst_di()
 	{
 		m_registers.ime = false;
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_EI()
+	inline InstructionResult::Enum CPU::inst_ei()
 	{
 		m_registers.ime = true;
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Jumps
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline bool CPU::Instruction_JP()
+	inline InstructionResult::Enum CPU::inst_jp()
 	{
-		m_registers.pc = ImmediateWord(false);
-		GBHW_CPU_ACTION_PERFORMED;
+		m_registers.pc = immediate_word(false);
+		return InstructionResult::Passed;
 	}
 
-	template<RF::Type FlagType, bool IsSet>
-	bool CPU::Instruction_JP_CC()
+	template<RF::Enum FlagType, bool IsSet>
+	inline InstructionResult::Enum CPU::inst_jp_cc()
 	{
 		// Read new possible address
-		Word address = ImmediateWord();
+		Word address = immediate_word();
 
 		// Jump only if condition is met.
 		if (m_registers.is_flag_set(FlagType) == IsSet)
 		{
 			m_registers.pc = address;
-			GBHW_CPU_ACTION_PERFORMED;
+			return InstructionResult::Passed;
 		}
 
-		GBHW_CPU_ACTION_FAILED;
+		return InstructionResult::Failed;
 	}
 
-	inline bool CPU::Instruction_JP_HL()
+	inline InstructionResult::Enum CPU::inst_jp_hl()
 	{
 		m_registers.pc = m_registers.hl;
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_JR()
+	inline InstructionResult::Enum CPU::inst_jr()
 	{
-		Byte amount = ImmediateByte();
+		Byte amount = immediate_byte();
 
 		if((amount & 0x80) == 0x80)
 		{
@@ -266,14 +255,14 @@ namespace gbhw
 			m_registers.pc += amount;
 		}
 
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	template<RF::Type FlagType, bool IsSet>
-	bool CPU::Instruction_JR_CC()
+	template<RF::Enum FlagType, bool IsSet>
+	inline InstructionResult::Enum CPU::inst_jr_cc()
 	{
 		// Read new possible address
-		Byte amount = ImmediateByte();
+		Byte amount = immediate_byte();
 
 		// Jump only if condition is met.
 		if (m_registers.is_flag_set(FlagType) == IsSet)
@@ -289,203 +278,203 @@ namespace gbhw
 				m_registers.pc += amount;
 			}
 
-			GBHW_CPU_ACTION_PERFORMED;
+			return InstructionResult::Passed;
 		}
 
-		GBHW_CPU_ACTION_FAILED;
+		return InstructionResult::Failed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Calls
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline bool CPU::Instruction_CALL()
+	inline InstructionResult::Enum CPU::inst_call()
 	{
-		StackPushWord(m_registers.pc + 2);		// Push next instruction address onto the stack.
-		m_registers.pc = ImmediateWord(false);	// Jump to new address.
-		GBHW_CPU_ACTION_PERFORMED;
+		stack_push(m_registers.pc + 2);		// Push next instruction address onto the stack.
+		m_registers.pc = immediate_word(false);	// Jump to new address.
+		return InstructionResult::Passed;
 	}
 
-	template<RF::Type FlagType, bool IsSet>
-	bool CPU::Instruction_CALL_CC()
+	template<RF::Enum FlagType, bool IsSet>
+	inline InstructionResult::Enum CPU::inst_call_cc()
 	{
-		Word address = ImmediateWord(); // Read new address always, this will move PC along.
+		Word address = immediate_word(); // Read new address always, this will move PC along.
 
 		if (m_registers.is_flag_set(FlagType) == IsSet)
 		{
-			StackPushWord(m_registers.pc);	// Push next instruction address onto the stack.
+			stack_push(m_registers.pc);	// Push next instruction address onto the stack.
 			m_registers.pc = address;		// Jump to new address.
-			GBHW_CPU_ACTION_PERFORMED;
+			return InstructionResult::Passed;
 		}
 
-		GBHW_CPU_ACTION_FAILED;
+		return InstructionResult::Failed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Restarts
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
 	template<Byte Offset>
-	bool CPU::Instruction_RST()
+	inline InstructionResult::Enum CPU::inst_rst()
 	{
-		StackPushWord(m_registers.pc);
+		stack_push(m_registers.pc);
 		m_registers.pc = (0x0000 + Offset);
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Returns
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline bool CPU::Instruction_RET()
+	inline InstructionResult::Enum CPU::inst_ret()
 	{
-		m_registers.pc = StackPopWord();
-		GBHW_CPU_ACTION_PERFORMED;
+		m_registers.pc = stack_pop();
+		return InstructionResult::Passed;
 	}
 
-	template<RF::Type FlagType, bool IsSet>
-	bool CPU::Instruction_RET_CC()
+	template<RF::Enum FlagType, bool IsSet>
+	inline InstructionResult::Enum CPU::inst_ret_cc()
 	{
 		if (m_registers.is_flag_set(FlagType) == IsSet)
 		{
-			m_registers.pc = StackPopWord();
-			GBHW_CPU_ACTION_PERFORMED;
+			m_registers.pc = stack_pop();
+			return InstructionResult::Passed;
 		}
 
-		GBHW_CPU_ACTION_FAILED;
+		return InstructionResult::Failed;
 	}
 
-	inline bool CPU::Instruction_RETI()
+	inline InstructionResult::Enum CPU::inst_reti()
 	{
-		m_registers.pc = StackPopWord();
+		m_registers.pc = stack_pop();
 		m_registers.ime = true;
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 8-bit Loads
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	template<RT::Type DstRegister, RT::Type SrcRegister>
-	bool CPU::Instruction_LD_N_N()
+	template<RT::Enum DstRegister, RT::Enum SrcRegister>
+	inline InstructionResult::Enum CPU::inst_ld_n_n()
 	{
 		m_registers.set_register<DstRegister>(m_registers.get_register<SrcRegister>());
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	template<RT::Type DstRegister, RT::Type SrcRegisterPtr>
-	bool CPU::Instruction_LD_N_N_PTR()
+	template<RT::Enum DstRegister, RT::Enum SrcRegisterPtr>
+	inline InstructionResult::Enum CPU::inst_ld_n_n_ptr()
 	{
 		Byte val = m_mmu->ReadByte(m_registers.get_register_word<SrcRegisterPtr>());
 		m_registers.set_register<DstRegister>(val);
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	template<RT::Type DstRegisterPtr, RT::Type SrcRegister>
-	bool CPU::Instruction_LD_N_PTR_N()
+	template<RT::Enum DstRegisterPtr, RT::Enum SrcRegister>
+	inline InstructionResult::Enum CPU::inst_ld_n_ptr_n()
 	{
 		m_mmu->WriteByte(m_registers.get_register_word<DstRegisterPtr>(),
 						 m_registers.get_register<SrcRegister>());
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	template<RT::Type DstRegister>
-	bool CPU::Instruction_LD_N_IMM()
+	template<RT::Enum DstRegister>
+	inline InstructionResult::Enum CPU::inst_ld_n_imm()
 	{
-		m_registers.set_register<DstRegister>(ImmediateByte());
-		GBHW_CPU_ACTION_PERFORMED;
+		m_registers.set_register<DstRegister>(immediate_byte());
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_LD_A_IMM_PTR()
+	inline InstructionResult::Enum CPU::inst_ld_a_imm_ptr()
 	{
-		m_registers.a = m_mmu->ReadByte(ImmediateWord());
-		GBHW_CPU_ACTION_PERFORMED;
+		m_registers.a = m_mmu->ReadByte(immediate_word());
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_LD_IMM_PTR_A()
+	inline InstructionResult::Enum CPU::inst_ld_imm_ptr_a()
 	{
-		m_mmu->WriteByte(ImmediateWord(), m_registers.a);
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(immediate_word(), m_registers.a);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_LD_HL_PTR_IMM()
+	inline InstructionResult::Enum CPU::inst_ld_hl_ptr_imm()
 	{
-		m_mmu->WriteByte(m_registers.hl, ImmediateByte());
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(m_registers.hl, immediate_byte());
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_LDD_A_HL_PTR()
-	{
-		m_registers.a = m_mmu->ReadByte(m_registers.hl);
-		m_registers.hl = Instruction_DEC_W(m_registers.hl);
-		GBHW_CPU_ACTION_PERFORMED;
-	}
-
-	inline bool CPU::Instruction_LDD_HL_PTR_A()
-	{
-		m_mmu->WriteByte(m_registers.hl, m_registers.a);
-		m_registers.hl = Instruction_DEC_W(m_registers.hl);
-		GBHW_CPU_ACTION_PERFORMED;
-	}
-
-	inline bool CPU::Instruction_LDI_A_HL_PTR()
+	inline InstructionResult::Enum CPU::inst_ldd_a_hl_ptr()
 	{
 		m_registers.a = m_mmu->ReadByte(m_registers.hl);
-		m_registers.hl = Instruction_INC_W(m_registers.hl);
-		GBHW_CPU_ACTION_PERFORMED;
+		m_registers.hl = inst_dec_w(m_registers.hl);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_LDI_HL_PTR_A()
+	inline InstructionResult::Enum CPU::inst_ldd_hl_ptr_a()
 	{
 		m_mmu->WriteByte(m_registers.hl, m_registers.a);
-		m_registers.hl = Instruction_INC_W(m_registers.hl);
-		GBHW_CPU_ACTION_PERFORMED;
+		m_registers.hl = inst_dec_w(m_registers.hl);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_LDH_IMM_PTR_A()
+	inline InstructionResult::Enum CPU::inst_ldi_a_hl_ptr()
 	{
-		m_mmu->WriteByte(0xFF00 + ImmediateByte(), m_registers.a);
-		GBHW_CPU_ACTION_PERFORMED;
+		m_registers.a = m_mmu->ReadByte(m_registers.hl);
+		m_registers.hl = inst_inc_w(m_registers.hl);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_LDH_A_IMM_PTR()
+	inline InstructionResult::Enum CPU::inst_ldi_hl_ptr_a()
 	{
-		m_registers.a = m_mmu->ReadByte(0xFF00 + ImmediateByte());
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(m_registers.hl, m_registers.a);
+		m_registers.hl = inst_inc_w(m_registers.hl);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_LD_C_PTR_A()
+	inline InstructionResult::Enum CPU::inst_ldh_imm_ptr_a()
+	{
+		m_mmu->WriteByte(0xFF00 + immediate_byte(), m_registers.a);
+		return InstructionResult::Passed;
+	}
+
+	inline InstructionResult::Enum CPU::inst_ldh_a_imm_ptr()
+	{
+		m_registers.a = m_mmu->ReadByte(0xFF00 + immediate_byte());
+		return InstructionResult::Passed;
+	}
+
+	inline InstructionResult::Enum CPU::inst_ld_c_ptr_a()
 	{
 		m_mmu->WriteByte(0xFF00 + m_registers.c, m_registers.a);
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_LD_A_C_PTR()
+	inline InstructionResult::Enum CPU::inst_ld_a_c_ptr()
 	{
 		m_registers.a = m_mmu->ReadByte(0xFF00 + m_registers.c);
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 16-bit Loads
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	template<RT::Type DstRegister>
-	bool CPU::Instruction_LD_NN_IMM()
+	template<RT::Enum DstRegister>
+	inline InstructionResult::Enum CPU::inst_ld_nn_imm()
 	{
-		m_registers.set_register_word<DstRegister>(ImmediateWord());
-		GBHW_CPU_ACTION_PERFORMED;
+		m_registers.set_register_word<DstRegister>(immediate_word());
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_LD_SP_HL()
+	inline InstructionResult::Enum CPU::inst_ld_sp_hl()
 	{
 		m_registers.sp = m_registers.hl;
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_LD_HL_SP_IMM()
+	inline InstructionResult::Enum CPU::inst_ld_hl_sp_imm()
 	{
-		const SByte amount = static_cast<SByte>(ImmediateByte());
+		const SByte amount = static_cast<SByte>(immediate_byte());
 		const int32_t res  = m_registers.sp + amount;
 		const int32_t temp = m_registers.sp ^ amount ^ res;
 
@@ -494,41 +483,41 @@ namespace gbhw
 		m_registers.clear_flags(RF::Zero | RF::Negative);
 		m_registers.hl = res;
 
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_IMM_PTR_SP()
+	inline InstructionResult::Enum CPU::inst_imm_ptr_sp()
 	{
-		m_mmu->WriteWord(ImmediateWord(), m_registers.sp);
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteWord(immediate_word(), m_registers.sp);
+		return InstructionResult::Passed;
 	}
 
-	template<RT::Type SrcRegister>
-	bool CPU::Instruction_PUSH_NN()
+	template<RT::Enum SrcRegister>
+	inline InstructionResult::Enum CPU::inst_push_nn()
 	{
-		StackPushWord(m_registers.get_register_word<SrcRegister>());
-		GBHW_CPU_ACTION_PERFORMED;
+		stack_push(m_registers.get_register_word<SrcRegister>());
+		return InstructionResult::Passed;
 	}
 
-	template<RT::Type DstRegister>
-	bool CPU::Instruction_POP_NN()
+	template<RT::Enum DstRegister>
+	inline InstructionResult::Enum CPU::inst_pop_nn()
 	{
-		m_registers.set_register_word<DstRegister>(StackPopWord());
-		GBHW_CPU_ACTION_PERFORMED;
+		m_registers.set_register_word<DstRegister>(stack_pop());
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_POP_AF()
+	inline InstructionResult::Enum CPU::inst_pop_af()
 	{
 		// Lower nibble of F register is always 0.
-		m_registers.af = (StackPopWord() & 0xFFF0);
-		GBHW_CPU_ACTION_PERFORMED;
+		m_registers.af = (stack_pop() & 0xFFF0);
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 8-bit ALU - ADD
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline bool CPU::Instruction_ADD(Byte val)
+	inline InstructionResult::Enum CPU::inst_add(Byte val)
 	{
 		Byte calc = m_registers.a + val;
 		m_registers.set_flag_if<RF::Zero>((calc & 0xFF) == 0);
@@ -536,30 +525,31 @@ namespace gbhw
 		m_registers.set_flag_if<RF::Carry>((0xFF - m_registers.a) < val);
 		m_registers.set_flag_if<RF::HalfCarry>(0x0F - (m_registers.a & 0x0F) < (val & 0x0F));
 		m_registers.a = calc;
-		GBHW_CPU_ACTION_PERFORMED;
+
+		return InstructionResult::Passed;
 	}
 
-	template<RT::Type SrcRegister>
-	bool CPU::Instruction_ADD_N()
+	template<RT::Enum SrcRegister>
+	inline InstructionResult::Enum CPU::inst_add_n()
 	{
-		return Instruction_ADD(m_registers.get_register<SrcRegister>());
+		return inst_add(m_registers.get_register<SrcRegister>());
 	}
 
-	inline bool CPU::Instruction_ADD_HL_PTR()
+	inline InstructionResult::Enum CPU::inst_add_hl_ptr()
 	{
-		return Instruction_ADD(m_mmu->ReadByte(m_registers.hl));
+		return inst_add(m_mmu->ReadByte(m_registers.hl));
 	}
 
-	inline bool CPU::Instruction_ADD_IMM()
+	inline InstructionResult::Enum CPU::inst_add_imm()
 	{
-		return Instruction_ADD(ImmediateByte());
+		return inst_add(immediate_byte());
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 8-bit ALU - ADC
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline bool CPU::Instruction_ADC(Byte val)
+	inline InstructionResult::Enum CPU::inst_adc(Byte val)
 	{
 		Byte carryval = m_registers.is_flag_set(RF::Carry) ? 1 : 0;
 		Word calc = static_cast<Word>(m_registers.a) + static_cast<Word>(val) + carryval;
@@ -570,59 +560,60 @@ namespace gbhw
 		m_registers.a = static_cast<Byte>(calc & 0x00FF);
 		m_registers.set_flag_if<RF::Zero>(m_registers.a == 0);
 
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	template<RT::Type SrcRegister>
-	bool CPU::Instruction_ADC_N()
+	template<RT::Enum SrcRegister>
+	inline InstructionResult::Enum CPU::inst_adc_n()
 	{
-		return Instruction_ADC(m_registers.get_register<SrcRegister>());
+		return inst_adc(m_registers.get_register<SrcRegister>());
 	}
 
-	inline bool CPU::Instruction_ADC_HL_PTR()
+	inline InstructionResult::Enum CPU::inst_adc_hl_ptr()
 	{
-		return Instruction_ADC(m_mmu->ReadByte(m_registers.hl));
+		return inst_adc(m_mmu->ReadByte(m_registers.hl));
 	}
 
-	inline bool CPU::Instruction_ADC_IMM()
+	inline InstructionResult::Enum CPU::inst_adc_imm()
 	{
-		return Instruction_ADC(ImmediateByte());
+		return inst_adc(immediate_byte());
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 8-bit ALU - SUB
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline bool CPU::Instruction_SUB(Byte val)
+	inline InstructionResult::Enum CPU::inst_sub(Byte val)
 	{
 		m_registers.set_flag(RF::Negative);
 		m_registers.set_flag_if<RF::Carry>(m_registers.a < val);
 		m_registers.set_flag_if<RF::HalfCarry>((m_registers.a & 0x0F) < (val & 0x0F));
 		m_registers.a -= val;
 		m_registers.set_flag_if<RF::Zero>(m_registers.a  == 0);
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	template<RT::Type SrcRegister> bool CPU::Instruction_SUB_N()
+	template<RT::Enum SrcRegister>
+	inline InstructionResult::Enum CPU::inst_sub_n()
 	{
-		return Instruction_SUB(m_registers.get_register<SrcRegister>());
+		return inst_sub(m_registers.get_register<SrcRegister>());
 	}
 
-	inline bool CPU::Instruction_SUB_HL_PTR()
+	inline InstructionResult::Enum CPU::inst_sub_hl_ptr()
 	{
-		return Instruction_SUB(m_mmu->ReadByte(m_registers.hl));
+		return inst_sub(m_mmu->ReadByte(m_registers.hl));
 	}
 
-	inline bool CPU::Instruction_SUB_IMM()
+	inline InstructionResult::Enum CPU::inst_sub_imm()
 	{
-		return Instruction_SUB(ImmediateByte());
+		return inst_sub(immediate_byte());
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 8-bit ALU - SBC
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline bool CPU::Instruction_SBC(Byte val)
+	inline InstructionResult::Enum CPU::inst_sbc(Byte val)
 	{
 		const Word carryval		= m_registers.is_flag_set(RF::Carry) ? 1 : 0;
 		const Word subamount	= (val + carryval);
@@ -647,144 +638,144 @@ namespace gbhw
 
 		m_registers.a = calc;
 
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	template<RT::Type SrcRegister>
-	bool CPU::Instruction_SBC_N()
+	template<RT::Enum SrcRegister>
+	inline InstructionResult::Enum CPU::inst_sbc_n()
 	{
-		return Instruction_SBC(m_registers.get_register<SrcRegister>());
+		return inst_sbc(m_registers.get_register<SrcRegister>());
 	}
 
-	inline bool CPU::Instruction_SBC_HL_PTR()
+	inline InstructionResult::Enum CPU::inst_sbc_hl_ptr()
 	{
-		return Instruction_SBC(m_mmu->ReadByte(m_registers.hl));
+		return inst_sbc(m_mmu->ReadByte(m_registers.hl));
 	}
 
-	inline bool CPU::Instruction_SBC_IMM()
+	inline InstructionResult::Enum CPU::inst_sbc_imm()
 	{
-		return Instruction_SBC(ImmediateByte());
+		return inst_sbc(immediate_byte());
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 8-bit ALU - AND
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline bool CPU::Instruction_AND(Byte val)
+	inline InstructionResult::Enum CPU::inst_and(Byte val)
 	{
 		m_registers.a &= val;
 		m_registers.clear_flags(RF::Negative | RF::Carry);
 		m_registers.set_flag(RF::HalfCarry);
 		m_registers.set_flag_if<RF::Zero>(m_registers.a == 0);
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	template<RT::Type SrcRegister>
-	bool CPU::Instruction_AND_N()
+	template<RT::Enum SrcRegister>
+	inline InstructionResult::Enum CPU::inst_and_n()
 	{
-		return Instruction_AND(m_registers.get_register<SrcRegister>());
+		return inst_and(m_registers.get_register<SrcRegister>());
 	}
 
-	inline bool CPU::Instruction_AND_HL_PTR()
+	inline InstructionResult::Enum CPU::inst_and_hl_ptr()
 	{
-		return Instruction_AND(m_mmu->ReadByte(m_registers.hl));
+		return inst_and(m_mmu->ReadByte(m_registers.hl));
 	}
 
-	inline bool CPU::Instruction_AND_IMM()
+	inline InstructionResult::Enum CPU::inst_and_imm()
 	{
-		return Instruction_AND(ImmediateByte());
+		return inst_and(immediate_byte());
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 8-bit ALU - OR
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline bool CPU::Instruction_OR(Byte val)
+	inline InstructionResult::Enum CPU::inst_or(Byte val)
 	{
 		m_registers.a |= val;
 		m_registers.clear_flags(RF::Negative | RF::HalfCarry | RF::Carry);
 		m_registers.set_flag_if<RF::Zero>(m_registers.a == 0);
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	template<RT::Type SrcRegister>
-	bool CPU::Instruction_OR_N()
+	template<RT::Enum SrcRegister>
+	inline InstructionResult::Enum CPU::inst_or_n()
 	{
-		return Instruction_OR(m_registers.get_register<SrcRegister>());
+		return inst_or(m_registers.get_register<SrcRegister>());
 	}
 
-	inline bool CPU::Instruction_OR_HL_PTR()
+	inline InstructionResult::Enum CPU::inst_or_hl_ptr()
 	{
-		return Instruction_OR(m_mmu->ReadByte(m_registers.hl));
+		return inst_or(m_mmu->ReadByte(m_registers.hl));
 	}
 
-	inline bool CPU::Instruction_OR_IMM()
+	inline InstructionResult::Enum CPU::inst_or_imm()
 	{
-		return Instruction_OR(ImmediateByte());
+		return inst_or(immediate_byte());
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 8-bit ALU - XOR
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline bool CPU::Instruction_XOR(Byte val)
+	inline InstructionResult::Enum CPU::inst_xor(Byte val)
 	{
 		m_registers.a = m_registers.a ^ val;
 		m_registers.clear_flags(RF::Negative | RF::HalfCarry | RF::Carry);
 		m_registers.set_flag_if<RF::Zero>(m_registers.a == 0);
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	template<RT::Type SrcRegister>
-	bool CPU::Instruction_XOR_N()
+	template<RT::Enum SrcRegister>
+	inline InstructionResult::Enum CPU::inst_xor_n()
 	{
-		return Instruction_XOR(m_registers.get_register<SrcRegister>());
+		return inst_xor(m_registers.get_register<SrcRegister>());
 	}
 
-	inline bool CPU::Instruction_XOR_HL_PTR()
+	inline InstructionResult::Enum CPU::inst_xor_hl_ptr()
 	{
-		return Instruction_XOR(m_mmu->ReadByte(m_registers.hl));
+		return inst_xor(m_mmu->ReadByte(m_registers.hl));
 	}
 
-	inline bool CPU::Instruction_XOR_IMM()
+	inline InstructionResult::Enum CPU::inst_xor_imm()
 	{
-		return Instruction_XOR(ImmediateByte());
+		return inst_xor(immediate_byte());
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 8-bit ALU - INC
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline bool CPU::Instruction_CP(Byte val)
+	inline InstructionResult::Enum CPU::inst_cp(Byte val)
 	{
 		m_registers.set_flag_if<RF::Zero>(m_registers.a == val);
 		m_registers.set_flag_if<RF::Carry>(val > m_registers.a);
 		m_registers.set_flag_if<RF::HalfCarry>((val & 0x0F) > (m_registers.a & 0x0F));
 		m_registers.set_flag(RF::Negative);
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	template<RT::Type SrcRegister>
-	bool CPU::Instruction_CP_N()
+	template<RT::Enum SrcRegister>
+	inline InstructionResult::Enum CPU::inst_cp_n()
 	{
-		return Instruction_CP(m_registers.get_register<SrcRegister>());
+		return inst_cp(m_registers.get_register<SrcRegister>());
 	}
 
-	inline bool CPU::Instruction_CP_HL_PTR()
+	inline InstructionResult::Enum CPU::inst_cp_hl_ptr()
 	{
-		return Instruction_CP(m_mmu->ReadByte(m_registers.hl));
+		return inst_cp(m_mmu->ReadByte(m_registers.hl));
 	}
 
-	inline bool CPU::Instruction_CP_IMM()
+	inline InstructionResult::Enum CPU::inst_cp_imm()
 	{
-		return Instruction_CP(ImmediateByte());
+		return inst_cp(immediate_byte());
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 8-bit ALU - INC
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline Byte CPU::Instruction_INC(Byte val)
+	inline Byte CPU::inst_inc(Byte val)
 	{
 		val++;
 		m_registers.set_flag_if<RegisterFlag::HalfCarry>((val & 0x0F) == 0x00);
@@ -793,25 +784,25 @@ namespace gbhw
 		return val;
 	}
 
-	template<RT::Type DstRegister>
-	bool CPU::Instruction_INC_N()
+	template<RT::Enum DstRegister>
+	inline InstructionResult::Enum CPU::inst_inc_n()
 	{
 		Byte& dst = m_registers.get_register<DstRegister>();
-		dst = Instruction_INC(dst);
-		GBHW_CPU_ACTION_PERFORMED;
+		dst = inst_inc(dst);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_INC_HL_PTR()
+	inline InstructionResult::Enum CPU::inst_inc_hl_ptr()
 	{
-		m_mmu->WriteByte(m_registers.hl, Instruction_INC(m_mmu->ReadByte(m_registers.hl)));
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(m_registers.hl, inst_inc(m_mmu->ReadByte(m_registers.hl)));
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 8-bit ALU - DEC
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline Byte CPU::Instruction_DEC(Byte val)
+	inline Byte CPU::inst_dec(Byte val)
 	{
 		val--;
 		m_registers.set_flag_if<RegisterFlag::HalfCarry>((val & 0x0F) == 0x0F);
@@ -820,42 +811,41 @@ namespace gbhw
 		return val;
 	}
 
-	template<RT::Type DstRegister>
-	bool CPU::Instruction_DEC_N()
+	template<RT::Enum DstRegister>
+	inline InstructionResult::Enum CPU::inst_dec_n()
 	{
 		Byte& dst = m_registers.get_register<DstRegister>();
-		dst = Instruction_DEC(dst);
-		GBHW_CPU_ACTION_PERFORMED;
+		dst = inst_dec(dst);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_DEC_HL_PTR()
+	inline InstructionResult::Enum CPU::inst_dec_hl_ptr()
 	{
-		m_mmu->WriteByte(m_registers.hl, Instruction_DEC(m_mmu->ReadByte(m_registers.hl)));
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(m_registers.hl, inst_dec(m_mmu->ReadByte(m_registers.hl)));
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 16-bit ALU - ADD
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	template<RT::Type SrcRegister>
-	bool CPU::Instruction_ADD_HL_NN()
+	template<RT::Enum SrcRegister>
+	inline InstructionResult::Enum CPU::inst_add_hl_nn()
 	{
-		Word& src = m_registers.get_register_word()<SrcRegister>();
+		Word& src = m_registers.get_register_word<SrcRegister>();
 
 		m_registers.set_flag_if<RF::Carry>((0xFFFF - m_registers.hl) < src);
 		m_registers.set_flag_if<RF::HalfCarry>((0x0FFF - (m_registers.hl & 0x0FFF)) < (src & 0x0FFF));
 		m_registers.clear_flag(RF::Negative);
-
 		m_registers.hl += src;
 
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_ADD_SP_IMM()
+	inline InstructionResult::Enum CPU::inst_add_sp_imm()
 	{
 		// Sign extend.
-		Byte immb = ImmediateByte();
+		Byte immb = immediate_byte();
 		SWord imm = static_cast<SWord>(static_cast<SByte>(immb));
 
 		m_registers.set_flag_if<RF::Carry>((0xFF - (m_registers.sp & 0x00FF)) < immb);
@@ -864,49 +854,49 @@ namespace gbhw
 
 		m_registers.sp += static_cast<Word>(imm);
 
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 16-bit ALU - INC
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline Word CPU::Instruction_INC_W(Word val)
+	inline Word CPU::inst_inc_w(Word val)
 	{
 		// No flags modified in 16-bit mode
 		return val + 1;
 	}
 
-	template<RT::Type DstRegister>
-	bool CPU::Instruction_INC_NN()
+	template<RT::Enum DstRegister>
+	inline InstructionResult::Enum CPU::inst_inc_nn()
 	{
 		Word& dst = m_registers.get_register_word<DstRegister>();
-		dst = Instruction_INC_W(dst);
-		GBHW_CPU_ACTION_PERFORMED;
+		dst = inst_inc_w(dst);
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// 16-bit ALU - DEC
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline Word CPU::Instruction_DEC_W(Word val)
+	inline Word CPU::inst_dec_w(Word val)
 	{
 		return val - 1;
 	}
 
-	template<RT::Type DstRegister>
-	bool CPU::Instruction_DEC_NN()
+	template<RT::Enum DstRegister>
+	inline InstructionResult::Enum CPU::inst_dec_nn()
 	{
 		Word& dst = m_registers.get_register_word<DstRegister>();
-		dst = Instruction_DEC_W(dst);
-		GBHW_CPU_ACTION_PERFORMED;
+		dst = inst_dec_w(dst);
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Rotates & Shifts
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline bool CPU::Instruction_RLCA()
+	inline InstructionResult::Enum CPU::inst_rlca()
 	{
 		Byte& dst = m_registers.a;
 		Byte carry = (dst & 0x80) >> 7;
@@ -915,10 +905,10 @@ namespace gbhw
 
 		dst <<= 1;
 		dst |= carry;
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_RLA()
+	inline InstructionResult::Enum CPU::inst_rla()
 	{
 		Byte& dst = m_registers.a;
 		Byte carry = m_registers.is_flag_set(RF::Carry) ? 1 : 0;
@@ -927,10 +917,10 @@ namespace gbhw
 		m_registers.clear_flags(RF::Negative | RF::Zero | RF::HalfCarry);
 		dst <<= 1;
 		dst |= carry;
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_RRCA()
+	inline InstructionResult::Enum CPU::inst_rrca()
 	{
 		Byte& dst = m_registers.a;
 		Byte carry = (dst & 0x01);
@@ -942,10 +932,10 @@ namespace gbhw
 		if(carry)
 			dst |= 0x80;
 
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_RRA()
+	inline InstructionResult::Enum CPU::inst_rra()
 	{
 		Byte& dst = m_registers.a;
 		Byte carry = m_registers.is_flag_set(RF::Carry) ? 0x80 : 0;
@@ -954,32 +944,31 @@ namespace gbhw
 		m_registers.clear_flags(RF::Negative | RF::Zero | RF::HalfCarry);
 		dst >>= 1;
 		dst |= carry;
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Extended
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline bool CPU::Instruction_EXT()
+	inline InstructionResult::Enum CPU::inst_ext()
 	{
-		m_currentExtendedInstruction = ImmediateByte();
+		m_currentOpcodeExt = immediate_byte();
 
-		Instruction& extendedInstruction = m_instructionsExtended[m_currentExtendedInstruction];
-		InstructionFunction& func = extendedInstruction.GetFunction();
-		bool bActionPerformed = (this->*func)();
-		Byte cycles = extendedInstruction.GetCycles(bActionPerformed);
+		Instruction& extendedInstruction = m_instructionsExt[m_currentOpcodeExt];
+		InstructionFunction& func = extendedInstruction.function();
+		Byte cycles = extendedInstruction.cycles((this->*func)());
 		assert(cycles != 0);
-		m_currentInstructionCycles += cycles;
+		m_instructionCycles += cycles;
 
-		GBHW_CPU_ACTION_PERFORMED;
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Extended - RLC
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline Byte CPU::Instruction_EXT_RLC(Byte val)
+	inline Byte CPU::inst_ext_rlc(Byte val)
 	{
 		if((val & 0x80) != 0)
 		{
@@ -999,25 +988,25 @@ namespace gbhw
 		return val;
 	}
 
-	template<RT::Type Register>
-	bool CPU::Instruction_EXT_RLC_N()
+	template<RT::Enum Register>
+	inline InstructionResult::Enum CPU::inst_ext_rlc_n()
 	{
 		Byte& reg = m_registers.get_register<Register>();
-		reg = Instruction_EXT_RLC(reg);
-		GBHW_CPU_ACTION_PERFORMED;
+		reg = inst_ext_rlc(reg);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_EXT_RLC_HL_ADDR()
+	inline InstructionResult::Enum CPU::inst_ext_rlc_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_RLC(m_mmu->ReadByte(m_registers.hl)));
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(m_registers.hl, inst_ext_rlc(m_mmu->ReadByte(m_registers.hl)));
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Extended - RRC
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline Byte CPU::Instruction_EXT_RRC(Byte val)
+	inline Byte CPU::inst_ext_rrc(Byte val)
 	{
 		Byte carry = val & 0x01;
 
@@ -1031,25 +1020,25 @@ namespace gbhw
 		return val;
 	}
 
-	template<RT::Type Register>
-	bool CPU::Instruction_EXT_RRC_N()
+	template<RT::Enum Register>
+	inline InstructionResult::Enum CPU::inst_ext_rrc_n()
 	{
 		Byte& reg = m_registers.get_register<Register>();
-		reg = Instruction_EXT_RRC(reg);
-		GBHW_CPU_ACTION_PERFORMED;
+		reg = inst_ext_rrc(reg);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_EXT_RRC_HL_ADDR()
+	inline InstructionResult::Enum CPU::inst_ext_rrc_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_RRC(m_mmu->ReadByte(m_registers.hl)));
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(m_registers.hl, inst_ext_rrc(m_mmu->ReadByte(m_registers.hl)));
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Extended - RL
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline Byte CPU::Instruction_EXT_RL(Byte val)
+	inline Byte CPU::inst_ext_rl(Byte val)
 	{
 		Byte carry = m_registers.is_flag_set(RF::Carry) ? 1 : 0;
 		m_registers.set_flag_if<RF::Carry>((val & 0x80) != 0);
@@ -1063,25 +1052,25 @@ namespace gbhw
 		return val;
 	}
 
-	template<RT::Type Register>
-	bool CPU::Instruction_EXT_RL_N()
+	template<RT::Enum Register>
+	inline InstructionResult::Enum CPU::inst_ext_rl_n()
 	{
 		Byte& reg = m_registers.get_register<Register>();
-		reg = Instruction_EXT_RL(reg);
-		GBHW_CPU_ACTION_PERFORMED;
+		reg = inst_ext_rl(reg);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_EXT_RL_HL_ADDR()
+	inline InstructionResult::Enum CPU::inst_ext_rl_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_RL(m_mmu->ReadByte(m_registers.hl)));
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(m_registers.hl, inst_ext_rl(m_mmu->ReadByte(m_registers.hl)));
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Extended - RR
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline Byte CPU::Instruction_EXT_RR(Byte val)
+	inline Byte CPU::inst_ext_rr(Byte val)
 	{
 		bool bSetCarry = (val & 0x01) != 0;
 
@@ -1099,25 +1088,25 @@ namespace gbhw
 		return val;
 	}
 
-	template<RT::Type Register>
-	bool CPU::Instruction_EXT_RR_N()
+	template<RT::Enum Register>
+	inline InstructionResult::Enum CPU::inst_ext_rr_n()
 	{
 		Byte& reg = m_registers.get_register<Register>();
-		reg = Instruction_EXT_RR(reg);
-		GBHW_CPU_ACTION_PERFORMED;
+		reg = inst_ext_rr(reg);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_EXT_RR_HL_ADDR()
+	inline InstructionResult::Enum CPU::inst_ext_rr_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_RR(m_mmu->ReadByte(m_registers.hl)));
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(m_registers.hl, inst_ext_rr(m_mmu->ReadByte(m_registers.hl)));
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Extended - SLA
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline Byte CPU::Instruction_EXT_SLA(Byte val)
+	inline Byte CPU::inst_ext_sla(Byte val)
 	{
 		m_registers.set_flag_if<RF::Carry>((val & 0x80) != 0);
 		val <<= 1;
@@ -1126,25 +1115,25 @@ namespace gbhw
 		return val;
 	}
 
-	template<RT::Type Register>
-	bool CPU::Instruction_EXT_SLA_N()
+	template<RT::Enum Register>
+	inline InstructionResult::Enum CPU::inst_ext_sla_n()
 	{
 		Byte& reg = m_registers.get_register<Register>();
-		reg = Instruction_EXT_SLA(reg);
-		GBHW_CPU_ACTION_PERFORMED;
+		reg = inst_ext_sla(reg);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_EXT_SLA_HL_ADDR()
+	inline InstructionResult::Enum CPU::inst_ext_sla_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_SLA(m_mmu->ReadByte(m_registers.hl)));
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(m_registers.hl, inst_ext_sla(m_mmu->ReadByte(m_registers.hl)));
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Extended - SRA
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline Byte CPU::Instruction_EXT_SRA(Byte val)
+	inline Byte CPU::inst_ext_sra(Byte val)
 	{
 		m_registers.set_flag_if<RF::Carry>((val & 0x01) != 0);
 
@@ -1156,24 +1145,25 @@ namespace gbhw
 		return val;
 	}
 
-	template<RT::Type Register> bool CPU::Instruction_EXT_SRA_N()
+	template<RT::Enum Register>
+	inline InstructionResult::Enum CPU::inst_ext_sra_n()
 	{
 		Byte& reg = m_registers.get_register<Register>();
-		reg = Instruction_EXT_SRA(reg);
-		GBHW_CPU_ACTION_PERFORMED;
+		reg = inst_ext_sra(reg);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_EXT_SRA_HL_ADDR()
+	inline InstructionResult::Enum CPU::inst_ext_sra_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_SRA(m_mmu->ReadByte(m_registers.hl)));
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(m_registers.hl, inst_ext_sra(m_mmu->ReadByte(m_registers.hl)));
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Extended - SWAP
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline Byte CPU::Instruction_EXT_SWAP(Byte val)
+	inline Byte CPU::inst_ext_swap(Byte val)
 	{
 		// Swap top 4 bits with bottom 4 bits.
 		Byte res = (((val & 0xF0) >> 4) | ((val & 0x0F) << 4));
@@ -1182,25 +1172,25 @@ namespace gbhw
 		return res;
 	}
 
-	template<RT::Type DstRegister>
-	bool CPU::Instruction_EXT_SWAP_N()
+	template<RT::Enum DstRegister>
+	inline InstructionResult::Enum CPU::inst_ext_swap_n()
 	{
 		Byte& dst = m_registers.get_register<DstRegister>();
-		dst = Instruction_EXT_SWAP(dst);
-		GBHW_CPU_ACTION_PERFORMED;
+		dst = inst_ext_swap(dst);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_EXT_SWAP_HL_PTR()
+	inline InstructionResult::Enum CPU::inst_ext_swap_hl_ptr()
 	{
-		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_SWAP(m_mmu->ReadByte(m_registers.hl)));
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(m_registers.hl, inst_ext_swap(m_mmu->ReadByte(m_registers.hl)));
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Extended - SRL
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
-	inline Byte CPU::Instruction_EXT_SRL(Byte val)
+	inline Byte CPU::inst_ext_srl(Byte val)
 	{
 		m_registers.set_flag_if<RF::Carry>((val & 0x01) != 0);
 		val >>= 1;
@@ -1209,26 +1199,26 @@ namespace gbhw
 		return val;
 	}
 
-	template<RT::Type Register>
-	bool CPU::Instruction_EXT_SRL_N()
+	template<RT::Enum Register>
+	inline InstructionResult::Enum CPU::inst_ext_srl_n()
 	{
 		Byte& reg = m_registers.get_register<Register>();
-		reg = Instruction_EXT_SRL(reg);
-		GBHW_CPU_ACTION_PERFORMED;
+		reg = inst_ext_srl(reg);
+		return InstructionResult::Passed;
 	}
 
-	inline bool CPU::Instruction_EXT_SRL_HL_ADDR()
+	inline InstructionResult::Enum CPU::inst_ext_srl_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_SRL(m_mmu->ReadByte(m_registers.hl)));
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(m_registers.hl, inst_ext_srl(m_mmu->ReadByte(m_registers.hl)));
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Extended - BIT
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
 	template<Byte Bit>
-	void CPU::Instruction_EXT_BIT(Byte val)
+	void CPU::inst_ext_bit(Byte val)
 	{
 		static_assert(Bit >= 0 && Bit <= 7, "Bit is invalid, must be between 0 and 7 inclusive");
 		static const Byte kBitMask = 1 << Bit;
@@ -1238,71 +1228,73 @@ namespace gbhw
 		m_registers.set_flag(RF::HalfCarry);
 	}
 
-	template<Byte Bit, RT::Type Register>
-	bool CPU::Instruction_EXT_BIT_B_N()
+	template<Byte Bit, RT::Enum Register>
+	inline InstructionResult::Enum CPU::inst_ext_bit_b_n()
 	{
-		Instruction_EXT_BIT<Bit>(m_registers.get_register<Register>());
-		GBHW_CPU_ACTION_PERFORMED;
+		inst_ext_bit<Bit>(m_registers.get_register<Register>());
+		return InstructionResult::Passed;
 	}
 
 	template<Byte Bit>
-	bool CPU::Instruction_EXT_BIT_B_HL_ADDR()
+	inline InstructionResult::Enum CPU::inst_ext_bit_b_hl_addr()
 	{
-		Instruction_EXT_BIT<Bit>(m_mmu->ReadByte(m_registers.hl));
-		GBHW_CPU_ACTION_PERFORMED;
+		inst_ext_bit<Bit>(m_mmu->ReadByte(m_registers.hl));
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Extended - RESET
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
 	template<Byte Bit>
-	Byte CPU::Instruction_EXT_RESET(Byte val)
+	Byte CPU::inst_ext_reset(Byte val)
 	{
 		static_assert(Bit >= 0 && Bit <= 7, "Bit is invalid, must be between 0 and 7 inclusive");
 		static const Byte kBitMask = ~(1 << Bit);
 		return (val & kBitMask);
 	}
 
-	template<Byte Bit, RT::Type Register>
-	bool CPU::Instruction_EXT_RESET_B_N()
+	template<Byte Bit, RT::Enum Register>
+	inline InstructionResult::Enum CPU::inst_ext_reset_b_n()
 	{
 		Byte& reg = m_registers.get_register<Register>();
-		reg = Instruction_EXT_RESET<Bit>(reg);
-		GBHW_CPU_ACTION_PERFORMED;
+		reg = inst_ext_reset<Bit>(reg);
+		return InstructionResult::Passed;
 	}
 
 	template<Byte Bit>
-	bool CPU::Instruction_EXT_RESET_B_HL_ADDR()
+	inline InstructionResult::Enum CPU::inst_ext_reset_b_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_RESET<Bit>(m_mmu->ReadByte(m_registers.hl)));
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(m_registers.hl, inst_ext_reset<Bit>(m_mmu->ReadByte(m_registers.hl)));
+		return InstructionResult::Passed;
 	}
 
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 	// Extended - SET
-	//~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+	//--------------------------------------------------------------------------
 
 	template<Byte Bit>
-	Byte CPU::Instruction_EXT_SET(Byte val)
+	Byte CPU::inst_ext_set(Byte val)
 	{
 		static_assert(Bit >= 0 && Bit <= 7, "Bit is invalid, must be between 0 and 7 inclusive");
 		static const Byte kBitMask = 1 << Bit;
 		return (val | kBitMask);
 	}
 
-	template<Byte Bit, RT::Type Register>
-	bool CPU::Instruction_EXT_SET_B_N()
+	template<Byte Bit, RT::Enum Register>
+	inline InstructionResult::Enum CPU::inst_ext_set_b_n()
 	{
 		Byte& reg = m_registers.get_register<Register>();
-		reg = Instruction_EXT_SET<Bit>(reg);
-		GBHW_CPU_ACTION_PERFORMED;
+		reg = inst_ext_set<Bit>(reg);
+		return InstructionResult::Passed;
 	}
 
 	template<Byte Bit>
-	bool CPU::Instruction_EXT_SET_B_HL_ADDR()
+	inline InstructionResult::Enum CPU::inst_ext_set_b_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, Instruction_EXT_SET<Bit>(m_mmu->ReadByte(m_registers.hl)));
-		GBHW_CPU_ACTION_PERFORMED;
+		m_mmu->WriteByte(m_registers.hl, inst_ext_set<Bit>(m_mmu->ReadByte(m_registers.hl)));
+		return InstructionResult::Passed;
 	}
+
+	//--------------------------------------------------------------------------
 }

@@ -4,16 +4,20 @@
 
 namespace gbhw
 {
+	//--------------------------------------------------------------------------
+
 	class MBC
 	{
 	public:
 		MBC(MMU_ptr mmu);
 		virtual ~MBC();
-		virtual bool HandleWrite(const Address& address, Byte value);
+		virtual bool write(const Address& address, Byte value);
+
+		static MBC* create(MMU_ptr mmu, CartridgeType::Type cartridge);
 
 	protected:
 		MMU_ptr m_mmu;
 	};
 
-	MBC* CreateMBC(MMU* mmu, CartridgeType::Type cartridgeType);
+	//--------------------------------------------------------------------------
 }

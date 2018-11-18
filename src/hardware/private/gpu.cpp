@@ -26,14 +26,14 @@ namespace gbhw
 				// Generate a CPU interrupt if needed.
 				if((interrupt != HWLCDCStatus::InterruptNone) && (stat & interrupt) != 0)
 				{
-					cpu->GenerateInterrupt(HWInterrupts::Stat);
+					cpu->generate_interrupt(HWInterrupts::Stat);
 				}
 
 				// Special case for VBlank, always generate a VBlank interrupt
 				// when we enter into vBlank.
 				if(mode == HWLCDCStatus::ModeVBlank)
 				{
-					cpu->GenerateInterrupt(HWInterrupts::VBlank);
+					cpu->generate_interrupt(HWInterrupts::VBlank);
 				}
 			}
 
