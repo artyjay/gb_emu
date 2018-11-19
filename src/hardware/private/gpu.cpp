@@ -1,12 +1,7 @@
 #include "gpu.h"
 #include "cpu.h"
 #include "mmu.h"
-
-
-#include "gbhw_log.h"
-
-#include <assert.h>
-#include <iostream>
+#include "log.h"
 
 namespace gbhw
 {
@@ -16,7 +11,7 @@ namespace gbhw
 		static const uint32_t kScanlineReadVRAMCycles	= 172;
 		static const uint32_t kHBlankCycles				= 204;
 
-		static GBInline Byte UpdateLCDCStatusMode(CPU* cpu, Byte stat, HWLCDCStatus::Type mode, HWLCDCStatus::Type interrupt)
+		static inline Byte UpdateLCDCStatusMode(CPU_ptr cpu, Byte stat, HWLCDCStatus::Type mode, HWLCDCStatus::Type interrupt)
 		{
 			if((stat & HWLCDCStatus::ModeMask) != mode)
 			{
@@ -53,7 +48,7 @@ namespace gbhw
 		memset(m_tiles, 0, sizeof(GPUTileData) * 256);
 	}
 
-	void GPUTilePattern::DirtyTileCheckAll(MMU* mmu)
+	void GPUTilePattern::DirtyTileCheckAll(MMU_ptr mmu)
 	{
 		for (int32_t i = 0; i < 256; ++i)
 		{
@@ -61,7 +56,7 @@ namespace gbhw
 		}
 	}
 
-	void GPUTilePattern::DirtyTileCheck(Byte tileIndex, MMU* mmu)
+	void GPUTilePattern::DirtyTileCheck(Byte tileIndex, MMU_ptr mmu)
 	{
 // 		if (m_bSignedIndex)
 // 		{
@@ -122,9 +117,9 @@ namespace gbhw
 
 	void GPU::Update(uint32_t cycles)
 	{
-		Byte ly		= m_cpu->ReadIO(HWRegs::LY);
-		Byte stat	= m_cpu->ReadIO(HWRegs::Stat);
-		Byte lcdc	= m_cpu->ReadIO(HWRegs::LCDC);
+		Byte ly		= m_cpu->read_io(HWRegs::LY);
+		Byte stat	= m_cpu->read_io(HWRegs::Stat);
+		Byte lcdc	= m_cpu->read_io(HWRegs::LCDC);
 
 		// LCD if off.
 		if((lcdc & 0x80) == 0)
@@ -175,7 +170,7 @@ namespace gbhw
 
 			if (m_modeCycles > 400)
 			{
-				gbhw::Warning("GPU is lagging quite badly, this needs some re-thinking\n");
+				log_warning("GPU is lagging quite badly, this needs some re-thinking\n");
 			}
 
 			// Display is on
@@ -254,8 +249,8 @@ namespace gbhw
 			}
 		}
 
-		m_cpu->WriteIO(HWRegs::LY, ly);
-		m_cpu->WriteIO(HWRegs::Stat, stat);
+		m_cpu->write_io(HWRegs::LY, ly);
+		m_cpu->write_io(HWRegs::Stat, stat);
 	}
 
 	void GPU::Reset()
@@ -270,7 +265,7 @@ namespace gbhw
 	void GPU::SetLCDC(Byte val)
 	{
 		// todo:
-		if((val & 0x80) != (m_cpu->ReadIO(HWRegs::LCDC) & 0x80))
+		if((val & 0x80) != (m_cpu->read_io(HWRegs::LCDC) & 0x80))
 		{
 			if(val & 0x80)
 			{
@@ -321,7 +316,7 @@ namespace gbhw
 		}
 		else
 		{
-			Error("Invalid sprite index specified: %d\n", spriteIndex);
+			log_error("Invalid sprite index specified: %d\n", spriteIndex);
 		}
 	}
 
@@ -357,7 +352,7 @@ namespace gbhw
 		}
 		else
 		{
-			Message("Invalid tile pattern address [0x%04x]\n", tilePatternAddress);
+			log_error("Invalid tile pattern address [0x%04x]\n", tilePatternAddress);
 		}
 	}
 
@@ -377,8 +372,6 @@ namespace gbhw
 		}
 	}
 
-	
-
 	void GPU::DrawScanLine(Byte line)
 	{
 		if (line >= kScreenHeight)
@@ -387,13 +380,13 @@ namespace gbhw
 		}
 
 		// Store state
-		m_lcdc				= m_cpu->ReadIO(HWRegs::LCDC);
+		m_lcdc				= m_cpu->read_io(HWRegs::LCDC);
 		m_currentScanLine	= line;
 
 		// This is only allowed to be modified on screen refresh, so cache first scanline
 		if (m_currentScanLine == 0)
 		{
-			m_windowPosY = m_cpu->ReadIO(HWRegs::WindowY);
+			m_windowPosY = m_cpu->read_io(HWRegs::WindowY);
 			m_windowReadY = 0;	// Reset this. Window drawing will resume drawing from where it last read when disabled between h-blanks.
 		}
 
@@ -401,20 +394,20 @@ namespace gbhw
 		m_tilePatterns[0].DirtyTileCheckAll(m_mmu);
 		m_tilePatterns[1].DirtyTileCheckAll(m_mmu);
 
-		if (HWLCDC::GetBGEnabled(m_lcdc))
+		if (HWLCDC::get_bg_enabled(m_lcdc))
 		{
-			DrawScanLineBGTileMap(HWLCDC::GetBGTileMapAddress(m_lcdc), m_cpu->ReadIO(HWRegs::ScrollX), m_cpu->ReadIO(HWRegs::ScrollY));
+			DrawScanLineBGTileMap(HWLCDC::get_bg_tile_map_address(m_lcdc), m_cpu->read_io(HWRegs::ScrollX), m_cpu->read_io(HWRegs::ScrollY));
 		}
 
-		if (HWLCDC::GetWindowEnabled(m_lcdc))
+		if (HWLCDC::get_window_enabled(m_lcdc))
 		{
 			// Can be modified between interrupts.
-			Byte windowX = m_cpu->ReadIO(HWRegs::WindowX);
+			Byte windowX = m_cpu->read_io(HWRegs::WindowX);
 
 			// Only draw on this scanline when visible.
 			if (windowX <= 166 && m_currentScanLine >= m_windowPosY)
 			{
-				DrawScanLineWindowTileMap(HWLCDC::GetWindowTileMapAddress(m_lcdc), windowX - 7);
+				DrawScanLineWindowTileMap(HWLCDC::get_window_tile_map_address(m_lcdc), windowX - 7);
 			}
 
 			
@@ -425,7 +418,7 @@ namespace gbhw
 // 			}
 		}
 
-		if (HWLCDC::GetSpriteEnabled(m_lcdc))
+		if (HWLCDC::get_sprite_enabled(m_lcdc))
 		{
 			DrawScanLineSprite();
 		}
@@ -456,7 +449,7 @@ namespace gbhw
 		Byte			tileY				= (m_currentScanLine + scrollY) % 8;							// Y-coordinate within the tile
 
 		// Calculate tile map/pattern addresses.
-		const Byte		tilePatternIndex	= HWLCDC::GetTilePatternIndex(m_lcdc);
+		const Byte		tilePatternIndex	= HWLCDC::get_tile_pattern_index(m_lcdc);
 		const Address	tileMapBase			= tileMapAddress + ((((m_currentScanLine + scrollY) % 256) >> 3) << 5);	// Get line of tiles to use. base + (mapline / 8) * 32.
 		Byte			tileMapX			= scrollX >> 3;													// Get first tile to use. offsetx / 8.
 
@@ -487,7 +480,7 @@ namespace gbhw
 		Byte			tileY = (m_windowReadY) % 8;							// Y-coordinate within the tile
 
 																							// Calculate tile map/pattern addresses.
-		const Byte		tilePatternIndex = HWLCDC::GetTilePatternIndex(m_lcdc);
+		const Byte		tilePatternIndex = HWLCDC::get_tile_pattern_index(m_lcdc);
 		const Address	tileMapBase = tileMapAddress + ((m_windowReadY >> 3) << 5);	// Get line of tiles to use. base + (mapline / 8) * 32.
 		Byte			tileMapX = 0;													// Get first tile to use. offsetx / 8.
 
@@ -520,7 +513,7 @@ namespace gbhw
 	void GPU::DrawScanLineSprite()
 	{
 		const Address	screenAddr			= m_currentScanLine * kScreenWidth;
-		const Byte		tilePatternIndex	= HWLCDC::GetTilePatternIndex(m_lcdc);
+		const Byte		tilePatternIndex	= HWLCDC::get_tile_pattern_index(m_lcdc);
 
 		// Find the sprites for this scanline
 		UpdateScanLineSprites();
@@ -545,20 +538,16 @@ namespace gbhw
 
 			bool bFlipX = (flags & HWSpriteFlags::FlipX) != 0;
 			bool bFlipY = (flags & HWSpriteFlags::FlipY) != 0;
-			Byte palette = ((flags & HWSpriteFlags::Palette) ? 1 : 0) + 1;	// Paelette data for all 3 palettes starts with the bg palette.
+			Byte palette = ((flags & HWSpriteFlags::Palette) ? 1 : 0) + 1;	// Palette data for all 3 palettes starts with the bg palette.
 
 			// Always from tile pattern 1 (i.e. 0x8000)
 			const Byte tileY = m_currentScanLine - spriteY;
-			const Byte tileYIndex = bFlipY ? (HWLCDC::GetSpriteDoubleHeight(m_lcdc) ? (15 - tileY) : (7 - tileY)) : tileY;
-			const Byte tileExtra = (HWLCDC::GetSpriteDoubleHeight(m_lcdc) && (tileYIndex > 7)) ? 1 : 0;
+			const Byte tileYIndex = bFlipY ? (HWLCDC::get_sprite_double_height(m_lcdc) ? (15 - tileY) : (7 - tileY)) : tileY;
+			const Byte tileExtra = (HWLCDC::get_sprite_double_height(m_lcdc) && (tileYIndex > 7)) ? 1 : 0;
 
-			if(HWLCDC::GetSpriteDoubleHeight(m_lcdc))
+			if(tileY >= (HWLCDC::get_sprite_double_height(m_lcdc) ? 16 : 8))
 			{
-				assert(tileY < 16);
-			}
-			else
-			{
-				assert(tileY < 8);
+				log_error("Tile line is invalid");
 			}
 
 			const Byte* tileLine = m_tilePatterns[1].GetTileLine(tileIndex + tileExtra, tileYIndex & 0x7);
@@ -670,5 +659,4 @@ namespace gbhw
 			m_screenData[screenPixelY + screenPixelX] = (pixelLow | (pixelHigh << 1));
 		}
 	}
-
-} // gbhw
+}

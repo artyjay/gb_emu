@@ -25,23 +25,23 @@ namespace gbhw
 
 	void Timer::update(uint32_t cycles)
 	{
-		uint32_t timaPeriod = kTimaPeriods[m_cpu->ReadIO(HWRegs::TAC) & 0x03];
+		uint32_t timaPeriod = kTimaPeriods[m_cpu->read_io(HWRegs::TAC) & 0x03];
 
-		if(m_cpu->ReadIO(HWRegs::TAC) & (0x2))	// Bit 2 is timer enabled.
+		if(m_cpu->read_io(HWRegs::TAC) & (0x2))	// Bit 2 is timer enabled.
 		{
 			m_tima += cycles;
 
 			while(m_tima >= timaPeriod)
 			{
 				// Increment tima once for the period.
-				Byte newTima = m_cpu->ReadIO(HWRegs::TIMA) + 1;
-				m_cpu->WriteIO(HWRegs::TIMA, newTima);
+				Byte newTima = m_cpu->read_io(HWRegs::TIMA) + 1;
+				m_cpu->write_io(HWRegs::TIMA, newTima);
 
 				// Wrapped around/overflowed.
 				if(newTima == 0)
 				{
-					m_cpu->WriteIO(HWRegs::TIMA, m_cpu->ReadIO(HWRegs::TMA));	// Reset tima.
-					m_cpu->GenerateInterrupt(HWInterrupts::Timer);				// Generate an interrupt.
+					m_cpu->write_io(HWRegs::TIMA, m_cpu->read_io(HWRegs::TMA));	// Reset tima.
+					m_cpu->generate_interrupt(HWInterrupts::Timer);				// Generate an interrupt.
 				}
 
 				m_tima -= timaPeriod;
@@ -56,7 +56,7 @@ namespace gbhw
 
 		while(m_divt >= 64)
 		{
-			m_cpu->WriteIO(HWRegs::DIV, m_cpu->ReadIO(HWRegs::DIV) + 1);
+			m_cpu->write_io(HWRegs::DIV, m_cpu->read_io(HWRegs::DIV) + 1);
 			m_divt -= 64;
 		}
 	}

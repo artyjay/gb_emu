@@ -8,6 +8,7 @@
 #include <array>
 #include <functional>
 #include <string>
+#include <type_traits>
 #include <vector>
 
 #ifdef WIN32
@@ -59,7 +60,7 @@ namespace gbhw
 			Unknown
 		};
 
-		static const char* GetString(Type type);
+		static const char* get_string(Type type);
 	};
 
 	struct HardwareType
@@ -72,7 +73,7 @@ namespace gbhw
 			Unknown
 		};
 
-		static const char* GetString(Type type);
+		static const char* get_string(Type type);
 	};
 
 	struct RomSize
@@ -92,8 +93,8 @@ namespace gbhw
 			Unknown
 		};
 
-		static uint32_t GetBankCount(Type type);
-		static const char* GetString(Type type);
+		static uint32_t get_bank_count(Type type);
+		static const char* get_string(Type type);
 	};
 
 	struct RamSize
@@ -109,8 +110,8 @@ namespace gbhw
 			Unknown
 		};
 
-		static uint32_t GetBankCount(Type type);
-		static const char* GetString(Type type);
+		static uint32_t get_bank_count(Type type);
+		static const char* get_string(Type type);
 	};
 
 	struct DestinationCode
@@ -122,7 +123,7 @@ namespace gbhw
 			Unknown
 		};
 
-		static const char* GetString(Type type);
+		static const char* get_string(Type type);
 	};
 
 	struct LicenseeCodeOld
@@ -135,9 +136,8 @@ namespace gbhw
 			Unknown
 		};
 
-		static const char* GetString(Type type);
+		static const char* get_string(Type type);
 	};
-
 
 	struct HWRegs
 	{
@@ -179,7 +179,7 @@ namespace gbhw
 			Button = 0x10
 		};
 
-		static const char* GetString(Type interrupt);
+		static const char* get_string(Type interrupt);
 	};
 
 	struct HWInterruptRoutines
@@ -217,15 +217,15 @@ namespace gbhw
 			SpriteData = 0xFE00,
 		};
 
-		static Byte GetTilePatternIndex(Byte lcdc);
-		static Address GetTilePatternAddress(Byte index);
-		static Address GetBGTileMapAddress(Byte lcdc);
-		static Address GetWindowTileMapAddress(Byte lcdc);
+		static Byte get_tile_pattern_index(Byte lcdc);
+		static Address get_tile_pattern_address(Byte index);
+		static Address get_bg_tile_map_address(Byte lcdc);
+		static Address get_window_tile_map_address(Byte lcdc);
 
-		static bool GetBGEnabled(Byte lcdc);
-		static bool GetWindowEnabled(Byte lcdc);
-		static bool GetSpriteEnabled(Byte lcdc);
-		static bool GetSpriteDoubleHeight(Byte lcdc);
+		static bool get_bg_enabled(Byte lcdc);
+		static bool get_window_enabled(Byte lcdc);
+		static bool get_sprite_enabled(Byte lcdc);
+		static bool get_sprite_double_height(Byte lcdc);
 	};
 
 	struct HWLCDCStatus
@@ -245,22 +245,6 @@ namespace gbhw
 			InterruptOAM = 0x20,
 			InterruptCoincidence = 0x40,
 			InterruptNone = 0xFF	// Used to not send an interrupt.
-		};
-	};
-
-	struct HWButton
-	{
-		enum Type
-		{
-			A = 0,
-			B,
-			Select,
-			Start,
-			Right,
-			Left,
-			Up,
-			Down,
-			Count
 		};
 	};
 

@@ -1,5 +1,3 @@
-#include <type_traits>
-
 #include "mmu.h"
 
 namespace gbhw
@@ -183,7 +181,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_halt()
 	{
-		//Message("Halting CPU until interrupt is generated\n");
+		//log_debug("Halting CPU until interrupt is generated\n");
 		//m_bHalted = true;
 		return InstructionResult::Passed;
 	}
@@ -191,7 +189,7 @@ namespace gbhw
 	inline InstructionResult::Enum CPU::inst_stop()
 	{
 		Byte empty = immediate_byte();
-		Message("Stopping CPU until input is detected, following byte = 0x%02x\n", empty);
+		log_debug("Stopping CPU until input is detected, following byte = 0x%02x\n", empty);
 		m_bStopped = true;
 		return InstructionResult::Passed;
 	}
@@ -958,7 +956,10 @@ namespace gbhw
 		Instruction& extendedInstruction = m_instructionsExt[m_currentOpcodeExt];
 		InstructionFunction& func = extendedInstruction.function();
 		Byte cycles = extendedInstruction.cycles((this->*func)());
-		assert(cycles != 0);
+
+		if(cycles == 0)
+			log_error("Extended instruction executes zero cycles, this is impossible, indicates unimplemented instruction\n");
+
 		m_instructionCycles += cycles;
 
 		return InstructionResult::Passed;

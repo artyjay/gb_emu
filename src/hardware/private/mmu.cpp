@@ -1,16 +1,15 @@
-#include "gpu.h"
-#include "mbc.h"
 #include "mmu.h"
+#include "cpu.h"
+#include "gpu.h"
+#include "log.h"
+#include "mbc.h"
 #include "rom.h"
-
-#include <memory>
-#include <iostream>
 
 namespace gbhw
 {
 	namespace
 	{
-		const Byte kButtonBits[HWButton::Count] =
+		const Byte kButtonBits[button_dpad_down + 1] =
 		{
 			0x01,
 			0x02,
@@ -99,7 +98,7 @@ namespace gbhw
 			delete m_mbc;
 		}
 
-		m_mbc = CreateMBC(this, cartridgeType);
+		m_mbc = MBC::create(MMU_ptr(this), cartridgeType);
 
 		Reset();
 
@@ -163,7 +162,7 @@ namespace gbhw
 			}
 		}
 
-		Error("Unhandled memory read occurred: [0x%04x]\n", address);
+		log_error("Unhandled memory read occurred: [0x%04x]\n", address);
 
 		return 0;
 	}
@@ -314,7 +313,6 @@ namespace gbhw
 						// Bottom 3 bits are read-only when from an instruction...
 						region->m_memory[regionAddr] = (region->m_memory[regionAddr] & 0x07) | (byte & 0xF8);
 					} break;
-					
 					default:
 					{
 						region->m_memory[regionAddr] = byte;
@@ -344,35 +342,37 @@ namespace gbhw
 		WriteByte(address + 1,	static_cast<Byte>((word >> 8) & 0xFF));
 	}
 
-	void MMU::PressButton(HWButton::Type button)
+	void MMU::set_button_state(gbhw_button_t button, gbhw_button_state_t state)
 	{
-		if (button < HWButton::Right)
+		if(state == button_pressed)
 		{
-			m_buttonsFace &= ~(kButtonBits[button]);
+			if (button < button_dpad_right)
+			{
+				m_buttonsFace &= ~(kButtonBits[button]);
+			}
+			else
+			{
+				m_buttonsDirection &= ~(kButtonBits[button]);
+			}
+
+			m_cpu->generate_interrupt(HWInterrupts::Button);
 		}
 		else
 		{
-			m_buttonsDirection &= ~(kButtonBits[button]);
-		}
-
-		m_cpu->GenerateInterrupt(HWInterrupts::Button);
-	}
-
-	void MMU::ReleaseButton(HWButton::Type button)
-	{
-		if(button < HWButton::Right)
-		{
-			m_buttonsFace |= kButtonBits[button];
-		}
-		else
-		{
-			m_buttonsDirection |= kButtonBits[button];
+			if(button < button_dpad_right)
+			{
+				m_buttonsFace |= kButtonBits[button];
+			}
+			else
+			{
+				m_buttonsDirection |= kButtonBits[button];
+			}
 		}
 	}
 
 	void MMU::LoadRomBank(uint32_t sourceBankIndex, bool bFirstBank)
 	{
-		uint8_t* romBankData = m_rom->GetBank(sourceBankIndex);
+		uint8_t* romBankData = m_rom->get_bank(sourceBankIndex);
 
 		if (romBankData)
 		{
@@ -389,8 +389,8 @@ namespace gbhw
 		}
 		else
 		{
-			// @todo error....
-			Message("*CRITICAL* Failed to load ROM bank\n");
+			// @todo return error
+			log_error("Failed to load ROM bank\n");
 		}
 	}
 
@@ -404,7 +404,8 @@ namespace gbhw
 		}
 		else
 		{
-			Message("*CRITICAL* Failed to load RAM bank\n");
+			// @todo return error
+			log_error("Failed to load RAM bank\n");
 		}
 	}
 

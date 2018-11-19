@@ -4,8 +4,6 @@
 
 namespace gbhw
 {
-	class MMU;
-
 	struct GPUTileData
 	{
 		bool m_bDirty;
@@ -20,8 +18,8 @@ namespace gbhw
 		GPUTilePattern();
 
 		void Reset();
-		void DirtyTileCheckAll(MMU* mmu);
-		void DirtyTileCheck(Byte tileIndex, MMU* mmu);
+		void DirtyTileCheckAll(MMU_ptr mmu);
+		void DirtyTileCheck(Byte tileIndex, MMU_ptr mmu);
 
 		inline const Byte* GetTileLine(Byte tileIndex, const Byte tileLineY) const;
 		inline void DirtyTile(Byte tileIndex);
@@ -217,7 +215,7 @@ namespace gbhw
 	{
 		m_scanLineSprites.clear();
 
-		const Byte spriteHeight = HWLCDC::GetSpriteDoubleHeight(m_lcdc) ? 16 : 8;
+		const Byte spriteHeight = HWLCDC::get_sprite_double_height(m_lcdc) ? 16 : 8;
 
 		for (Byte spriteIndex = 0; spriteIndex < 40; ++spriteIndex)
 		{

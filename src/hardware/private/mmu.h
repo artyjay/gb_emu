@@ -1,12 +1,13 @@
 #pragma once
 
 #include "context.h"
+#include "gbhw.h"
 #include "mbc.h"
 
 namespace gbhw
 {
-	// The gameboy has a total working size of 65536, which is divided into regions
-	// behavior changes depending on the region accessed. Below is an outline of the
+	// The gameboy has a total working size of 65536, which is divided into regions.
+	// Behavior changes depending on the region accessed. Below is an outline of the
 	// memory regions.
 	//
 	// 16kB				- [0x0000 -> 0x3FFF]	Cartridge ROM (bank 0)
@@ -31,6 +32,8 @@ namespace gbhw
 		inline MemoryBank() : m_memory(nullptr) {}
 		uint8_t* m_memory;
 	};
+
+	using MemoryBanks = std::vector<MemoryBank>;
 
 	class CPU;
 	class GPU;
@@ -97,8 +100,7 @@ namespace gbhw
 		void WriteByte(Address address, Byte byte);
 		void WriteWord(Address address, Word word);
 
-		void PressButton(HWButton::Type button);
-		void ReleaseButton(HWButton::Type button);
+		void set_button_state(gbhw_button_t button, gbhw_button_state_t state);
 
 		void LoadRomBank(uint32_t sourceBankIndex, bool bFirstBank = false);
 		void LoadERamBank(uint32_t sourceBankIndex);
@@ -119,16 +121,11 @@ namespace gbhw
 		GPU_ptr					m_gpu;
 		CPU_ptr					m_cpu;
 		Rom_ptr					m_rom;
-
-
-
-
-
 		uint8_t					m_memory[kMemorySize];
 		Region					m_regions[static_cast<uint32_t>(RegionType::Count)];
 		Region*					m_regionsLUT[kRegionLutCount];
 		MBC*					m_mbc;
-		std::vector<MemoryBank> m_ramBanks;
+		MemoryBanks				m_ramBanks;
 
 
 		std::vector<Breakpoint>	m_writeBreakpoints;

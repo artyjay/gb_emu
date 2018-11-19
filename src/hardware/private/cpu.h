@@ -1,10 +1,8 @@
 #pragma once
 
 #include "context.h"
-#include "registers.h"	// @todo: This can live in this file
-
-#include <assert.h>
-#include <vector>
+#include "log.h"
+#include "registers.h"
 
 namespace gbhw
 {

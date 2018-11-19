@@ -1,7 +1,8 @@
 #include "gbhw.h"
 #include "context.h"
-
-#include <chrono>
+#include "gpu.h"
+#include "mmu.h"
+#include "rom.h"
 
 using namespace gbhw;
 
@@ -20,7 +21,6 @@ extern "C"
 		}
 
 		*ctx = (gbhw_context_t*)context;
-
 		return e_success;
 	}
 
@@ -38,15 +38,33 @@ extern "C"
 		if(!ctx || !path)
 			return e_invalidparam;
 
-		// @todo: Implement me.
+		FILE* romFile = fopen(path, "rb");
+		if(!romFile)
+			return e_failed;
 
-		return e_success;
+		fseek(romFile, 0, SEEK_END);
+		auto romLength = ftell(romFile);
+		fseek(romFile, 0, SEEK_SET);
+
+		Buffer romData = Buffer(romLength);
+		fread(&romData[0], 1, romLength, romFile);
+		fclose(romFile);
+
+		return gbhw_load_rom_memory(ctx, &romData[0], romLength);
 	}
 
 	gbhw_errorcode_t gbhw_load_rom_memory(gbhw_context_t* ctx, const uint8_t* memory, uint32_t length)
 	{
 		if(!ctx || !memory || !length)
 			return e_invalidparam;
+
+		Context* context = (Context*)ctx;
+		context->rom->load(memory, length);
+
+		// Reset the mmu with rom cartridge type
+		context->mmu->Reset(context->rom->get_cartridge_type());
+
+		// @todo: Reset a whole bunch of other stuff too.
 
 		return e_success;
 	}
@@ -56,6 +74,11 @@ extern "C"
 		if(!ctx || !screen || !width || !height)
 			return e_invalidparam;
 
+		Context* context = (Context*)ctx;
+		*screen = context->gpu->GetScreenData();
+		*width	= 0;
+		*height = 0;
+
 		return e_success;
 	}
 
@@ -64,92 +87,7 @@ extern "C"
 		if(!ctx)
 			return e_invalidparam;
 
-		return e_success;
-	}
-
-	gbhw_errorcode_t gbhw_set_button_state(gbhw_context_t* ctx, gbhw_button_t button, gbhw_button_state_t state)
-	{
-		if(!ctx)
-			return e_invalidparam;
-
-		return e_success;
-	}
-}
-
-#if 0
-namespace gbhw
-{
-	namespace
-	{
-		uint64_t GetWallTime()
-		{
-			return std::chrono::steady_clock::now().time_since_epoch().count();
-		}
-	}
-
-	Hardware::Hardware()
-		: m_executeMode(ExecuteMode::SingleInstruction)
-	{
-	}
-
-	Hardware::~Hardware()
-	{
-	}
-
-	void Hardware::Initialise()
-	{
-		// Create components.
-		m_cpu = new CPU();
-		m_gpu = new GPU();
-		m_mmu = new MMU();
-		m_rom = new Rom();
-		m_timer = new Timer();
-
-		// Assign various components to each others for communication.
-		m_cpu->Initialise(m_mmu);
-		m_gpu->Initialise(m_cpu, m_mmu);
-		m_mmu->Initialise(m_cpu, m_gpu, m_rom);
-		m_rom->Initialise(m_cpu, m_mmu);
-		m_timer->Initialise(m_cpu);
-	}
-
-	void Hardware::Release()
-	{
-		delete m_cpu;
-		delete m_gpu;
-		delete m_mmu;
-		delete m_rom;
-		delete m_timer;
-	}
-
-	bool Hardware::LoadROM(const char* path)
-	{
-		FILE* romfile = fopen(path, "rb");
-
-		if(romfile)
-		{
-			fseek(romfile, 0, SEEK_END);
-			auto romlength = ftell(romfile);
-			fseek(romfile, 0, SEEK_SET);
-
-			uint8_t* romdata = new uint8_t[romlength];
-			fread(romdata, 1, romlength, romfile);
-			fclose(romfile);
-
-			m_rom->Load(romdata, romlength);
-
-			// Reset the mmu with rom cartridge type.
-			m_mmu->Reset(m_rom->GetCartridgeType());
-
-			return true;
-		}
-
-		return false;
-	}
-
-	void Hardware::Execute()
-	{
-		// single cycle.
+				// single cycle.
 		uint16_t cpucycles = 0;
 		uint16_t maxcycles = 1;
 		bool bLoop = false;
@@ -201,37 +139,17 @@ namespace gbhw
 // 				delta = GetWallTime() - start;
 // 			}
 		}
+
+		return e_success;
 	}
 
-	ExecuteMode::Type Hardware::GetExecuteMode() const
+	gbhw_errorcode_t gbhw_set_button_state(gbhw_context_t* ctx, gbhw_button_t button, gbhw_button_state_t state)
 	{
-		return m_executeMode;
-	}
+		if(!ctx)
+			return e_invalidparam;
 
-	void Hardware::SetExecuteMode(ExecuteMode::Type mode)
-	{
-		m_executeMode = mode;
-	}
-
-	void Hardware::RegisterLogCallback(LogCallback callback)
-	{
-		Log::GetLog().RegisterCallback(callback);
-	}
-
-	void Hardware::PressButton(HWButton::Type button)
-	{
-		m_mmu->PressButton(button);
-	}
-
-	void Hardware::ReleaseButton(HWButton::Type button)
-	{
-		m_mmu->ReleaseButton(button);
-	}
-
-	const Byte* Hardware::GetScreenData() const
-	{
-		return m_gpu->GetScreenData();
+		Context* context = (Context*)ctx;
+		context->mmu->set_button_state(button, state);
+		return e_success;
 	}
 }
-
-#endif

@@ -1,7 +1,6 @@
 #pragma once
 
 #include "types.h"
-
 #include <memory>
 
 namespace gbhw
@@ -30,12 +29,11 @@ namespace gbhw
 
 		bool initialise();
 
-	private:
-		CPU_ptr		m_cpu;
-		GPU_ptr		m_gpu;
-		MMU_ptr		m_mmu;
-		Rom_ptr		m_rom;
-		Timer_ptr	m_timer;
+		CPU_ptr		cpu;
+		GPU_ptr		gpu;
+		MMU_ptr		mmu;
+		Rom_ptr		rom;
+		Timer_ptr	timer;
 	};
 
 	//--------------------------------------------------------------------------

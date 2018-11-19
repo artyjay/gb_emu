@@ -1,10 +1,10 @@
-#include "gbhw_log.h"
-
-#include "mbc.h"
 #include "rom.h"
+#include "log.h"
 
 namespace gbhw
 {
+	//--------------------------------------------------------------------------
+
 	namespace
 	{
 		static const uint32_t kTitleOffset						= 0x134;
@@ -22,18 +22,21 @@ namespace gbhw
 		static const uint32_t kComplementCheckOffset			= 0x14D;
 		static const uint32_t kCheckSumOffset					= 0x14E;
 		static const uint32_t kCheckSumLength					= 2;
+		static const uint32_t kBankSize							= 16384;
 	}
+
+	//--------------------------------------------------------------------------
 
 	Rom::Rom()
 	{
-		Reset();
+		reset();
 	}
 
 	Rom::~Rom()
 	{
 	}
 
-	void Rom::Reset()
+	void Rom::reset()
 	{
 		m_romData.resize(0);
 		m_title				= "";
@@ -46,35 +49,40 @@ namespace gbhw
 		m_banks.resize(0);
 	}
 
-	void Rom::Load(uint8_t* romData, uint32_t romLength)
+	bool Rom::load(const uint8_t* data, uint32_t length)
 	{
-		Reset();
+		reset();
+
+		if(length == 0)
+			return false;
 
 		// Copy ROM into memory.
-		m_romData = std::vector<uint8_t>(&romData[0], &romData[romLength]);
+		m_romData = Buffer(&data[0], &data[length]);
 
 		// Perform actual load.
-		LoadHeader();
-		LoadBanks();
+		load_header();
+		load_banks();
+
+		return true;
 	}
 
-	uint8_t* Rom::GetBank(Byte bankIndex)
+	uint8_t* Rom::get_bank(Byte bankIndex)
 	{
 		if (bankIndex < m_banks.size())
 		{
 			return m_banks[bankIndex].m_memory;
 		}
 
-		// @todo error...
+		log_error("Failed to obtain rom bank, index out of range\n");
 		return nullptr;
 	}
 
-	CartridgeType::Type Rom::GetCartridgeType() const
+	CartridgeType::Type Rom::get_cartridge_type() const
 	{
 		return m_cartridgeType;
 	}
 
-	void Rom::LoadHeader()
+	void Rom::load_header()
 	{
 		// parse the rom header..
 		m_title				= std::string(m_romData.begin() + kTitleOffset, m_romData.begin() + kTitleOffset + kTitleLength);
@@ -83,6 +91,8 @@ namespace gbhw
 		m_ramSize			= static_cast<RamSize::Type>(m_romData[kRamSizeOffset]);
 		m_destinationCode	= static_cast<DestinationCode::Type>(m_romData[kDestinationCodeOffset]);
 		m_licenseeCodeOld	= static_cast<LicenseeCodeOld::Type>(m_romData[kLicenseeCodeOldOffset]);
+
+		// @todo: sanity check rom size matches supplied data buffer.
 
 		// Detect HW type
 		Byte hwType = static_cast<Byte>(m_romData[kHWTypeOffset]);
@@ -103,19 +113,19 @@ namespace gbhw
 			}
 		}
 
-		Message("Loading ROM header\n");
-		Message("\tTitle:               %s\n", m_title.c_str());
-		Message("\tCartridge type:      %s\n", CartridgeType::GetString(m_cartridgeType));
-		Message("\tHardware type:       %s\n", HardwareType::GetString(m_hardwareType));
-		Message("\tRom Size:            %s\n", RomSize::GetString(m_romSize));
-		Message("\tRam Size:            %s\n", RamSize::GetString(m_ramSize));
-		Message("\tDestination Code:    %s\n", DestinationCode::GetString(m_destinationCode));
-		Message("\tLicensee Code (Old): %s\n", LicenseeCodeOld::GetString(m_licenseeCodeOld));
+		log_debug("Loaded ROM header\n");
+		log_debug("\tTitle:               %s\n", m_title.c_str());
+		log_debug("\tCartridge type:      %s\n", CartridgeType::get_string(m_cartridgeType));
+		log_debug("\tHardware type:       %s\n", HardwareType::get_string(m_hardwareType));
+		log_debug("\tRom Size:            %s\n", RomSize::get_string(m_romSize));
+		log_debug("\tRam Size:            %s\n", RamSize::get_string(m_ramSize));
+		log_debug("\tDestination Code:    %s\n", DestinationCode::get_string(m_destinationCode));
+		log_debug("\tLicensee Code (Old): %s\n", LicenseeCodeOld::get_string(m_licenseeCodeOld));
 	}
 
-	void Rom::LoadBanks()
+	void Rom::load_banks()
 	{
-		m_banks.resize(RomSize::GetBankCount(m_romSize));
+		m_banks.resize(RomSize::get_bank_count(m_romSize));
 		uint8_t* dataPtr = m_romData.data();
 
 		for (auto& bank : m_banks)
@@ -124,6 +134,8 @@ namespace gbhw
 			dataPtr += kBankSize;
 		}
 	}
+
+	//--------------------------------------------------------------------------
 
 #if 0
 	// deprecated: Move to more appropriate location

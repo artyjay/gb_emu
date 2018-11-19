@@ -1,28 +1,29 @@
 #pragma once
 
 #include "context.h"
+#include "mmu.h"
 
 namespace gbhw
 {
+	//--------------------------------------------------------------------------
+
 	class Rom
 	{
 	public:
 		Rom();
 		~Rom();
 
-		void Reset();
-		void Load(uint8_t* romData, uint32_t romLength);
+		void reset();
+		bool load(const uint8_t* data, uint32_t length);
 
-		uint8_t* GetBank(Byte bankIndex);
-		CartridgeType::Type GetCartridgeType() const;
-
-		static const uint32_t kBankSize = 16384;
+		uint8_t* get_bank(Byte bankIndex);
+		CartridgeType::Type get_cartridge_type() const;
 
 	private:
-		void LoadHeader();
-		void LoadBanks();
+		void load_header();
+		void load_banks();
 
-		std::vector<uint8_t>		m_romData;
+		Buffer						m_romData;
 		std::string					m_title;
 		CartridgeType::Type			m_cartridgeType;
 		HardwareType::Type			m_hardwareType;
@@ -30,6 +31,8 @@ namespace gbhw
 		RamSize::Type				m_ramSize;
 		DestinationCode::Type		m_destinationCode;
 		LicenseeCodeOld::Type		m_licenseeCodeOld;
-		std::vector<MemoryBank>		m_banks;
+		MemoryBanks					m_banks;
 	};
+
+	//--------------------------------------------------------------------------
 }

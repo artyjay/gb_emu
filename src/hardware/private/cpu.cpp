@@ -38,8 +38,15 @@ namespace gbhw
 
 	void Instruction::set(InstructionFunction fn)
 	{
-		assert(m_function == nullptr || m_function == &CPU::instruction_not_implemented || m_function == &CPU::instruction_not_implemented_ext);
-		m_function = fn;
+		if(m_function == nullptr || m_function == &CPU::instruction_not_implemented || m_function == &CPU::instruction_not_implemented_ext)
+		{
+			// Only allow setting if it was previously one of the above.
+			m_function = fn;
+		}
+		else
+		{
+			log_error("Attempting to set an instructions function when it has already been set\n");
+		}
 	}
 
 	void Instruction::set(Address address)
@@ -92,7 +99,9 @@ namespace gbhw
 			InstructionFunction& func = instruction.function();
 
 			Byte instCycles = instruction.cycles((this->*func)());
-			assert(instCycles != 0);
+			if(instCycles == 0)
+				log_error("Instruction executes zero cycles, this is impossible, indicates unimplemented instruction\n");
+
 			m_instructionCycles += instCycles;
 
 			// Update cycles
@@ -779,7 +788,7 @@ namespace gbhw
 	InstructionResult::Enum CPU::instruction_not_implemented()
 	{
 		Instruction& inst = m_instructions[m_currentOpcode];
-		gbhw::Error("Instruction not implemented [Opcode: 0x%02x, Assembly: %s]\n", inst.opcode(), inst.assembly());
+		log_error("Instruction not implemented [Opcode: 0x%02x, Assembly: %s]\n", inst.opcode(), inst.assembly());
 		throw std::runtime_error("Instruction not implemented");
 		return InstructionResult::Failed;
 	}
@@ -787,7 +796,7 @@ namespace gbhw
 	InstructionResult::Enum CPU::instruction_not_implemented_ext()
 	{
 		Instruction& inst = m_instructionsExt[m_currentOpcodeExt];
-		gbhw::Error("Extended instruction not implemented [Opcode: 0x%02x, Assembly: %s]\n", inst.is_extended(), inst.assembly());
+		log_error("Extended instruction not implemented [Opcode: 0x%02x, Assembly: %s]\n", inst.is_extended(), inst.assembly());
 		throw std::runtime_error("Extended instruction not implemented");
 		return InstructionResult::Failed;
 	}
