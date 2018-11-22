@@ -1,5 +1,6 @@
 #pragma once
 
+#include <common.h>
 #include <gbhw.h>
 #include <SDL.h>
 
@@ -21,7 +22,11 @@ namespace gbe
 		SDL_Surface*		m_screen;
 		SDL_Texture*		m_texture;
 		SDL_PixelFormat*	m_format;
-		gbhw::Hardware		m_hardware;
+		gbhw_context_t		m_hardware;
+
+		uint32_t			m_screenWidth;
+		uint32_t			m_screenHeight;
 		uint32_t			m_screenScale;
+
 	};
 }

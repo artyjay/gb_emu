@@ -14,7 +14,7 @@ namespace gbd
 		ImageWidget(QWidget* parent = nullptr);
 		~ImageWidget();
 
-		void SetHardware(gbhw::Hardware* hardware);
+		void SetHardware(gbhw_context_t hardware);
 		void SetTilePatternIndex(uint32_t tilePatternIndex);
 
 	protected:
@@ -22,7 +22,7 @@ namespace gbd
 
 	private:
 		QImage m_image;
-		gbhw::Hardware* m_hardware;
+		gbhw_context_t m_hardware;
 		uint32_t m_tilePatternIndex;
 	};
 }

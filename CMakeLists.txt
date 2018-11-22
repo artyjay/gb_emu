@@ -48,6 +48,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
 # Project configuration
 #-------------------------------------------------------------------------------
 
+add_subdirectory(src/common)
 add_subdirectory(src/hardware)
 
 if(GB_ENABLE_FRONTEND_DESKTOP)

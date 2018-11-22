@@ -112,12 +112,19 @@ endmacro()
 # Helper for setting up the QT dependency
 #-------------------------------------------------------------------------------
 macro(gb_prepare_qt)
+	## There are 2 requirements for utilising Qt:
+	##    1. Environment variable "Qt5" specified before invoking Cmake that points to the installation directory.
+	##    2. PATH environment variable updated to point to folder containing moc/uic.
+	if(NOT DEFINED ENV{Qt5})
+		message(FATAL_ERROR "The Qt5 dependency requires an environment variable set \"Qt5\" to the installation path of Qt")
+	endif()
+
 	set(CMAKE_INCLUDE_CURRENT_DIR ON)
 	set(CMAKE_AUTOMOC ON)
 	set(CMAKE_AUTOUIC ON)
 
-	find_package(Qt5Core)
-	find_package(Qt5Widgets)
+
+	set(CMAKE_PREFIX_PATH "${CMAKE_PREFIX_PATH};ENV{Qt5}")
 endmacro()
 
 #-------------------------------------------------------------------------------

@@ -4,14 +4,18 @@
 
 #include <stdint.h>
 
+#ifdef HWExportDLL
 #ifdef _WIN32
-#	ifdef GBExportHW
+#	ifdef HWExportSymbols
 #		define HWPublicAPI __declspec(dllexport)
 #	else
 #		define HWPublicAPI __declspec(dllimport)
 #	endif
 #else
 #	define HWPublicAPI __attribute__((visibility ("default")))
+#endif
+#else
+#	define HWPublicAPI
 #endif
 
 #ifdef __cplusplus
@@ -67,6 +71,7 @@ typedef struct gbhw_settings
 {
 	const uint8_t*		rom;
 	uint32_t			rom_size;
+	const char*			rom_path;
 	gbhw_log_level_t	log_level;
 	gbhw_log_callback_t	log_callback;
 	void*				log_userdata;
@@ -74,86 +79,24 @@ typedef struct gbhw_settings
 
 /*----------------------------------------------------------------------------*/
 
-HWPublicAPI gbhw_errorcode_t gbhw_create(gbhw_settings_t* settings, gbhw_context_t** context);
+gbhw_errorcode_t gbhw_create(gbhw_settings_t* settings, gbhw_context_t* ctx);
 
-HWPublicAPI void gbhw_destroy(gbhw_context_t* context);
+HWPublicAPI void gbhw_destroy(gbhw_context_t ctx);
 
-HWPublicAPI gbhw_errorcode_t gbhw_load_rom_file(gbhw_context_t* context, const char* path);
+HWPublicAPI gbhw_errorcode_t gbhw_load_rom_file(gbhw_context_t ctx, const char* path);
 
-HWPublicAPI gbhw_errorcode_t gbhw_load_rom_memory(gbhw_context_t* context, const uint8_t* memory, uint32_t length);
+HWPublicAPI gbhw_errorcode_t gbhw_load_rom_memory(gbhw_context_t ctx, const uint8_t* memory, uint32_t length);
 
-HWPublicAPI gbhw_errorcode_t gbhw_get_screen(gbhw_context_t* context, const uint8_t** screen, uint32_t* width, uint32_t* height);
+HWPublicAPI gbhw_errorcode_t gbhw_get_screen(gbhw_context_t ctx, const uint8_t** screen);
 
-HWPublicAPI gbhw_errorcode_t gbhw_step(gbhw_context_t* context, gbhw_step_mode_t mode);
+HWPublicAPI gbhw_errorcode_t gbhw_get_screen_resolution(gbhw_context_t ctx, uint32_t* width, uint32_t* height);
 
-HWPublicAPI gbhw_errorcode_t gbhw_set_button_state(gbhw_context_t* context, gbhw_button_t button, gbhw_button_state_t state);
+HWPublicAPI gbhw_errorcode_t gbhw_step(gbhw_context_t ctx, gbhw_step_mode_t mode);
+
+HWPublicAPI gbhw_errorcode_t gbhw_set_button_state(gbhw_context_t ctx, gbhw_button_t button, gbhw_button_state_t state);
 
 /*----------------------------------------------------------------------------*/
 
 #ifdef __cplusplus
 }
-#endif
-
-
-
-
-
-
-
-
-
-
-
-#if 0
-
-#include "gbhw_types.h"
-
-namespace gbhw
-{
-	struct ExecuteMode
-	{
-		enum Type
-		{
-			SingleInstruction,
-			SingleVSync
-		};
-	};
-
-	class CPU;
-	class GPU;
-	class MMU;
-	class Rom;
-	class Timer;
-
-	class Hardware
-	{
-	public:
-		Hardware();
-		~Hardware();
-
-		void Initialise();
-		void Release();
-
-		bool LoadROM(const char* path);
-		void Execute();
-
-		ExecuteMode::Type GetExecuteMode() const;
-		void SetExecuteMode(ExecuteMode::Type mode);
-		void RegisterLogCallback(LogCallback callback);
-
-		void PressButton(HWButton::Type button);
-		void ReleaseButton(HWButton::Type button);
-
-		const Byte* GetScreenData() const;
-
-	private:
-		ExecuteMode::Type	m_executeMode;
-		CPU*				m_cpu;
-		GPU*				m_gpu;
-		MMU*				m_mmu;
-		Rom*				m_rom;
-		Timer*				m_timer;
-	};
-}
-
 #endif

@@ -17,8 +17,9 @@ target_include_directories(hardware
 	PUBLIC		"${PROJECT_SOURCE_DIR}/src/hardware/public"
 	PRIVATE		"${PROJECT_SOURCE_DIR}/src/hardware/private")
 
-target_compile_definitions(hardware
-	PRIVATE		GBExportHW=1)
+target_link_libraries(hardware
+	PUBLIC gb::common)
 
 # Alias
-add_library(gb::hardware ALIAS hardware)
+add_library(gb::hw ALIAS hardware)
+

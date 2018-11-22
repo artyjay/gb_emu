@@ -10,11 +10,11 @@
 #-------------------------------------------------------------------------------
 
 gb_gather_sources(HWT_SOURCES "src/hardware_tests")
-gb_add_executable(hardware_tests gbhw_tests HWT_SOURCES CXX)
+gb_add_executable(hardware_tests gb_hw_tests HWT_SOURCES CXX)
 
 target_include_directories(hardware_tests
 	PUBLIC "${PROJECT_SOURCE_DIR}/src/hardware_tests")
 
 target_link_libraries(hardware_tests
-	PRIVATE gb::hardware
+	PRIVATE gb::hw
 			CONAN_PKG::gtest)

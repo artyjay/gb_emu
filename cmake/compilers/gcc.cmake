@@ -10,7 +10,6 @@ set(COMPILER_NAME "gcc")
 set(GCC ON)
 
 set(COMPILER_DEFS
-	GBInline=inline
 	_SCL_SECURE_NO_WARNINGS			# Allow calling any one of the potentially unsafe methods in the Standard C++ Library
 	_CRT_SECURE_NO_WARNINGS			# Disable CRT deprecation warnings
 	GCC)

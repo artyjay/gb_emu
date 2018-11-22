@@ -18,7 +18,7 @@ namespace gbd
 
 	}
 
-	void ImageWidget::SetHardware(gbhw::Hardware* hardware)
+	void ImageWidget::SetHardware(gbhw_context_t hardware)
 	{
 		m_hardware = hardware;
 	}
@@ -32,9 +32,11 @@ namespace gbd
 	{
 		QPainter painter(this);
 
+#if 0
 		// Update the image
 		if (m_hardware)
 		{
+
 			const gbhw::GPUTilePattern* tilePatternData = m_hardware->GetGPU().GetTilePattern(m_tilePatternIndex);
 			QRgb* destData = (QRgb*)m_image.scanLine(0);
 
@@ -61,6 +63,7 @@ namespace gbd
 			}
 		}
 		else
+#endif
 		{
 			m_image.fill(QColor(255, 255, 255, 255));
 		}

@@ -17,15 +17,15 @@ namespace gbd
 		AssemblyWidget(QWidget* parent = nullptr);
 		~AssemblyWidget();
 
-		void SetHardware(gbhw::Hardware* hardware);
+		void SetHardware(gbhw_context_t hardware);
 		void UpdateView();
 		void ToggleBreakpoint();
 
 	private:
-		void AddBreakpoint(gbhw::Address address);
+		void AddBreakpoint(uint16_t address);
 
-		gbhw::Hardware*			m_hardware;
-		gbhw::InstructionList	m_instructions;
+		gbhw_context_t			m_hardware;
+		//gbhw::InstructionList	m_instructions;
 		InstructionItemList		m_lines;
 		BreakpointList			m_breakpoints;
 		QBrush					m_brushDefault;
