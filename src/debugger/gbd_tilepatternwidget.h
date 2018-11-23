@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gbhw.h>
+#include <gbhw_debug.h>
 #include <QPen>
 #include <QWidget>
 
@@ -14,7 +14,7 @@ namespace gbd
 		TilePatternWidget(QWidget* parent = nullptr);
 		~TilePatternWidget();
 
-		void SetHardware(gbhw::Hardware* hardware);
+		void SetHardware(gbhw_context_t hardware);
 		void SetTilePatternIndex(uint32_t tilePatternIndex);
 
 	protected:
@@ -34,7 +34,7 @@ namespace gbd
 		void GetTileIndexFromMouseEvt(QMouseEvent* evt, int32_t& tileX, int32_t& tileY, int32_t& tileIndex, gbhw::Address& tileAddress);
 
 		QImage				m_image;
-		gbhw::Hardware*		m_hardware;
+		gbhw_context_t		m_hardware;
 		uint32_t			m_tilePatternIndex;
 		float				m_scaleX;
 		float				m_scaleY;

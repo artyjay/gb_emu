@@ -1,6 +1,8 @@
 #include "gbd_memorywindow.h"
 #include "gbd_log.h"
 
+using namespace gbhw;
+
 namespace
 {
 	const int32_t kMemoryDisplayWindowSize = 16;
@@ -8,7 +10,7 @@ namespace
 
 namespace gbd
 {
-	MemoryWindow::MemoryWindow(QWidget* parent, gbhw::Hardware& hardware)
+	MemoryWindow::MemoryWindow(QWidget* parent, gbhw_context_t hardware)
 		: QWidget(parent, Qt::Window)
 		, m_hardware(hardware)
 		, m_enteredAddress(0)
@@ -37,7 +39,7 @@ namespace gbd
 			m_ui.m_memory->addItem(lineItem);
 		}
 	}
-	
+
 	MemoryWindow::~MemoryWindow()
 	{
 	}
@@ -63,12 +65,18 @@ namespace gbd
 		//Message("Entered address [%s], at address: %d\n", str.toStdString().c_str(), address);
 		gbhw::Byte lineBytes[16];
 
+		MMU* mmu;
+		if(gbhw_get_mmu(m_hardware, &mmu) != e_success)
+		{
+			return;
+		}
+
 		// Update view.
 		for (int32_t i = 0; i < kMemoryDisplayWindowSize; ++i)
 		{
 			for (int32_t lineByte = 0; lineByte < 16; ++lineByte)
 			{
-				lineBytes[lineByte] = m_hardware.GetCPU().GetMMU().ReadByte(address + lineByte);
+				lineBytes[lineByte] = mmu->ReadByte(address + lineByte);
 			}
 
 			QString lineText = QString::asprintf("0x%04x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x",
@@ -94,6 +102,5 @@ namespace gbd
 
 			address += 16;
 		}
-		
 	}
 }

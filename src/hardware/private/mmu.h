@@ -93,8 +93,8 @@ namespace gbhw
 		void BreakpointSet(Address addressStart, Address addressEnd);
 		void BreakpointSetConditional(Address address, Byte conditionValue);
 
-		Byte ReadByte(Address address);
-		Word ReadWord(Address address);
+		Byte ReadByte(Address address) const;
+		Word ReadWord(Address address) const;
 
 		void WriteIO(HWRegs::Type reg, Byte byte);
 		void WriteByte(Address address, Byte byte);

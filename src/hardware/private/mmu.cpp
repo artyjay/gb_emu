@@ -123,7 +123,7 @@ namespace gbhw
 		m_writeBreakpoints.push_back(Breakpoint(address, conditionValue));
 	}
 
-	Byte MMU::ReadByte(Address address)
+	Byte MMU::ReadByte(Address address) const
 	{
 		// @todo Check for out of bounds behaviour
 		const uint32_t	lutindex	= (address >> kLutShiftGranularity);
@@ -167,15 +167,16 @@ namespace gbhw
 		return 0;
 	}
 
+
+	Word MMU::ReadWord(Address address) const
+	{
+		return (ReadByte(address) + (static_cast<Word>(ReadByte(address + 1)) << 8));
+	}
+
 	void MMU::WriteIO(HWRegs::Type reg, Byte byte)
 	{
 		// Special case by-pass for IO regs, this is essential a HW write rather than a SW write.
 		m_memory[static_cast<Address>(reg)] = byte;
-	}
-
-	Word MMU::ReadWord(Address address)
-	{
-		return (ReadByte(address) + (static_cast<Word>(ReadByte(address + 1)) << 8));
 	}
 
 	void MMU::WriteByte(Address address, Byte byte)

@@ -60,8 +60,8 @@ namespace gbhw
 	//--------------------------------------------------------------------------
 
 	Registers::Registers()
-		: m_byteLUT { a, b, c, d, e, f, h, l }
-		, m_wordLUT { af, bc, de, hl, sp, pc }
+		: m_byteLUT { &a, &b, &c, &d, &e, &f, &h, &l }
+		, m_wordLUT { &af, &bc, &de, &hl, &sp, &pc }
 	{
 		reset();
 	}

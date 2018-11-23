@@ -16,7 +16,7 @@ namespace gbd
 	{
 	}
 
-	void Screen::SetHardware(gbhw::Hardware* hardware)
+	void Screen::SetHardware(gbhw_context_t hardware)
 	{
 		m_hardware = hardware;
 	}
@@ -28,12 +28,16 @@ namespace gbd
 		// Update the image
 		if(m_hardware)
 		{
-			const gbhw::Byte* screenData = m_hardware->GetGPU().GetScreenData();
+			const uint8_t* screenData;
+			uint32_t width, height;
+			gbhw_get_screen(m_hardware, &screenData);
+			gbhw_get_screen_resolution(m_hardware, &width, &height);
+
 			QRgb* destData = (QRgb*)m_image.scanLine(0);
 
-			for (uint32_t y = 0; y < gbhw::GPU::kScreenHeight; ++y)
+			for (uint32_t y = 0; y < height; ++y)
 			{
-				for (uint32_t x = 0; x < gbhw::GPU::kScreenWidth; ++x)
+				for (uint32_t x = 0; x < width; ++x)
 				{
 					gbhw::Byte hwpixel = (3 - *screenData) * 85;
 

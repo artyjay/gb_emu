@@ -38,7 +38,7 @@ namespace gbd
 	{
 	}
 
-	void TilePatternWidget::SetHardware(gbhw::Hardware* hardware)
+	void TilePatternWidget::SetHardware(gbhw_context_t hardware)
 	{
 		m_hardware = hardware;
 	}
@@ -51,6 +51,8 @@ namespace gbd
 	void TilePatternWidget::paintEvent(QPaintEvent* evt)
 	{
 		QPainter painter(this);
+
+#if 0
 
 		// Update the image
 		if (m_hardware)
@@ -113,10 +115,13 @@ namespace gbd
 			painter.setPen(m_lockedPen);
 			painter.drawRect(lockedTileX * 8, lockedTileY * 8, 8, 8);
 		}
+
+#endif
 	}
 
 	void TilePatternWidget::mouseMoveEvent(QMouseEvent* evt)
 	{
+#if 0
 		// Only update when we haven't locked the widget in-place.
 		if(m_lockedTileIndex == -1)
 		{
@@ -129,6 +134,7 @@ namespace gbd
 
 			repaint();
 		}
+#endif
 	}
 
 	void TilePatternWidget::mousePressEvent(QMouseEvent* evt)
@@ -189,12 +195,14 @@ namespace gbd
 
 	void TilePatternWidget::GetTileIndexFromMouseEvt(QMouseEvent* evt, int32_t& tileX, int32_t& tileY, int32_t& tileIndex, gbhw::Address& tileAddress)
 	{
+#if 0
 		int32_t posX = evt->pos().x();
 		int32_t posY = evt->pos().y();
 		tileX = posX / (8 * m_scaleX);
 		tileY = posY / (8 * m_scaleY);
 		tileIndex = tileY * 16 + tileX;
 		tileAddress = gbhw::HWLCDC::GetTilePatternAddress(m_tilePatternIndex) + (tileIndex * 16);
+#endif
 	}
 
 } // gbd

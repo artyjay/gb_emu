@@ -1,7 +1,6 @@
 #pragma once
 
-#include "gbhw.h"
-
+#include <gbhw_debug.h>
 #include <QWidget>
 
 namespace gbd
@@ -14,14 +13,14 @@ namespace gbd
 		TileMapWidget(QWidget* parent = nullptr);
 		~TileMapWidget();
 
-		void SetHardware(gbhw::Hardware* hardware);
+		void SetHardware(gbhw_context_t hardware);
 
 	protected:
 		void paintEvent(QPaintEvent* evt);
 
 	private:
 		QImage				m_image;
-		gbhw::Hardware*		m_hardware;
+		gbhw_context_t		m_hardware;
 	};
 }
 #pragma once

@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-#include <gbhw.h>
+#include <gbhw_debug.h>
 #include <QPen>
 #include <QWidget>
 
@@ -11,10 +11,10 @@ namespace gbd
 		Q_OBJECT
 
 	public:
-		ScreenWidget(QWidget * parent = nullptr);
+		ScreenWidget(QWidget* parent = nullptr);
 		~ScreenWidget();
 
-		void SetHardware(gbhw::Hardware* hardware);
+		void SetHardware(gbhw_context_t hardware);
 		void SetShowTilemapGrid(bool bShow);
 
 	protected:
@@ -25,7 +25,7 @@ namespace gbd
 		void UpdateCoordText(const QString& str);
 
 	private:
-		gbhw::Hardware*		m_hardware;
+		gbhw_context_t		m_hardware;
 		QImage				m_image;
 		bool				m_bShowTilemapGrid;
 		float				m_scaleX;

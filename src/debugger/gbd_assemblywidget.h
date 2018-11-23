@@ -1,7 +1,6 @@
 #pragma once
 
-#include "gbhw.h"
-
+#include <gbhw_debug.h>
 #include <QListWidget>
 
 typedef std::vector<QListWidgetItem*> InstructionItemList;
@@ -25,7 +24,7 @@ namespace gbd
 		void AddBreakpoint(uint16_t address);
 
 		gbhw_context_t			m_hardware;
-		//gbhw::InstructionList	m_instructions;
+		gbhw::InstructionList	m_instructions;
 		InstructionItemList		m_lines;
 		BreakpointList			m_breakpoints;
 		QBrush					m_brushDefault;

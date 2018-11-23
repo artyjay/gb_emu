@@ -1,15 +1,30 @@
 #include "gbd_mainwindow.h"
 #include "gbd_log.h"
 
+#include <iostream>
 #include <QtWidgets/QFileDialog>
 
-#include <iostream>
+using namespace gbhw;
 
 namespace
 {
-	void LogCallback(const char* message)
+	template<typename... Args>
+	inline void log_message(const char* format, Args... parameters)
 	{
-		gbd::MessageRaw(message);
+		static char buffer[4096];
+
+		int32_t len = sprintf(buffer, format, std::forward<Args>(parameters)...);
+
+		fwrite(buffer, sizeof(char), len, stdout);
+
+#ifdef WIN32
+		OutputDebugString(buffer);
+#endif
+	}
+
+	void hw_log_callback(void* userdata, gbhw_log_level_t level, const char* msg)
+	{
+		log_message(msg);
 	}
 }
 
@@ -33,9 +48,12 @@ namespace gbd
 		QObject::connect(m_ui.m_actionStepInstruction,		&QAction::triggered, this, &MainWindow::OnStepInstructionTriggered);
 		QObject::connect(m_ui.m_actionToggleBreakpoint,		&QAction::triggered, this, &MainWindow::OnToggleBreakpointTriggered);
 
-		m_hardware.RegisterLogCallback(&LogCallback);
+		// Create hardware.
+		gbhw_settings_t settings = {0};
+		settings.log_callback = hw_log_callback;
+		gbhw_create(&settings, &m_hardware);
 
-		m_ui.m_assembly->SetHardware(&m_hardware);
+		m_ui.m_assembly->SetHardware(m_hardware);
 
 		// Create screen window
 		m_screenWindow = new ScreenWindow(this, m_hardware);
@@ -55,7 +73,7 @@ namespace gbd
 		std::cout << "Opening rom file: " << path << std::endl;
 
 		// load into the emulator, then parse the contents.
-		if(m_hardware.LoadROM(path.c_str()))
+		if(gbhw_load_rom_file(m_hardware, path.c_str()) == e_success)
 		{
 			std::cout << "Successfully loaded rom file" << std::endl;
 			UpdateCPUState();
@@ -70,29 +88,33 @@ namespace gbd
 
 	void MainWindow::UpdateCPUState()
 	{
-		auto& registers = m_hardware.GetCPU().GetRegisters();
-	
-		m_ui.reg_a_->setText(QString::asprintf("0x%02x", registers.a));
-		m_ui.reg_b_->setText(QString::asprintf("0x%02x", registers.b));
-		m_ui.reg_c_->setText(QString::asprintf("0x%02x", registers.c));
-		m_ui.reg_d_->setText(QString::asprintf("0x%02x", registers.d));
-		m_ui.reg_e_->setText(QString::asprintf("0x%02x", registers.e));
-		m_ui.reg_f_->setText(QString::asprintf("0x%02x", registers.f));
-		m_ui.reg_h_->setText(QString::asprintf("0x%02x", registers.h));
-		m_ui.reg_l_->setText(QString::asprintf("0x%02x", registers.l));
+		Registers* registers;
+		if(gbhw_get_registers(m_hardware, &registers) != e_success)
+		{
+			return;
+		}
 
-		m_ui.reg_af_->setText(QString::asprintf("0x%04x", registers.af));
-		m_ui.reg_bc_->setText(QString::asprintf("0x%04x", registers.bc));
-		m_ui.reg_de_->setText(QString::asprintf("0x%04x", registers.de));
-		m_ui.reg_hl_->setText(QString::asprintf("0x%04x", registers.hl));
+		m_ui.reg_a_->setText(QString::asprintf("0x%02x", registers->a));
+		m_ui.reg_b_->setText(QString::asprintf("0x%02x", registers->b));
+		m_ui.reg_c_->setText(QString::asprintf("0x%02x", registers->c));
+		m_ui.reg_d_->setText(QString::asprintf("0x%02x", registers->d));
+		m_ui.reg_e_->setText(QString::asprintf("0x%02x", registers->e));
+		m_ui.reg_f_->setText(QString::asprintf("0x%02x", registers->f));
+		m_ui.reg_h_->setText(QString::asprintf("0x%02x", registers->h));
+		m_ui.reg_l_->setText(QString::asprintf("0x%02x", registers->l));
 
-		m_ui.reg_pc_->setText(QString::asprintf("0x%04x", registers.pc));
-		m_ui.reg_sp_->setText(QString::asprintf("0x%04x", registers.sp));
+		m_ui.reg_af_->setText(QString::asprintf("0x%04x", registers->af));
+		m_ui.reg_bc_->setText(QString::asprintf("0x%04x", registers->bc));
+		m_ui.reg_de_->setText(QString::asprintf("0x%04x", registers->de));
+		m_ui.reg_hl_->setText(QString::asprintf("0x%04x", registers->hl));
 
-		m_ui.m_flagZero->setChecked(registers.IsFlagSet(gbhw::RF::Zero));
-		m_ui.m_flagNegative->setChecked(registers.IsFlagSet(gbhw::RF::Negative));
-		m_ui.m_flagHalfCarry->setChecked(registers.IsFlagSet(gbhw::RF::HalfCarry));
-		m_ui.m_flagCarry->setChecked(registers.IsFlagSet(gbhw::RF::Carry));
+		m_ui.reg_pc_->setText(QString::asprintf("0x%04x", registers->pc));
+		m_ui.reg_sp_->setText(QString::asprintf("0x%04x", registers->sp));
+
+		m_ui.m_flagZero->setChecked(registers->is_flag_set(RF::Zero));
+		m_ui.m_flagNegative->setChecked(registers->is_flag_set(RF::Negative));
+		m_ui.m_flagHalfCarry->setChecked(registers->is_flag_set(RF::HalfCarry));
+		m_ui.m_flagCarry->setChecked(registers->is_flag_set(RF::Carry));
 	}
 
 	void MainWindow::UpdateGPUState()
@@ -125,8 +147,8 @@ namespace gbd
 
 			UpdateStatusLabel();
 
-			m_hardware.SetExecuteMode(gbhw::ExecuteMode::SingleVSync);
-			m_hardware.GetCPU().BreakpointSkip();
+			//m_hardware.SetExecuteMode(gbhw::ExecuteMode::SingleVSync);
+			//m_hardware.GetCPU().BreakpointSkip();
 
 			QObject::connect(&m_hardwareTimer, &QTimer::timeout, this, &MainWindow::OnRunningUpdate);
 			m_hardwareTimer.start(10);
@@ -169,9 +191,8 @@ namespace gbd
 		if(m_bPaused == true)
 		{
 			// Perform a single instruction step, ensuring we skip the current breakpoint (if we're on one).
-			m_hardware.SetExecuteMode(gbhw::ExecuteMode::SingleInstruction);
-			m_hardware.GetCPU().BreakpointSkip();
-			m_hardware.Execute();
+			gbhw_step(m_hardware, step_instruction);
+
 			UpdateCPUState();
 			UpdateGPUState();
 			UpdateAssemblyState();
@@ -189,13 +210,14 @@ namespace gbd
 		// @todo Be accurate about this by pulling the cycle count from the emulator.
 		if(!m_bPaused)
 		{
-			m_hardware.Execute();
+			gbhw_step(m_hardware, step_vsync);
 			UpdateGPUState();
 		}
-
-		if(m_hardware.GetCPU().IsBreakpoint())
-		{
-			PauseEmulation();
-		}
+// @todo: Handle breakpoints.
+//
+// 		if(m_hardware.GetCPU().IsBreakpoint())
+// 		{
+// 			PauseEmulation();
+// 		}
 	}
 } // gbd

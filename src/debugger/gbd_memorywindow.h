@@ -1,9 +1,9 @@
 #pragma once
 
-#include "gbhw.h"
 #include "ui_gbd_memorywindow.h"
-#include <QtWidgets/QWidget>
+#include <gbhw_debug.h>
 #include <vector>
+#include <QtWidgets/QWidget>
 
 typedef std::vector<QListWidgetItem*> MemoryLineList;
 
@@ -14,7 +14,7 @@ namespace gbd
 		Q_OBJECT
 
 	public:
-		MemoryWindow(QWidget* parent, gbhw::Hardware& hardware);
+		MemoryWindow(QWidget* parent, gbhw_context_t hardware);
 		~MemoryWindow();
 
 		void UpdateView();
@@ -24,7 +24,7 @@ namespace gbd
 
 	private:
 		Ui::GBDMemoryWindowClass	m_ui;
-		gbhw::Hardware&				m_hardware;
+		gbhw_context_t				m_hardware;
 		MemoryLineList				m_lines;
 		gbhw::Address				m_enteredAddress;
 	};

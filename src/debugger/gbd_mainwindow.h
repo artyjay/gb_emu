@@ -4,7 +4,7 @@
 #include "gbd_screenwindow.h"
 #include "ui_gbd_mainwindow.h"
 
-#include <gbhw.h>
+#include <gbhw_debug.h>
 #include <QTimer>
 #include <QtWidgets/QMainWindow>
 #include <map>
@@ -41,7 +41,7 @@ namespace gbd
 		void OnRunningUpdate();
 
 		Ui::GBDMainWindowClass	m_ui;
-		gbhw::Hardware			m_hardware;
+		gbhw_context_t			m_hardware;
 		bool					m_bPaused;
 
 		QBrush					m_brushDefault;

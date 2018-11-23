@@ -4,9 +4,11 @@
 #include <QPainter>
 #include <QMouseEvent>
 
+using namespace gbhw;
+
 namespace gbd
 {
-	ScreenWidget::ScreenWidget(QWidget * parent)
+	ScreenWidget::ScreenWidget(QWidget* parent)
 		: QWidget(parent)
 		, m_hardware(nullptr)
 		, m_image(160, 144, QImage::Format::Format_RGBX8888)
@@ -22,7 +24,7 @@ namespace gbd
 	{
 	}
 
-	void ScreenWidget::SetHardware(gbhw::Hardware* hardware)
+	void ScreenWidget::SetHardware(gbhw_context_t hardware)
 	{
 		m_hardware = hardware;
 	}
@@ -40,12 +42,16 @@ namespace gbd
 		// Update the image
 		if(m_hardware)
 		{
-			const gbhw::Byte* screenData = m_hardware->GetGPU().GetScreenData();
+			const uint8_t* screenData = nullptr;
+			uint32_t width, height;
+			gbhw_get_screen(m_hardware, &screenData);
+			gbhw_get_screen_resolution(m_hardware, &width, &height);
+
 			QRgb* destData = (QRgb*)m_image.scanLine(0);
 
-			for (uint32_t y = 0; y < gbhw::GPU::kScreenHeight; ++y)
+			for (uint32_t y = 0; y < height; ++y)
 			{
-				for (uint32_t x = 0; x < gbhw::GPU::kScreenWidth; ++x)
+				for (uint32_t x = 0; x < width; ++x)
 				{
 					gbhw::Byte hwpixel = (3 - *screenData) * 85;
 					*destData = qRgb(hwpixel, hwpixel, hwpixel);
@@ -66,13 +72,16 @@ namespace gbd
 		{
 			painter.setPen(m_gridPen);
 
-			gbhw::CPU& cpu = m_hardware->GetCPU();
-			gbhw::Byte scrollX = cpu.ReadIO(gbhw::HWRegs::ScrollX);
-			gbhw::Byte scrollY = cpu.ReadIO(gbhw::HWRegs::ScrollY);
+			CPU* cpu;
+			if(gbhw_get_cpu(m_hardware, &cpu) != e_success)
+				return;
+
+			gbhw::Byte scrollX = cpu->read_io(gbhw::HWRegs::ScrollX);
+			gbhw::Byte scrollY = cpu->read_io(gbhw::HWRegs::ScrollY);
 
 			int lineX = -(scrollX % 8);
 			int lineY = -(scrollY % 8);
-			
+
 			// Draw horizontal lines
 			for (uint32_t y = 0; y < 19; ++y)
 			{
@@ -91,6 +100,7 @@ namespace gbd
 
 	void ScreenWidget::mouseMoveEvent(QMouseEvent* evt)
 	{
+#if 0
 		gbhw::CPU& cpu = m_hardware->GetCPU();
 		gbhw::MMU& mmu = cpu.GetMMU();
 
@@ -125,5 +135,6 @@ namespace gbd
 		}
 
 		emit UpdateCoordText(str);
+#endif
 	}
 }

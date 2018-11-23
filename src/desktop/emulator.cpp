@@ -50,7 +50,9 @@ namespace gbe
 		else
 		{
 			gbhw_settings_t settings = { 0 };
-			settings.rom_path = "C:/Users/robert.johnson/Documents/personal/gb_emu/roms/Zelda.gb";
+
+			settings.rom_path = "D:/Development/personal/gb_emu/roms/Zelda.gb";
+			//settings.rom_path = "C:/Users/robert.johnson/Documents/personal/gb_emu/roms/Zelda.gb";
 			//settings.rom_path = "C:/Users/robert.johnson/Documents/personal/gb-test-roms/cpu_instrs/cpu_instrs.gb";
 			settings.log_callback = hw_log_callback;
 			settings.log_level = l_debug;

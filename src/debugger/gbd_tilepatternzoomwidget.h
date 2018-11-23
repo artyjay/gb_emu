@@ -1,6 +1,6 @@
 #pragma once
 
-#include <gbhw.h>
+#include <gbhw_debug.h>
 #include <QPen>
 #include <QWidget>
 
@@ -14,7 +14,7 @@ namespace gbd
 		TilePatternZoomWidget(QWidget* parent = nullptr);
 		~TilePatternZoomWidget();
 
-		void SetHardware(gbhw::Hardware* hardware);
+		void SetHardware(gbhw_context_t hardware);
 
 	public slots:
 		void SetZoomedTile(uint32_t unsignedTileIndex, uint32_t tilePatternIndex);
@@ -25,7 +25,7 @@ namespace gbd
 
 	private:
 		QImage				m_image;
-		gbhw::Hardware*		m_hardware;
+		gbhw_context_t		m_hardware;
 		uint32_t			m_tilePatternIndex;
 		uint32_t			m_unsignedTileIndex;
 		QPen				m_gridPen;

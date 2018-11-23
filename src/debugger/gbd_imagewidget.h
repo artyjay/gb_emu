@@ -1,7 +1,6 @@
 #pragma once
 
-#include "gbhw.h"
-
+#include <gbhw_debug.h>
 #include <QWidget>
 
 namespace gbd

@@ -60,6 +60,16 @@ namespace gbhw
 	// Helpers
 	//--------------------------------------------------------------------------
 
+	inline Registers* CPU::get_registers()
+	{
+		return &m_registers;
+	}
+
+	inline Instruction CPU::get_instruction(Byte opcode, bool bExtended) const
+	{
+		return bExtended ? m_instructionsExt[opcode] : m_instructions[opcode];
+	}
+
 	inline Byte CPU::immediate_byte(bool steppc)
 	{
 		Byte res = m_mmu->ReadByte(m_registers.pc);
@@ -830,7 +840,7 @@ namespace gbhw
 	template<RT::Enum SrcRegister>
 	inline InstructionResult::Enum CPU::inst_add_hl_nn()
 	{
-		Word& src = m_registers.get_register_word<SrcRegister>();
+		Word src = m_registers.get_register_word<SrcRegister>();
 
 		m_registers.set_flag_if<RF::Carry>((0xFFFF - m_registers.hl) < src);
 		m_registers.set_flag_if<RF::HalfCarry>((0x0FFF - (m_registers.hl & 0x0FFF)) < (src & 0x0FFF));

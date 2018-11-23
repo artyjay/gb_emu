@@ -2,6 +2,8 @@
 
 #include <QPainter>
 
+using namespace gbhw;
+
 namespace gbd
 {
 	TileMapWidget::TileMapWidget(QWidget* parent)
@@ -16,7 +18,7 @@ namespace gbd
 
 	}
 
-	void TileMapWidget::SetHardware(gbhw::Hardware* hardware)
+	void TileMapWidget::SetHardware(gbhw_context_t hardware)
 	{
 		m_hardware = hardware;
 	}
@@ -25,12 +27,15 @@ namespace gbd
 	{
 		QPainter painter(this);
 
+
 		// Update the image
 		if (m_hardware)
 		{
-			gbhw::MMU& mmu = m_hardware->GetCPU().GetMMU();
+			MMU* mmu = nullptr;
+			if(gbhw_get_mmu(m_hardware, &mmu) != e_success)
+				return;
 
-			gbhw::Address tilemapAddress = gbhw::HWLCDC::GetBGTileMapAddress(mmu.ReadByte(gbhw::HWRegs::LCDC));
+			Address tilemapAddress = gbhw::HWLCDC::get_bg_tile_map_address(mmu->ReadByte(gbhw::HWRegs::LCDC));
 
 			QFont font;
 			font.setFamily(QStringLiteral("Consolas"));
@@ -44,14 +49,17 @@ namespace gbd
 			{
 				for (uint32_t x = 0; x < 32; ++x)
 				{
-					gbhw::Byte tileIndex = mmu.ReadByte(tilemapAddress + (y * 32) + x);
+					gbhw::Byte tileIndex = mmu->ReadByte(tilemapAddress + (y * 32) + x);
 					painter.drawRect(x * tileSizeX, y * tileSizeY, tileSizeX, tileSizeY);
 					painter.drawText((x * tileSizeX) + 2, (y * tileSizeY) + 8 + ((tileSizeY - 8) / 2), QString::asprintf("%d", tileIndex));
 				}
 			}
 
-#if 0
-			const gbhw::GPUTilePattern* tilePatternData = m_hardware->GetGPU().GetTilePattern(0);
+			GPU* gpu;
+			if(gbhw_get_gpu(m_hardware, &gpu) != e_success)
+				return;
+
+			const GPUTilePattern* tilePatternData = gpu->GetTilePattern(0);
 			QRgb* destData = (QRgb*)m_image.scanLine(0);
 
 			for (uint32_t tileY = 0; tileY < 16; ++tileY)
@@ -75,7 +83,7 @@ namespace gbd
 					}
 				}
 			}
-#endif
+
 		}
 		else
 		{
@@ -83,6 +91,6 @@ namespace gbd
 		}
 
 		// Draw the image
-		//painter.drawImage(QPoint(0, 0), m_image);
+		painter.drawImage(QPoint(0, 0), m_image);
 	}
 } // gbd

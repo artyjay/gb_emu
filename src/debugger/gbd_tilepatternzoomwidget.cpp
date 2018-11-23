@@ -1,7 +1,8 @@
 #include "gbd_tilepatternzoomwidget.h"
-
 #include <QPainter>
 #include <QMouseEvent>
+
+using namespace gbhw;
 
 namespace gbd
 {
@@ -20,7 +21,7 @@ namespace gbd
 	{
 	}
 
-	void TilePatternZoomWidget::SetHardware(gbhw::Hardware* hardware)
+	void TilePatternZoomWidget::SetHardware(gbhw_context_t hardware)
 	{
 		m_hardware = hardware;
 	}
@@ -47,7 +48,11 @@ namespace gbd
 		// Update the image
 		if (m_hardware)
 		{
-			const gbhw::GPUTilePattern* tilePatternData = m_hardware->GetGPU().GetTilePattern(m_tilePatternIndex);
+			GPU* gpu;
+			if(gbhw_get_gpu(m_hardware, &gpu) != e_success)
+				return;
+
+			const gbhw::GPUTilePattern* tilePatternData = gpu->GetTilePattern(m_tilePatternIndex);
 			const gbhw::GPUTileData* tileData = &tilePatternData->m_tiles[m_unsignedTileIndex];
 			QRgb* destData = (QRgb*)m_image.scanLine(0);
 

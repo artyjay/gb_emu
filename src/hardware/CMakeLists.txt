@@ -17,6 +17,14 @@ target_include_directories(hardware
 	PUBLIC		"${PROJECT_SOURCE_DIR}/src/hardware/public"
 	PRIVATE		"${PROJECT_SOURCE_DIR}/src/hardware/private")
 
+if(GB_ENABLE_DEBUGGER)
+	target_include_directories(hardware
+		PUBLIC		"${PROJECT_SOURCE_DIR}/src/hardware/private"
+					"${PROJECT_SOURCE_DIR}/src/hardware/debug")
+	target_compile_definitions(hardware
+		PRIVATE		HWEnableDebug)
+endif()
+
 target_link_libraries(hardware
 	PUBLIC gb::common)
 

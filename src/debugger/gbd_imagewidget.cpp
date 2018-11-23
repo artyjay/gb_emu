@@ -2,6 +2,8 @@
 
 #include <QPainter>
 
+using namespace gbhw;
+
 namespace gbd
 {
 	ImageWidget::ImageWidget(QWidget* parent)
@@ -10,7 +12,6 @@ namespace gbd
 		, m_hardware(nullptr)
 		, m_tilePatternIndex(0)
 	{
-
 	}
 
 	ImageWidget::~ImageWidget()
@@ -32,12 +33,14 @@ namespace gbd
 	{
 		QPainter painter(this);
 
-#if 0
 		// Update the image
 		if (m_hardware)
 		{
+			GPU* gpu = nullptr;
+			if(gbhw_get_gpu(m_hardware, &gpu) != e_success)
+				return;
 
-			const gbhw::GPUTilePattern* tilePatternData = m_hardware->GetGPU().GetTilePattern(m_tilePatternIndex);
+			const gbhw::GPUTilePattern* tilePatternData = gpu->GetTilePattern(m_tilePatternIndex);
 			QRgb* destData = (QRgb*)m_image.scanLine(0);
 
 			for(uint32_t tileY = 0; tileY < 16; ++tileY)
@@ -63,7 +66,6 @@ namespace gbd
 			}
 		}
 		else
-#endif
 		{
 			m_image.fill(QColor(255, 255, 255, 255));
 		}

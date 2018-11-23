@@ -10,13 +10,13 @@ namespace gbd
 		Q_OBJECT
 
 	public:
-		ScreenWindow(QWidget* parent, gbhw::Hardware& hardware);
+		ScreenWindow(QWidget* parent, gbhw_context_t hardware);
 		~ScreenWindow();
 
 	private:
 		void OnShowTileGrid(bool bChecked);
 
 		Ui::GBDScreenWindowClass	m_ui;
-		gbhw::Hardware&				m_hardware;
+		gbhw_context_t				m_hardware;
 	};
 }

@@ -1,4 +1,5 @@
 #include "gbhw.h"
+#include "gbhw_debug.h"
 #include "context.h"
 #include "cpu.h"
 #include "gpu.h"
@@ -172,4 +173,124 @@ extern "C"
 		context->mmu->set_button_state(button, state);
 		return e_success;
 	}
+
+	//--------------------------------------------------------------------------
+	// Debug API
+	//--------------------------------------------------------------------------
+
+#if HWEnableDebug
+
+	HWPublicAPI gbhw_errorcode_t gbhw_get_cpu(gbhw_context_t ctx, gbhw::CPU** cpu)
+	{
+		if(!ctx)
+			return e_invalidparam;
+
+		Context* context = (Context*)ctx;
+		*cpu = context->cpu.get();
+
+		if(!*cpu)
+			return e_failed;
+
+		return e_success;
+	}
+
+	HWPublicAPI gbhw_errorcode_t gbhw_get_gpu(gbhw_context_t ctx, gbhw::GPU** gpu)
+	{
+		if(!ctx)
+			return e_invalidparam;
+
+		Context* context = (Context*)ctx;
+		*gpu = context->gpu.get();
+
+		if(!*gpu)
+			return e_failed;
+
+		return e_success;
+	}
+
+	HWPublicAPI gbhw_errorcode_t gbhw_get_mmu(gbhw_context_t ctx, gbhw::MMU** mmu)
+	{
+		if(!ctx)
+			return e_invalidparam;
+
+		Context* context = (Context*)ctx;
+		*mmu = context->mmu.get();
+
+		if(!*mmu)
+			return e_failed;
+
+		return e_success;
+	}
+
+	HWPublicAPI gbhw_errorcode_t gbhw_get_registers(gbhw_context_t ctx, gbhw::Registers** registers)
+	{
+		if(!ctx)
+			return e_invalidparam;
+
+		Context* context = (Context*)ctx;
+
+		if(!context->cpu)
+			return e_failed;
+
+		*registers = context->cpu->get_registers();
+		return e_success;
+	}
+
+	HWPublicAPI gbhw_errorcode_t gbhw_disasm(gbhw_context_t ctx, gbhw::Address address, gbhw::InstructionList& instructions, int32_t instructionCount)
+	{
+		if(!ctx)
+			return e_invalidparam;
+
+		Context* context = (Context*)ctx;
+
+		if(!context->mmu || !context->cpu)
+			return e_failed;
+
+		MMU* mmu = context->mmu.get();
+		CPU* cpu = context->cpu.get();
+
+		const uint8_t* instructionAddress = mmu->GetMemoryPtrFromAddress(address);
+		const uint8_t* baseInstruction = mmu->GetMemoryPtrFromAddress(0);
+		int32_t instructionsProcessed = 0;
+
+		while (true)
+		{
+			Byte opcode = *instructionAddress;
+			Instruction instruction;
+
+			if (opcode == 0xCB)
+			{
+				Byte extended = *(instructionAddress + 1);
+				instruction = cpu->get_instruction(extended, true);
+			}
+			else
+			{
+				instruction = cpu->get_instruction(opcode, false);
+			}
+
+			instruction.set(address);
+
+			const uint8_t* oldInstructionAddress = instructionAddress;
+			instructionAddress += instruction.byte_size();
+			address += instruction.byte_size();
+
+			if (instructionAddress == oldInstructionAddress)
+			{
+				instructionAddress++; // W\A - XX instructions should be parsed as 1 byte to prevent this.
+			}
+
+			instructions.push_back(instruction);
+			instructionsProcessed++;
+
+			if (instructionsProcessed >= instructionCount)
+			{
+				break;
+			}
+		}
+
+		return e_success;
+	}
+
+	//--------------------------------------------------------------------------
+#endif
 }

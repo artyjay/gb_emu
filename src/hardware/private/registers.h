@@ -114,11 +114,9 @@ namespace gbhw
 		inline bool operator==(const Registers& other);
 
 		template<RegisterType::Enum Register> inline Byte& get_register();
-		template<RegisterType::Enum Register> inline Byte  get_register() const;
 		template<RegisterType::Enum Register> inline void  set_register(Byte value);
 
 		template<RegisterType::Enum Register> inline Word& get_register_word();
-		template<RegisterType::Enum Register> inline Word  get_register_word() const;
 		template<RegisterType::Enum Register> inline void  set_register_word(Word value);
 
 		template<RegisterFlag::Enum FlagType> inline void set_flag_if(bool enabled);
@@ -137,8 +135,8 @@ namespace gbhw
 		bool ime;
 
 	private:
-		std::array<std::reference_wrapper<Byte>, 8> m_byteLUT;
-		std::array<std::reference_wrapper<Word>, 6> m_wordLUT;
+		std::array<Byte*, 8> m_byteLUT;
+		std::array<Word*, 6> m_wordLUT;
 	};
 
 	//--------------------------------------------------------------------------
@@ -162,15 +160,7 @@ namespace gbhw
 	{
 		static_assert(IsRegisterAny<Register, RT::A, RT::B, RT::C, RT::D, RT::E, RT::F, RT::H, RT::L>::value,
 			"Invalid register type, it is not a byte type");
-		return m_byteLUT[Register];
-	}
-
-	template<RegisterType::Enum Register>
-	inline Byte Registers::get_register() const
-	{
-		static_assert(IsRegisterAny<Register, RT::A, RT::B, RT::C, RT::D, RT::E, RT::F, RT::H, RT::L>::value,
-			"Invalid register type, it is not a byte type");
-		return m_byteLUT[Register];
+		return *m_byteLUT[Register];
 	}
 
 	template<RegisterType::Enum Register>
@@ -178,7 +168,7 @@ namespace gbhw
 	{
 		static_assert(IsRegisterAny<Register, RT::A, RT::B, RT::C, RT::D, RT::E, RT::F, RT::H, RT::L>::value,
 			"Invalid register type, it is not a byte type");
-		m_byteLUT[Register] = value;
+		*m_byteLUT[Register] = value;
 	}
 
 	template<RegisterType::Enum Register>
@@ -186,15 +176,7 @@ namespace gbhw
 	{
 		static_assert(IsRegisterAny<Register, RT::AF, RT::BC, RT::DE, RT::HL, RT::StackPointer, RT::ProgramCounter>::value,
 			"Invalid register type, it is not a word type");
-		return m_wordLUT[Register - RegisterType::AF];
-	}
-
-	template<RegisterType::Enum Register>
-	inline Word Registers::get_register_word() const
-	{
-		static_assert(IsRegisterAny<Register, RT::AF, RT::BC, RT::DE, RT::HL, RT::StackPointer, RT::ProgramCounter>::value,
-			"Invalid register type, it is not a word type");
-		return m_wordLUT[Register - RegisterType::AF];
+		return *m_wordLUT[Register - RegisterType::AF];
 	}
 
 	template<RegisterType::Enum Register>
@@ -202,7 +184,7 @@ namespace gbhw
 	{
 		static_assert(IsRegisterAny<Register, RT::AF, RT::BC, RT::DE, RT::HL, RT::StackPointer, RT::ProgramCounter>::value,
 			"Invalid register type, it is not a word type");
-		m_wordLUT[Register - RegisterType::AF] = value;
+		*m_wordLUT[Register - RegisterType::AF] = value;
 	}
 
 	template<RegisterFlag::Enum FlagType>

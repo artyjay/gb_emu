@@ -79,6 +79,9 @@ namespace gbhw
 		void write_io(HWRegs::Type reg, Byte val);
 		void generate_interrupt(HWInterrupts::Type interrupt);
 
+		inline Registers* get_registers();
+		inline Instruction get_instruction(Byte opcode, bool bExtended) const;
+
 	protected:
 		void handle_interrupts();
 		void handle_interrupt(HWInterrupts::Type interrupt, HWInterruptRoutines::Type routine, Byte regif, Byte regie);
