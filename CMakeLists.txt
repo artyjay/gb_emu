@@ -50,6 +50,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
 
 add_subdirectory(src/common)
 add_subdirectory(src/hardware)
+add_subdirectory(src/emulator)
 
 if(GB_ENABLE_FRONTEND_DESKTOP)
 	add_subdirectory(src/desktop)

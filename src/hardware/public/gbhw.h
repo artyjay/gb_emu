@@ -79,7 +79,7 @@ typedef struct gbhw_settings
 
 /*----------------------------------------------------------------------------*/
 
-gbhw_errorcode_t gbhw_create(gbhw_settings_t* settings, gbhw_context_t* ctx);
+HWPublicAPI gbhw_errorcode_t gbhw_create(gbhw_settings_t* settings, gbhw_context_t* ctx);
 
 HWPublicAPI void gbhw_destroy(gbhw_context_t ctx);
 

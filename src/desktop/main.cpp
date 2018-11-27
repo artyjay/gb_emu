@@ -1,8 +1,9 @@
-#include "emulator.h"
+#include <gbe.h>
 
 int main(int argc, char* args[])
 {
-	gbe::Emulator emulator;
-
-	return emulator.Run() ? 0 : -1;
+	gbe_context_t context = gbe_create();
+	int32_t	res = gbe_main_loop(context);
+	gbe_destroy(context);
+	return res;
 }

@@ -16,5 +16,4 @@ target_compile_definitions(desktop
 	PRIVATE SDL_MAIN_HANDLED)
 
 target_link_libraries(desktop
-	PRIVATE gb::hw
-			CONAN_PKG::sdl2)
+	PRIVATE gb::emulator)

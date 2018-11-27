@@ -22,5 +22,4 @@ target_include_directories(debugger
 target_link_libraries(debugger
 	PRIVATE gb::hw
 			Qt5::Core
-			Qt5::Widgets
-			CONAN_PKG::sdl2)
+			Qt5::Widgets)

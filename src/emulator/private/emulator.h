@@ -2,7 +2,7 @@
 
 #include <common.h>
 #include <gbhw.h>
-#include <SDL.h>
+#include "glcontext.h"
 
 namespace gbe
 {
@@ -12,21 +12,21 @@ namespace gbe
 		Emulator();
 		~Emulator();
 
-		bool Run();
+		bool main_loop();
+
+		void set_input(gbhw_button_t button, gbhw_button_state_t state);
+
 
 	private:
-		void UpdateSurface();
+		bool initialise_rendering();
+		void render_frame();
 
 		bool				m_bQuit;
-		SDL_Window*			m_window;
-		SDL_Surface*		m_screen;
-		SDL_Texture*		m_texture;
-		SDL_PixelFormat*	m_format;
 		gbhw_context_t		m_hardware;
+		GLContext_ptr		m_gl;
 
 		uint32_t			m_screenWidth;
 		uint32_t			m_screenHeight;
 		uint32_t			m_screenScale;
-
 	};
 }
