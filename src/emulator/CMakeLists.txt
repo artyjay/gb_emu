@@ -22,8 +22,8 @@ target_compile_definitions(emulator
 
 target_link_libraries(emulator
 	PUBLIC		gb::common
-	PRIVATE		gb::hw
-				CONAN_PKG::glfw)
+				gb::hw
+	PRIVATE		CONAN_PKG::sdl2)
 
 # Alias
 add_library(gb::emulator ALIAS emulator)

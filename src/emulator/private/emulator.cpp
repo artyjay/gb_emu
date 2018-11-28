@@ -29,6 +29,16 @@ namespace gbe
 
 	//--------------------------------------------------------------------------
 
+	struct ScreenPixel
+	{
+		uint8_t r;
+		uint8_t g;
+		uint8_t b;
+		uint8_t a;
+	};
+
+	//--------------------------------------------------------------------------
+
 	Emulator::Emulator()
 		: m_bQuit(false)
 		, m_screenWidth(0)
@@ -50,8 +60,8 @@ namespace gbe
 		settings.log_callback	= hw_log_callback;
 		settings.log_level		= l_debug;
 		settings.log_userdata	= this;
-		settings.rom_path		= "D:/Development/personal/gb_emu/roms/Zelda.gb";
-		//settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb_emu/roms/Zelda.gb";
+		//settings.rom_path		= "D:/Development/personal/gb_emu/roms/Zelda.gb";
+		settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb_emu/roms/Zelda.gb";
 		//settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb-test-roms/cpu_instrs/cpu_instrs.gb";
 
 		if (gbhw_create(&settings, &m_hardware) != e_success)
@@ -60,31 +70,45 @@ namespace gbe
 		if (gbhw_get_screen_resolution(m_hardware, &m_screenWidth, &m_screenHeight) != e_success)
 			return false;
 
-		m_screenWidth *= m_screenScale;
-		m_screenHeight *= m_screenScale;
+		// Setup SDL
+		SDL_Init(SDL_INIT_EVERYTHING);
 
-		// Create GL
-		GLContextSettings glSettings = {0};
-		glSettings.bES			= false;
-		glSettings.bFullscreen	= false;
-		glSettings.glMajor		= -1;
-		glSettings.glMinor		= -1;
-		glSettings.width		= m_screenWidth;
-		glSettings.height		= m_screenHeight;
-		glSettings.windowHandle	= nullptr;
-		m_gl = GLContext::create_context(this, glSettings);
+		m_window = SDL_CreateWindow("Gameboy Emulator",
+									SDL_WINDOWPOS_UNDEFINED,
+									SDL_WINDOWPOS_UNDEFINED,
+									m_screenWidth * m_screenScale,
+									m_screenHeight * m_screenScale,
+									SDL_WINDOW_SHOWN);
 
-		// Initialise rendering.
-		if(!initialise_rendering())
+		if(!m_window)
+		{
+			log_message("Failed to create window, error: %s\n", SDL_GetError());
 			return false;
+		}
 
+		m_renderer = SDL_CreateRenderer(m_window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+		if(!m_renderer)
+		{
+			log_message("Failed to create renderer, error: %s\n", SDL_GetError());
+			return false;
+		}
+
+		m_texture = SDL_CreateTexture(m_renderer,
+									  SDL_PIXELFORMAT_RGBX8888,
+									  SDL_TEXTUREACCESS_STREAMING,
+									  m_screenWidth,
+									  m_screenHeight);
+		if(!m_texture)
+		{
+			log_message("Failed to create texture, error: %s\n", SDL_GetError());
+			return false;
+		}
+
+		// Enter main-loop.
+		SDL_Event e;
 
 		while (!m_bQuit)
 		{
-			m_gl->poll();
-
-#if 0
-			//Handle events on queue
 			while (SDL_PollEvent(&e) != 0)
 			{
 				//User requests quit
@@ -110,7 +134,6 @@ namespace gbe
 					}
 				}
 			}
-#endif
 
 			// Tick hardware until there's a vsync.
 			gbhw_step(m_hardware, step_vsync);
@@ -121,6 +144,11 @@ namespace gbe
 			render_frame();
 		}
 
+		SDL_DestroyTexture(m_texture);
+		SDL_DestroyRenderer(m_renderer);
+		SDL_DestroyWindow(m_window);
+		SDL_Quit();
+
 		return true;
 	}
 
@@ -129,51 +157,32 @@ namespace gbe
 		gbhw_set_button_state(m_hardware, button, state);
 	}
 
-	bool Emulator::initialise_rendering()
-	{
-		return true;
-	}
-
 	void Emulator::render_frame()
 	{
-#if 0
-		SDL_FillRect(m_screen, nullptr, SDL_MapRGB(m_screen->format, 0x0, 0x0, 0x0));
-		SDL_LockSurface(m_screen);
-
-		// very much a hacky way of doing this, will be improved.
-		uint32_t* screenpixels = (uint32_t*)(m_screen->pixels);
 		const uint8_t* data	= nullptr;
-
-		// @todo: Error message.
 		if(gbhw_get_screen(m_hardware, &data) != e_success)
 			return;
 
-		const uint32_t dstWidth = m_screenScale * m_screenWidth;
+		// Pixels are 0->3 @todo: Output colour buffer from hardware directly.
+		ScreenPixel* pixels;
+		int32_t pitch;
+		SDL_LockTexture(m_texture, NULL, (void**)&pixels, &pitch);
 
 		for(uint32_t y = 0; y < m_screenHeight; ++y)
 		{
 			for(uint32_t x = 0; x < m_screenWidth; ++x)
 			{
-				//const uint8_t hwpixel = data[(y * m_screenWidth) + x];
-				uint8_t hwpixel = (3 - data[(y * m_screenWidth) + x]) * 85;	// Arbitrary colour scaling.
-
-				for(uint32_t ys = 0; ys < m_screenScale; ++ys)
-				{
-					uint32_t dsty = (y * m_screenScale) + ys;
-
-					for(uint32_t xs = 0; xs < m_screenScale; ++xs)
-					{
-						uint32_t dstx = (x * m_screenScale) + xs;
-						uint32_t* screenpixel = &screenpixels[(dsty * dstWidth) + dstx];
-						*screenpixel = SDL_MapRGB(m_screen->format, hwpixel, hwpixel, hwpixel);
-					}
-				}
+				pixels->r = pixels->g = pixels->b = (3 - *data) * 85;
+				data++;
+				pixels++;
 			}
 		}
 
-		SDL_UnlockSurface(m_screen);
-		SDL_UpdateWindowSurface(m_window);
-#endif
+		SDL_UnlockTexture(m_texture);
+
+		//SDL_UpdateTexture(m_texture, nullptr, data, m_screenWidth);
+		SDL_RenderCopy(m_renderer, m_texture, nullptr, nullptr);
+		SDL_RenderPresent(m_renderer);
 	}
 }
 
