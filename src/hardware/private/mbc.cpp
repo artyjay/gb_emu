@@ -74,13 +74,13 @@ namespace gbhw
 						m_romBank |= ((value & 0x03) << 5);
 
 						mbc_debug("MBC1: Loading Rom bank: %d\n", m_romBank);
-						m_mmu->LoadRomBank(m_romBank);
+						m_mmu->load_rom_bank(m_romBank);
 
 					}
 					else
 					{
 						mbc_debug("MBC1: Loading ERam bank: %d\n", value);
-						m_mmu->LoadERamBank(value & 0x03);
+						m_mmu->load_eram_bank(value & 0x03);
 					}
 				}
 				else if(range_check(address, 0x2000))
@@ -99,13 +99,13 @@ namespace gbhw
 					}
 
 					mbc_debug("MBC1: Loading Rom bank: %d\n", m_romBank);
-					m_mmu->LoadRomBank(m_romBank);
+					m_mmu->load_rom_bank(m_romBank);
 				}
 				else
 				{
 					// External-ram enable.
 					mbc_debug("MBC1: Enabling ERam: %s\n", value == 0 ? "false" : "true");
-					m_mmu->SetEnableERam(value != 0);
+					m_mmu->set_enable_eram(value != 0);
 				}
 
 				return true;
@@ -144,7 +144,7 @@ namespace gbhw
 				{
 					Byte ramBank = value & 0x03;
 					mbc_debug("MBC3: Loading ERam bank: %d\n", ramBank);
-					m_mmu->LoadERamBank(ramBank);
+					m_mmu->load_eram_bank(ramBank);
 				}
 				else if(range_check(address, 0x2000))
 				{
@@ -161,13 +161,13 @@ namespace gbhw
 					}
 
 					mbc_debug("MBC3: Loading Rom bank: %d\n", romBank);
-					m_mmu->LoadRomBank(romBank);
+					m_mmu->load_rom_bank(romBank);
 				}
 				else
 				{
 					// External-ram enable.
 					mbc_debug("MBC3: Enabling ERam: %s\n", value == 0x0 ? "false" : "true");
-					m_mmu->SetEnableERam(value != 0x0);
+					m_mmu->set_enable_eram(value != 0x0);
 				}
 
 				return true;
@@ -199,7 +199,7 @@ namespace gbhw
 				{
 					Byte ramBank = value & 0x0F;
 					mbc_debug("MBC5: Loading ERam bank: %d\n", ramBank);
-					m_mmu->LoadERamBank(ramBank);
+					m_mmu->load_eram_bank(ramBank);
 				}
 				else if(range_check(address, 0x3000))
 				{
@@ -215,7 +215,7 @@ namespace gbhw
 				{
 					// External-ram enable.
 					mbc_debug("MBC5: Enabling ERam: %s\n", value == 0x0 ? "false" : "true");
-					m_mmu->SetEnableERam(value != 0x0);
+					m_mmu->set_enable_eram(value != 0x0);
 				}
 
 				return true;
@@ -229,7 +229,7 @@ namespace gbhw
 		{
 			uint32_t romBank = (static_cast<uint32_t>(m_romBankHigh) << 8) | m_romBankLow;
 			mbc_debug("MBC5: Loading Rom bank: %u\n", romBank);
-			m_mmu->LoadRomBank(romBank);
+			m_mmu->load_rom_bank(romBank);
 		}
 
 		Byte m_romBankLow;

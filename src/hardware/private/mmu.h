@@ -6,9 +6,9 @@
 
 namespace gbhw
 {
-	// The gameboy has a total working size of 65536, which is divided into regions.
-	// Behavior changes depending on the region accessed. Below is an outline of the
-	// memory regions.
+	// The Gameboy has a total addressable memory size of 65536, which is divided
+	// into regions. Behavior changes depending on the region accessed. Below is
+	// an outline of the memory regions.
 	//
 	// 16kB				- [0x0000 -> 0x3FFF]	Cartridge ROM (bank 0)
 	// 16kB				- [0x4000 -> 0x7FFF]	Cartridge ROM (switchable bank)
@@ -42,7 +42,7 @@ namespace gbhw
 	{
 		struct RegionType
 		{
-			enum Type
+			enum Enum
 			{
 				RomBank0 = 0,
 				RomBank1,
@@ -56,28 +56,17 @@ namespace gbhw
 				Count
 			};
 
-			static const char* GetString(Type type);
+			static const char* GetString(Enum type);
 		};
 
 		struct Region
 		{
-			RegionType::Type	m_type;
+			RegionType::Enum	m_type;
 			uint8_t*			m_memory;
 			uint16_t			m_size;
 			Address				m_baseAddress;
 			bool				m_bEnabled;
 			bool				m_bReadOnly;
-		};
-
-		struct Breakpoint
-		{
-			Breakpoint(Address s, Address e) : m_startAddress(s), m_endAddress(e), m_conditionValue(0), m_bConditional(false) {}
-			Breakpoint(Address addr, Byte conditionValue) : m_startAddress(addr), m_endAddress(addr), m_conditionValue(conditionValue), m_bConditional(true) {}
-
-			Address m_startAddress;
-			Address m_endAddress;	// inclusive.
-			Byte	m_conditionValue;
-			bool	m_bConditional;
 		};
 
 	public:
@@ -87,32 +76,28 @@ namespace gbhw
 		void initialise(CPU_ptr cpu, GPU_ptr gpu, Rom_ptr rom);
 		void release();
 
-		void Reset(CartridgeType::Type cartridgeType);
+		void reset(CartridgeType::Type cartridgeType);
 
-		bool CheckResetBreakpoint();
-		void BreakpointSet(Address addressStart, Address addressEnd);
-		void BreakpointSetConditional(Address address, Byte conditionValue);
+		Byte read_byte(Address address) const;
+		Word read_word(Address address) const;
+		Byte read_io(HWRegs::Type reg);
 
-		Byte ReadByte(Address address) const;
-		Word ReadWord(Address address) const;
-
-		void WriteIO(HWRegs::Type reg, Byte byte);
-		void WriteByte(Address address, Byte byte);
-		void WriteWord(Address address, Word word);
+		void write_byte(Address address, Byte byte);
+		void write_word(Address address, Word word);
+		void write_io(HWRegs::Type reg, Byte byte);
 
 		void set_button_state(gbhw_button_t button, gbhw_button_state_t state);
 
-		void LoadRomBank(uint32_t sourceBankIndex, bool bFirstBank = false);
-		void LoadERamBank(uint32_t sourceBankIndex);
-		void SetEnableERam(bool bEnabled);
+		void load_rom_bank(uint32_t sourceBankIndex, RegionType::Enum destRegion = RegionType::RomBank1);
+		void load_eram_bank(uint32_t sourceBankIndex);
+		void set_enable_eram(bool bEnabled);
 
-		const uint8_t* GetMemoryPtrFromAddress(Address address);
+		const uint8_t* get_memory_ptr_from_addr(Address address);
 
 	private:
-		void HandleBreakpoint(Address writeAddress, Byte value);
-		void InitialiseRegion(RegionType::Type type, Address baseaddress, uint16_t size, bool bEnabled, bool bReadOnly);
-		void InitialiseRam();
-		void Reset();
+		void initialise_region(RegionType::Enum type, Address baseaddress, uint16_t size, bool bEnabled, bool bReadOnly);
+		void initialise_ram();
+		void reset();
 
 		static const uint32_t	kMemorySize				= 65536;
 		static const uint32_t	kLutShiftGranularity	= 7;	// Shift right for / 128.
@@ -127,9 +112,6 @@ namespace gbhw
 		MBC*					m_mbc;
 		MemoryBanks				m_ramBanks;
 
-
-		std::vector<Breakpoint>	m_writeBreakpoints;
-		bool					m_bBreakpoint;
 		Byte					m_buttonColumn;
 		Byte					m_buttonsDirection;
 		Byte					m_buttonsFace;

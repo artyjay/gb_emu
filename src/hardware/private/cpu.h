@@ -74,9 +74,6 @@ namespace gbhw
 		void update_stalled();
 		bool is_stalled() const;
 
-		// I/O - external interface for interrupt handling and i/o.
-		Byte read_io(HWRegs::Type reg);
-		void write_io(HWRegs::Type reg, Byte val);
 		void generate_interrupt(HWInterrupts::Type interrupt);
 
 		inline Registers* get_registers();

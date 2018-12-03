@@ -77,7 +77,7 @@ extern "C"
 		context->rom->load(memory, length);
 
 		// Reset the mmu with rom cartridge type
-		context->mmu->Reset(context->rom->get_cartridge_type());
+		context->mmu->reset(context->rom->get_cartridge_type());
 
 		// @todo: Reset a whole bunch of other stuff too.
 
@@ -249,8 +249,8 @@ extern "C"
 		MMU* mmu = context->mmu.get();
 		CPU* cpu = context->cpu.get();
 
-		const uint8_t* instructionAddress = mmu->GetMemoryPtrFromAddress(address);
-		const uint8_t* baseInstruction = mmu->GetMemoryPtrFromAddress(0);
+		const uint8_t* instructionAddress = mmu->get_memory_ptr_from_addr(address);
+		const uint8_t* baseInstruction = mmu->get_memory_ptr_from_addr(0);
 		int32_t instructionsProcessed = 0;
 
 		while (true)

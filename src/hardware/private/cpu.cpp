@@ -122,25 +122,15 @@ namespace gbhw
 		return m_bStopped || m_bHalted;
 	}
 
-	Byte CPU::read_io(HWRegs::Type reg)
-	{
-		return m_mmu->ReadByte(static_cast<Address>(reg));
-	}
-
-	void CPU::write_io(HWRegs::Type reg, Byte val)
-	{
-		m_mmu->WriteIO(reg, val);
-	}
-
 	void CPU::generate_interrupt(HWInterrupts::Type interrupt)
 	{
-		m_mmu->WriteByte(HWRegs::IF, m_mmu->ReadByte(HWRegs::IF) | static_cast<Byte>(interrupt));
+		m_mmu->write_byte(HWRegs::IF, m_mmu->read_byte(HWRegs::IF) | static_cast<Byte>(interrupt));
 	}
 
 	void CPU::handle_interrupts()
 	{
-		Byte regif = m_mmu->ReadByte(HWRegs::IF);
-		Byte regie = m_mmu->ReadByte(HWRegs::IE);
+		Byte regif = m_mmu->read_byte(HWRegs::IF);
+		Byte regie = m_mmu->read_byte(HWRegs::IE);
 
 		if(regif == 0)
 		{
@@ -162,17 +152,15 @@ namespace gbhw
 		{
 			if(m_registers.ime)
 			{
-				//gbhw::Message("Handling interrupt: %s\n", HWInterrupts::ToStr(interrupt));
-
 				if (HWInterrupts::Timer == interrupt)
 				{
 					log_debug("Handling timer interrupt\n");
 				}
 
-				m_mmu->WriteByte(HWRegs::IF, regif & ~(inter));	// Remove flag, indicating handled.
-				m_registers.ime = false;									// Disable interrupts.
+				m_mmu->write_byte(HWRegs::IF, regif & ~(inter));		// Remove flag, indicating handled.
+				m_registers.ime = false;								// Disable interrupts.
 				stack_push(m_registers.pc);								// Push current instruction onto the stack.
-				m_registers.pc = static_cast<Word>(routine);				// Jump to interrupt routine.
+				m_registers.pc = static_cast<Word>(routine);			// Jump to interrupt routine.
 			}
 
 			if ((interrupt == HWInterrupts::Button) && m_bStopped)

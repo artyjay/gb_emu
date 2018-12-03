@@ -35,7 +35,7 @@ namespace gbhw
 		};
 	}
 
-	const char* MMU::RegionType::GetString(Type type)
+	const char* MMU::RegionType::GetString(Enum type)
 	{
 		return kRegionTypeStrings[type];
 	}
@@ -47,26 +47,25 @@ namespace gbhw
 		, m_rom(nullptr)
 		, m_mbc(nullptr)
 	{
-		// @todo Initialise all memory with "random" data.
-		InitialiseRegion(RegionType::RomBank0,			0x0000, 16384, true, true);
-		InitialiseRegion(RegionType::RomBank1,			0x4000, 16384, true, true);
-		InitialiseRegion(RegionType::VideoRam,			0x8000, 8192,  true, false);
-		InitialiseRegion(RegionType::ExternalRam,		0xA000, 8192, false, false);
-		InitialiseRegion(RegionType::InternalRam,		0xC000, 8192,  true, false); // This is bankable, 0xC000->0xCFFF is fixed, 0xD000->0xDFFF is bankable 1-7 on CGB.
-		InitialiseRegion(RegionType::InternalRamEcho,	0xE000, 7680,  true, false);
-		InitialiseRegion(RegionType::SpriteAttribute,	0xFE00, 256,   true, false);
-		InitialiseRegion(RegionType::IO,				0xFF00, 128,   true, false);
-		InitialiseRegion(RegionType::ZeroPageRam,		0xFF80, 128,   true, false);
-		InitialiseRam();
+		// @todo: Initialise all memory with "random" data.
+		initialise_region(RegionType::RomBank0,			0x0000, 16384, true, true);
+		initialise_region(RegionType::RomBank1,			0x4000, 16384, true, true);
+		initialise_region(RegionType::VideoRam,			0x8000, 8192,  true, false);
+		initialise_region(RegionType::ExternalRam,		0xA000, 8192, false, false);
+		initialise_region(RegionType::InternalRam,		0xC000, 8192,  true, false); // This is bankable, 0xC000->0xCFFF is fixed, 0xD000->0xDFFF is bankable 1-7 on CGB.
+		initialise_region(RegionType::InternalRamEcho,	0xE000, 7680,  true, false);
+		initialise_region(RegionType::SpriteAttribute,	0xFE00, 256,   true, false);
+		initialise_region(RegionType::IO,				0xFF00, 128,   true, false);
+		initialise_region(RegionType::ZeroPageRam,		0xFF80, 128,   true, false);
+		initialise_ram();
 
 		// Echo working ram by sharing the same pointer. The 7680 byte region reserved for the
 		// echo is just ignored.
 		Region& workingRam		= m_regions[static_cast<uint32_t>(RegionType::InternalRam)];
 		Region& workingRamEcho	= m_regions[static_cast<uint32_t>(RegionType::InternalRamEcho)];
-
 		workingRamEcho.m_memory = workingRam.m_memory;
 
-		Reset();
+		reset();
 	}
 
 	MMU::~MMU()
@@ -91,7 +90,7 @@ namespace gbhw
 		m_rom = nullptr;
 	}
 
-	void MMU::Reset(CartridgeType::Type cartridgeType)
+	void MMU::reset(CartridgeType::Type cartridgeType)
 	{
 		if(m_mbc)
 		{
@@ -100,30 +99,15 @@ namespace gbhw
 
 		m_mbc = MBC::create(MMU_ptr(this), cartridgeType);
 
-		Reset();
+		reset();
 
-		// Load bank 0 and 1 into memory initially.
-		LoadRomBank(0, true);
-		LoadRomBank(1);
+		// Load bank 0 and 1 into memory initially, Bank0 is fixed across all
+		// known MBC types. So it will always point at the beginning of a rom.
+		load_rom_bank(0, RegionType::RomBank0);
+		load_rom_bank(1);
 	}
 
-	bool MMU::CheckResetBreakpoint()
-	{
-		bool res = m_bBreakpoint;
-		m_bBreakpoint = false;
-		return res;
-	}
-	void MMU::BreakpointSet(Address addressStart, Address addressEnd)
-	{
-		m_writeBreakpoints.push_back(Breakpoint(addressStart, addressEnd));
-	}
-
-	void MMU::BreakpointSetConditional(Address address, Byte conditionValue)
-	{
-		m_writeBreakpoints.push_back(Breakpoint(address, conditionValue));
-	}
-
-	Byte MMU::ReadByte(Address address) const
+	Byte MMU::read_byte(Address address) const
 	{
 		// @todo Check for out of bounds behaviour
 		const uint32_t	lutindex	= (address >> kLutShiftGranularity);
@@ -168,25 +152,22 @@ namespace gbhw
 	}
 
 
-	Word MMU::ReadWord(Address address) const
+	Word MMU::read_word(Address address) const
 	{
-		return (ReadByte(address) + (static_cast<Word>(ReadByte(address + 1)) << 8));
+		return (read_byte(address) + (static_cast<Word>(read_byte(address + 1)) << 8));
 	}
 
-	void MMU::WriteIO(HWRegs::Type reg, Byte byte)
+	Byte MMU::read_io(HWRegs::Type reg)
 	{
-		// Special case by-pass for IO regs, this is essential a HW write rather than a SW write.
-		m_memory[static_cast<Address>(reg)] = byte;
+		return read_byte(static_cast<Address>(reg));
 	}
 
-	void MMU::WriteByte(Address address, Byte byte)
+	void MMU::write_byte(Address address, Byte byte)
 	{
 		// @todo Check for out of bounds behaviour
 		const uint32_t	lutindex = (address >> kLutShiftGranularity);
 			  Region*	region = m_regionsLUT[lutindex];
 		const Address	regionAddr = address - region->m_baseAddress;
-
-		HandleBreakpoint(address, byte);
 
 		if(address >= 0x9800 && address < 0x9810)
 		{
@@ -269,11 +250,14 @@ namespace gbhw
 						}
 
 						region->m_memory[regionAddr] = byte;
-					} break;
+
+						break;
+					}
 					case HWRegs::DIV:
 					{
 						region->m_memory[regionAddr] = 0;	// DIV is reset when written to.
-					} break;
+						break;
+					}
 					case HWRegs::DMA:
 					{
 						Address source = byte << 8;
@@ -286,61 +270,62 @@ namespace gbhw
 							m_gpu->UpdateSpriteData(dstAddress, m_memory[dstAddress]);
 						}
 
-
-					} break;
+						break;
+					}
 					case HWRegs::LCDC:
 					{
 						// Inform GPU of display being turned on/off.
 						m_gpu->SetLCDC(byte);
 						region->m_memory[regionAddr] = byte;
-					} break;
+						break;
+					}
 					case HWRegs::BGP:
 					{
 						m_gpu->UpdatePalette(HWRegs::BGP, byte);
 						region->m_memory[regionAddr] = byte;
-					} break;
+						break;
+					}
 					case HWRegs::OBJ0P:
 					{
 						m_gpu->UpdatePalette(HWRegs::OBJ0P, byte);
 						region->m_memory[regionAddr] = byte;
-					} break;
+						break;
+					}
 					case HWRegs::OBJ1P:
 					{
 						m_gpu->UpdatePalette(HWRegs::OBJ1P, byte);
 						region->m_memory[regionAddr] = byte;
-					} break;
+						break;
+					}
 					case HWRegs::Stat:
 					{
 						// Bottom 3 bits are read-only when from an instruction...
 						region->m_memory[regionAddr] = (region->m_memory[regionAddr] & 0x07) | (byte & 0xF8);
-					} break;
+						break;
+					}
 					default:
 					{
 						region->m_memory[regionAddr] = byte;
-					} break;
+						break;
+					}
 				}
 
-				// After writing special case handling...
-				switch(address)
-				{
-					case HWRegs::ScrollY:
-						break;
-					case HWRegs::LYC:
-						//std::cout << "Writing to lyc: " << std::hex << (int)byte << std::endl;
-						break;
-				}
-
-				
-				
 				break;
 			}
 		}
 	}
-	
-	void MMU::WriteWord(Address address, Word word)
+
+	void MMU::write_word(Address address, Word word)
 	{
-		WriteByte(address,		static_cast<Byte>(word & 0xFF));
-		WriteByte(address + 1,	static_cast<Byte>((word >> 8) & 0xFF));
+		write_byte(address,		static_cast<Byte>(word & 0xFF));
+		write_byte(address + 1,	static_cast<Byte>((word >> 8) & 0xFF));
+	}
+
+	void MMU::write_io(HWRegs::Type reg, Byte byte)
+	{
+		// Special case by-pass for IO regs, this is essentially a HW write rather
+		// than a SW write.
+		m_memory[static_cast<Address>(reg)] = byte;
 	}
 
 	void MMU::set_button_state(gbhw_button_t button, gbhw_button_state_t state)
@@ -371,22 +356,13 @@ namespace gbhw
 		}
 	}
 
-	void MMU::LoadRomBank(uint32_t sourceBankIndex, bool bFirstBank)
+	void MMU::load_rom_bank(uint32_t sourceBankIndex, RegionType::Enum destRegion)
 	{
 		uint8_t* romBankData = m_rom->get_bank(sourceBankIndex);
 
 		if (romBankData)
 		{
-			if(bFirstBank)
-			{
-				m_regions[RegionType::RomBank0].m_memory = romBankData;
-			}
-			else
-			{
-				m_regions[RegionType::RomBank1].m_memory = romBankData;
-			}
-			//Message("Loading ROM bank %u into %s\n", sourceBankIndex, RegionType::GetString(destinationBank.m_type));
-			//memcpy_s(destinationBank.m_memory, Rom::kBankSize, romBankData, Rom::kBankSize);
+			m_regions[destRegion].m_memory = romBankData;
 		}
 		else
 		{
@@ -395,7 +371,7 @@ namespace gbhw
 		}
 	}
 
-	void MMU::LoadERamBank(uint32_t sourceBankIndex)
+	void MMU::load_eram_bank(uint32_t sourceBankIndex)
 	{
 		uint8_t* ramBankData = m_ramBanks[sourceBankIndex].m_memory;
 
@@ -410,47 +386,19 @@ namespace gbhw
 		}
 	}
 
-	void MMU::SetEnableERam(bool bEnabled)
+	void MMU::set_enable_eram(bool bEnabled)
 	{
 		m_regions[RegionType::ExternalRam].m_bEnabled = bEnabled;
 	}
 
-	const uint8_t* MMU::GetMemoryPtrFromAddress(Address address)
+	const uint8_t* MMU::get_memory_ptr_from_addr(Address address)
 	{
-		// @todo Check for out of bounds behaviour
-		const uint32_t	lutindex = (address >> kLutShiftGranularity);
-		Region*	region = m_regionsLUT[lutindex];
-		const Address	regionAddr = address - region->m_baseAddress;
-
-		return (region->m_memory + regionAddr);
+		// @todo: Check for out of bounds behaviour
+		const Region* region = m_regionsLUT[(address >> kLutShiftGranularity)];
+		return (region->m_memory + (address - region->m_baseAddress));
 	}
 
-	void MMU::HandleBreakpoint(Address writeAddress, Byte value)
-	{
-		m_bBreakpoint = false;
-
-		for (auto& bp : m_writeBreakpoints)
-		{
-			if(bp.m_bConditional)
-			{
-				if(writeAddress == bp.m_startAddress && value == bp.m_conditionValue)
-				{
-					m_bBreakpoint = true;
-					break;
-				}
-			}
-			else
-			{
-				if (writeAddress >= bp.m_startAddress && writeAddress <= bp.m_endAddress)
-				{
-					m_bBreakpoint = true;
-					break;
-				}
-			}
-		}
-	}
-
-	void MMU::InitialiseRegion(RegionType::Type type, Address baseaddress, uint16_t size, bool bEnabled, bool bReadOnly)
+	void MMU::initialise_region(RegionType::Enum type, Address baseaddress, uint16_t size, bool bEnabled, bool bReadOnly)
 	{
 		Region* region = &m_regions[type];
 
@@ -462,7 +410,7 @@ namespace gbhw
 		region->m_bEnabled		= bEnabled;
 		region->m_bReadOnly		= bReadOnly;
 
-		// Setup lut.
+		// Setup LUT.
 		uint32_t lutindex = (baseaddress >> kLutShiftGranularity);
 		const uint32_t lutend = (size >> kLutShiftGranularity) + lutindex;
 
@@ -472,7 +420,7 @@ namespace gbhw
 		}
 	}
 
-	void MMU::InitialiseRam()
+	void MMU::initialise_ram()
 	{
 		for(uint32_t i = 0; i < 16; ++i)
 		{
@@ -482,7 +430,7 @@ namespace gbhw
 		}
 	}
 
-	void MMU::Reset()
+	void MMU::reset()
 	{
 		memset(m_memory, 0, kMemorySize);
 
@@ -529,7 +477,5 @@ namespace gbhw
 		m_buttonColumn = 0;
 		m_buttonsDirection = 0x0F;
 		m_buttonsFace = 0x0F;
-
-		m_bBreakpoint = false;
 	}
 }

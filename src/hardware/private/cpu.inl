@@ -72,7 +72,7 @@ namespace gbhw
 
 	inline Byte CPU::immediate_byte(bool steppc)
 	{
-		Byte res = m_mmu->ReadByte(m_registers.pc);
+		Byte res = m_mmu->read_byte(m_registers.pc);
 
 		if(steppc)
 		{
@@ -84,7 +84,7 @@ namespace gbhw
 
 	inline Word CPU::immediate_word(bool steppc)
 	{
-		Word res = m_mmu->ReadWord(m_registers.pc);
+		Word res = m_mmu->read_word(m_registers.pc);
 
 		if (steppc)
 		{
@@ -101,13 +101,13 @@ namespace gbhw
 	inline void CPU::stack_push(Word word)
 	{
 		m_registers.sp -= 2;
-		m_mmu->WriteWord(m_registers.sp, word);
+		m_mmu->write_word(m_registers.sp, word);
 	}
 
 	inline Word CPU::stack_pop()
 	{
 		m_registers.sp += 2;
-		return m_mmu->ReadWord(m_registers.sp - 2);
+		return m_mmu->read_word(m_registers.sp - 2);
 	}
 
 	//--------------------------------------------------------------------------
@@ -373,7 +373,7 @@ namespace gbhw
 	template<RT::Enum DstRegister, RT::Enum SrcRegisterPtr>
 	inline InstructionResult::Enum CPU::inst_ld_n_n_ptr()
 	{
-		Byte val = m_mmu->ReadByte(m_registers.get_register_word<SrcRegisterPtr>());
+		Byte val = m_mmu->read_byte(m_registers.get_register_word<SrcRegisterPtr>());
 		m_registers.set_register<DstRegister>(val);
 		return InstructionResult::Passed;
 	}
@@ -381,7 +381,7 @@ namespace gbhw
 	template<RT::Enum DstRegisterPtr, RT::Enum SrcRegister>
 	inline InstructionResult::Enum CPU::inst_ld_n_ptr_n()
 	{
-		m_mmu->WriteByte(m_registers.get_register_word<DstRegisterPtr>(),
+		m_mmu->write_byte(m_registers.get_register_word<DstRegisterPtr>(),
 						 m_registers.get_register<SrcRegister>());
 		return InstructionResult::Passed;
 	}
@@ -395,71 +395,71 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_ld_a_imm_ptr()
 	{
-		m_registers.a = m_mmu->ReadByte(immediate_word());
+		m_registers.a = m_mmu->read_byte(immediate_word());
 		return InstructionResult::Passed;
 	}
 
 	inline InstructionResult::Enum CPU::inst_ld_imm_ptr_a()
 	{
-		m_mmu->WriteByte(immediate_word(), m_registers.a);
+		m_mmu->write_byte(immediate_word(), m_registers.a);
 		return InstructionResult::Passed;
 	}
 
 	inline InstructionResult::Enum CPU::inst_ld_hl_ptr_imm()
 	{
-		m_mmu->WriteByte(m_registers.hl, immediate_byte());
+		m_mmu->write_byte(m_registers.hl, immediate_byte());
 		return InstructionResult::Passed;
 	}
 
 	inline InstructionResult::Enum CPU::inst_ldd_a_hl_ptr()
 	{
-		m_registers.a = m_mmu->ReadByte(m_registers.hl);
+		m_registers.a = m_mmu->read_byte(m_registers.hl);
 		m_registers.hl = inst_dec_w(m_registers.hl);
 		return InstructionResult::Passed;
 	}
 
 	inline InstructionResult::Enum CPU::inst_ldd_hl_ptr_a()
 	{
-		m_mmu->WriteByte(m_registers.hl, m_registers.a);
+		m_mmu->write_byte(m_registers.hl, m_registers.a);
 		m_registers.hl = inst_dec_w(m_registers.hl);
 		return InstructionResult::Passed;
 	}
 
 	inline InstructionResult::Enum CPU::inst_ldi_a_hl_ptr()
 	{
-		m_registers.a = m_mmu->ReadByte(m_registers.hl);
+		m_registers.a = m_mmu->read_byte(m_registers.hl);
 		m_registers.hl = inst_inc_w(m_registers.hl);
 		return InstructionResult::Passed;
 	}
 
 	inline InstructionResult::Enum CPU::inst_ldi_hl_ptr_a()
 	{
-		m_mmu->WriteByte(m_registers.hl, m_registers.a);
+		m_mmu->write_byte(m_registers.hl, m_registers.a);
 		m_registers.hl = inst_inc_w(m_registers.hl);
 		return InstructionResult::Passed;
 	}
 
 	inline InstructionResult::Enum CPU::inst_ldh_imm_ptr_a()
 	{
-		m_mmu->WriteByte(0xFF00 + immediate_byte(), m_registers.a);
+		m_mmu->write_byte(0xFF00 + immediate_byte(), m_registers.a);
 		return InstructionResult::Passed;
 	}
 
 	inline InstructionResult::Enum CPU::inst_ldh_a_imm_ptr()
 	{
-		m_registers.a = m_mmu->ReadByte(0xFF00 + immediate_byte());
+		m_registers.a = m_mmu->read_byte(0xFF00 + immediate_byte());
 		return InstructionResult::Passed;
 	}
 
 	inline InstructionResult::Enum CPU::inst_ld_c_ptr_a()
 	{
-		m_mmu->WriteByte(0xFF00 + m_registers.c, m_registers.a);
+		m_mmu->write_byte(0xFF00 + m_registers.c, m_registers.a);
 		return InstructionResult::Passed;
 	}
 
 	inline InstructionResult::Enum CPU::inst_ld_a_c_ptr()
 	{
-		m_registers.a = m_mmu->ReadByte(0xFF00 + m_registers.c);
+		m_registers.a = m_mmu->read_byte(0xFF00 + m_registers.c);
 		return InstructionResult::Passed;
 	}
 
@@ -496,7 +496,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_imm_ptr_sp()
 	{
-		m_mmu->WriteWord(immediate_word(), m_registers.sp);
+		m_mmu->write_word(immediate_word(), m_registers.sp);
 		return InstructionResult::Passed;
 	}
 
@@ -545,7 +545,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_add_hl_ptr()
 	{
-		return inst_add(m_mmu->ReadByte(m_registers.hl));
+		return inst_add(m_mmu->read_byte(m_registers.hl));
 	}
 
 	inline InstructionResult::Enum CPU::inst_add_imm()
@@ -579,7 +579,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_adc_hl_ptr()
 	{
-		return inst_adc(m_mmu->ReadByte(m_registers.hl));
+		return inst_adc(m_mmu->read_byte(m_registers.hl));
 	}
 
 	inline InstructionResult::Enum CPU::inst_adc_imm()
@@ -609,7 +609,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_sub_hl_ptr()
 	{
-		return inst_sub(m_mmu->ReadByte(m_registers.hl));
+		return inst_sub(m_mmu->read_byte(m_registers.hl));
 	}
 
 	inline InstructionResult::Enum CPU::inst_sub_imm()
@@ -657,7 +657,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_sbc_hl_ptr()
 	{
-		return inst_sbc(m_mmu->ReadByte(m_registers.hl));
+		return inst_sbc(m_mmu->read_byte(m_registers.hl));
 	}
 
 	inline InstructionResult::Enum CPU::inst_sbc_imm()
@@ -686,7 +686,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_and_hl_ptr()
 	{
-		return inst_and(m_mmu->ReadByte(m_registers.hl));
+		return inst_and(m_mmu->read_byte(m_registers.hl));
 	}
 
 	inline InstructionResult::Enum CPU::inst_and_imm()
@@ -714,7 +714,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_or_hl_ptr()
 	{
-		return inst_or(m_mmu->ReadByte(m_registers.hl));
+		return inst_or(m_mmu->read_byte(m_registers.hl));
 	}
 
 	inline InstructionResult::Enum CPU::inst_or_imm()
@@ -742,7 +742,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_xor_hl_ptr()
 	{
-		return inst_xor(m_mmu->ReadByte(m_registers.hl));
+		return inst_xor(m_mmu->read_byte(m_registers.hl));
 	}
 
 	inline InstructionResult::Enum CPU::inst_xor_imm()
@@ -771,7 +771,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_cp_hl_ptr()
 	{
-		return inst_cp(m_mmu->ReadByte(m_registers.hl));
+		return inst_cp(m_mmu->read_byte(m_registers.hl));
 	}
 
 	inline InstructionResult::Enum CPU::inst_cp_imm()
@@ -802,7 +802,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_inc_hl_ptr()
 	{
-		m_mmu->WriteByte(m_registers.hl, inst_inc(m_mmu->ReadByte(m_registers.hl)));
+		m_mmu->write_byte(m_registers.hl, inst_inc(m_mmu->read_byte(m_registers.hl)));
 		return InstructionResult::Passed;
 	}
 
@@ -829,7 +829,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_dec_hl_ptr()
 	{
-		m_mmu->WriteByte(m_registers.hl, inst_dec(m_mmu->ReadByte(m_registers.hl)));
+		m_mmu->write_byte(m_registers.hl, inst_dec(m_mmu->read_byte(m_registers.hl)));
 		return InstructionResult::Passed;
 	}
 
@@ -1009,7 +1009,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_ext_rlc_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, inst_ext_rlc(m_mmu->ReadByte(m_registers.hl)));
+		m_mmu->write_byte(m_registers.hl, inst_ext_rlc(m_mmu->read_byte(m_registers.hl)));
 		return InstructionResult::Passed;
 	}
 
@@ -1041,7 +1041,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_ext_rrc_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, inst_ext_rrc(m_mmu->ReadByte(m_registers.hl)));
+		m_mmu->write_byte(m_registers.hl, inst_ext_rrc(m_mmu->read_byte(m_registers.hl)));
 		return InstructionResult::Passed;
 	}
 
@@ -1073,7 +1073,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_ext_rl_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, inst_ext_rl(m_mmu->ReadByte(m_registers.hl)));
+		m_mmu->write_byte(m_registers.hl, inst_ext_rl(m_mmu->read_byte(m_registers.hl)));
 		return InstructionResult::Passed;
 	}
 
@@ -1109,7 +1109,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_ext_rr_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, inst_ext_rr(m_mmu->ReadByte(m_registers.hl)));
+		m_mmu->write_byte(m_registers.hl, inst_ext_rr(m_mmu->read_byte(m_registers.hl)));
 		return InstructionResult::Passed;
 	}
 
@@ -1136,7 +1136,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_ext_sla_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, inst_ext_sla(m_mmu->ReadByte(m_registers.hl)));
+		m_mmu->write_byte(m_registers.hl, inst_ext_sla(m_mmu->read_byte(m_registers.hl)));
 		return InstructionResult::Passed;
 	}
 
@@ -1166,7 +1166,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_ext_sra_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, inst_ext_sra(m_mmu->ReadByte(m_registers.hl)));
+		m_mmu->write_byte(m_registers.hl, inst_ext_sra(m_mmu->read_byte(m_registers.hl)));
 		return InstructionResult::Passed;
 	}
 
@@ -1193,7 +1193,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_ext_swap_hl_ptr()
 	{
-		m_mmu->WriteByte(m_registers.hl, inst_ext_swap(m_mmu->ReadByte(m_registers.hl)));
+		m_mmu->write_byte(m_registers.hl, inst_ext_swap(m_mmu->read_byte(m_registers.hl)));
 		return InstructionResult::Passed;
 	}
 
@@ -1220,7 +1220,7 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_ext_srl_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, inst_ext_srl(m_mmu->ReadByte(m_registers.hl)));
+		m_mmu->write_byte(m_registers.hl, inst_ext_srl(m_mmu->read_byte(m_registers.hl)));
 		return InstructionResult::Passed;
 	}
 
@@ -1249,7 +1249,7 @@ namespace gbhw
 	template<Byte Bit>
 	inline InstructionResult::Enum CPU::inst_ext_bit_b_hl_addr()
 	{
-		inst_ext_bit<Bit>(m_mmu->ReadByte(m_registers.hl));
+		inst_ext_bit<Bit>(m_mmu->read_byte(m_registers.hl));
 		return InstructionResult::Passed;
 	}
 
@@ -1276,7 +1276,7 @@ namespace gbhw
 	template<Byte Bit>
 	inline InstructionResult::Enum CPU::inst_ext_reset_b_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, inst_ext_reset<Bit>(m_mmu->ReadByte(m_registers.hl)));
+		m_mmu->write_byte(m_registers.hl, inst_ext_reset<Bit>(m_mmu->read_byte(m_registers.hl)));
 		return InstructionResult::Passed;
 	}
 
@@ -1303,7 +1303,7 @@ namespace gbhw
 	template<Byte Bit>
 	inline InstructionResult::Enum CPU::inst_ext_set_b_hl_addr()
 	{
-		m_mmu->WriteByte(m_registers.hl, inst_ext_set<Bit>(m_mmu->ReadByte(m_registers.hl)));
+		m_mmu->write_byte(m_registers.hl, inst_ext_set<Bit>(m_mmu->read_byte(m_registers.hl)));
 		return InstructionResult::Passed;
 	}
 

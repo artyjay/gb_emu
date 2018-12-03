@@ -9,7 +9,7 @@ namespace gbhw
 	public:
 		Timer();
 
-		void initialise(CPU_ptr cpu);
+		void initialise(CPU_ptr cpu, MMU_ptr mmu);
 		void release();
 
 		void update(uint32_t cycles);
@@ -17,6 +17,7 @@ namespace gbhw
 
 	private:
 		CPU_ptr		m_cpu;
+		MMU_ptr		m_mmu;
 		uint32_t	m_tima;
 		uint32_t	m_divt;
 	};

@@ -72,8 +72,8 @@ namespace gbhw
 			{
 				Address lineAddress = tileAddress + (y * 2);
 
-				Byte lineLow = mmu->ReadByte(lineAddress);
-				Byte lineHigh = mmu->ReadByte(lineAddress + 1);
+				Byte lineLow = mmu->read_byte(lineAddress);
+				Byte lineHigh = mmu->read_byte(lineAddress + 1);
 				Byte* tileLinePixels = tileData.m_pixels[y];
 
 				for (Byte tilePixelX = 0; tilePixelX < 8; ++tilePixelX)
@@ -117,9 +117,9 @@ namespace gbhw
 
 	void GPU::Update(uint32_t cycles)
 	{
-		Byte ly		= m_cpu->read_io(HWRegs::LY);
-		Byte stat	= m_cpu->read_io(HWRegs::Stat);
-		Byte lcdc	= m_cpu->read_io(HWRegs::LCDC);
+		Byte ly		= m_mmu->read_io(HWRegs::LY);
+		Byte stat	= m_mmu->read_io(HWRegs::Stat);
+		Byte lcdc	= m_mmu->read_io(HWRegs::LCDC);
 
 		// LCD if off.
 		if((lcdc & 0x80) == 0)
@@ -249,8 +249,8 @@ namespace gbhw
 			}
 		}
 
-		m_cpu->write_io(HWRegs::LY, ly);
-		m_cpu->write_io(HWRegs::Stat, stat);
+		m_mmu->write_io(HWRegs::LY, ly);
+		m_mmu->write_io(HWRegs::Stat, stat);
 	}
 
 	void GPU::Reset()
@@ -265,7 +265,7 @@ namespace gbhw
 	void GPU::SetLCDC(Byte val)
 	{
 		// todo:
-		if((val & 0x80) != (m_cpu->read_io(HWRegs::LCDC) & 0x80))
+		if((val & 0x80) != (m_mmu->read_io(HWRegs::LCDC) & 0x80))
 		{
 			if(val & 0x80)
 			{
@@ -380,13 +380,13 @@ namespace gbhw
 		}
 
 		// Store state
-		m_lcdc				= m_cpu->read_io(HWRegs::LCDC);
+		m_lcdc				= m_mmu->read_io(HWRegs::LCDC);
 		m_currentScanLine	= line;
 
 		// This is only allowed to be modified on screen refresh, so cache first scanline
 		if (m_currentScanLine == 0)
 		{
-			m_windowPosY = m_cpu->read_io(HWRegs::WindowY);
+			m_windowPosY = m_mmu->read_io(HWRegs::WindowY);
 			m_windowReadY = 0;	// Reset this. Window drawing will resume drawing from where it last read when disabled between h-blanks.
 		}
 
@@ -396,13 +396,13 @@ namespace gbhw
 
 		if (HWLCDC::get_bg_enabled(m_lcdc))
 		{
-			DrawScanLineBGTileMap(HWLCDC::get_bg_tile_map_address(m_lcdc), m_cpu->read_io(HWRegs::ScrollX), m_cpu->read_io(HWRegs::ScrollY));
+			DrawScanLineBGTileMap(HWLCDC::get_bg_tile_map_address(m_lcdc), m_mmu->read_io(HWRegs::ScrollX), m_mmu->read_io(HWRegs::ScrollY));
 		}
 
 		if (HWLCDC::get_window_enabled(m_lcdc))
 		{
 			// Can be modified between interrupts.
-			Byte windowX = m_cpu->read_io(HWRegs::WindowX);
+			Byte windowX = m_mmu->read_io(HWRegs::WindowX);
 
 			// Only draw on this scanline when visible.
 			if (windowX <= 166 && m_currentScanLine >= m_windowPosY)
@@ -445,16 +445,16 @@ namespace gbhw
 	{
 		// Setup basics.
 		const Address	screenAddr			= m_currentScanLine * kScreenWidth;
-		Byte			tileX				= scrollX % 8;													// X-coordinate within the tile to start off with.
-		Byte			tileY				= (m_currentScanLine + scrollY) % 8;							// Y-coordinate within the tile
+		Byte			tileX				= scrollX % 8;															// X-coordinate within the tile to start off with.
+		Byte			tileY				= (m_currentScanLine + scrollY) % 8;									// Y-coordinate within the tile
 
 		// Calculate tile map/pattern addresses.
 		const Byte		tilePatternIndex	= HWLCDC::get_tile_pattern_index(m_lcdc);
 		const Address	tileMapBase			= tileMapAddress + ((((m_currentScanLine + scrollY) % 256) >> 3) << 5);	// Get line of tiles to use. base + (mapline / 8) * 32.
-		Byte			tileMapX			= scrollX >> 3;													// Get first tile to use. offsetx / 8.
+		Byte			tileMapX			= scrollX >> 3;															// Get first tile to use. offsetx / 8.
 
 		// Load first tile in the line.
-		Byte tileIndex = m_mmu->ReadByte(tileMapBase + tileMapX);
+		Byte tileIndex = m_mmu->read_byte(tileMapBase + tileMapX);
 		const Byte* tileLine = m_tilePatterns[tilePatternIndex].GetTileLine(tileIndex, tileY);
 
 		for (uint32_t screenX = 0; screenX < kScreenWidth; ++screenX)
@@ -466,7 +466,7 @@ namespace gbhw
 				// Move across the tile source x, catching end of tile.
 				tileX = 0;
 				tileMapX = (tileMapX + 1) & 0x1f;	// Wrap tile x to 0->31.
-				tileIndex = m_mmu->ReadByte(tileMapBase + tileMapX);
+				tileIndex = m_mmu->read_byte(tileMapBase + tileMapX);
 				tileLine = m_tilePatterns[tilePatternIndex].GetTileLine(tileIndex, tileY);
 			}
 		}
@@ -487,7 +487,7 @@ namespace gbhw
 		m_windowReadY++;
 
 																									// Load first tile in the line.
-		Byte tileIndex = m_mmu->ReadByte(tileMapBase + tileMapX);
+		Byte tileIndex = m_mmu->read_byte(tileMapBase + tileMapX);
 		const Byte* tileLine = m_tilePatterns[tilePatternIndex].GetTileLine(tileIndex, tileY);
 
 		for (int16_t screenX = windowX; screenX < (int16_t)kScreenWidth; ++screenX)
@@ -504,7 +504,7 @@ namespace gbhw
 				// Move across the tile source x, catching end of tile.
 				tileX = 0;
 				tileMapX++;// = (tileMapX + 1) & 0x1f;	// Wrap tile x to 0->31.
-				tileIndex = m_mmu->ReadByte(tileMapBase + tileMapX);
+				tileIndex = m_mmu->read_byte(tileMapBase + tileMapX);
 				tileLine = m_tilePatterns[tilePatternIndex].GetTileLine(tileIndex, tileY);
 			}
 		}
@@ -588,8 +588,8 @@ namespace gbhw
 		{
 			Address oamAddr = 0xFE00 + (i * 4);
 
-			Byte y = m_mmu->ReadByte(oamAddr);
-			Byte x = m_mmu->ReadByte(oamAddr + 1);
+			Byte y = m_mmu->read_byte(oamAddr);
+			Byte x = m_mmu->read_byte(oamAddr + 1);
 
 			// not visible...
 			if(x == 0 || x >= 168 || y == 0 || y >= 160)
@@ -619,10 +619,10 @@ namespace gbhw
 		for(uint32_t i = 0; i < visibleSpritesCount; ++i)
 		{
 			Address oamAddr = visibleSprites[i];
-			Byte y = m_mmu->ReadByte(oamAddr);
-			Byte x = m_mmu->ReadByte(oamAddr + 1);
-			Byte tilePattern = m_mmu->ReadByte(oamAddr + 2);
-			Byte attribs = m_mmu->ReadByte(oamAddr + 3);
+			Byte y = m_mmu->read_byte(oamAddr);
+			Byte x = m_mmu->read_byte(oamAddr + 1);
+			Byte tilePattern = m_mmu->read_byte(oamAddr + 2);
+			Byte attribs = m_mmu->read_byte(oamAddr + 3);
 
 			x -= 8;
 			y -= 16;
@@ -641,8 +641,8 @@ namespace gbhw
 		uint32_t screenPixelY = kScreenWidth * line;
 
 		// 16 bytes per tile.
-		Byte tileLineLow = m_mmu->ReadByte(0x8000 + (tilePatternIndex * 16) + tileLineOffset);
-		Byte tileLineHigh = m_mmu->ReadByte(0x8000 + (tilePatternIndex * 16) + tileLineOffset + 1);
+		Byte tileLineLow = m_mmu->read_byte(0x8000 + (tilePatternIndex * 16) + tileLineOffset);
+		Byte tileLineHigh = m_mmu->read_byte(0x8000 + (tilePatternIndex * 16) + tileLineOffset + 1);
 
 		// Read the line data
 		for (uint32_t pixelX = 0; pixelX < 8; pixelX++)

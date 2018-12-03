@@ -32,7 +32,7 @@ namespace gbhw
 		cpu->initialise(mmu);
 		gpu->initialise(cpu, mmu);
 		mmu->initialise(cpu, gpu, rom);
-		timer->initialise(cpu);
+		timer->initialise(cpu, mmu);
 
 		return true;
 	}
