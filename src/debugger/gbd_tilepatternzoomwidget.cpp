@@ -52,7 +52,7 @@ namespace gbd
 			if(gbhw_get_gpu(m_hardware, &gpu) != e_success)
 				return;
 
-			const gbhw::GPUTilePattern* tilePatternData = gpu->GetTilePattern(m_tilePatternIndex);
+			const gbhw::GPUTilePattern* tilePatternData = gpu->get_tile_pattern(m_tilePatternIndex);
 			const gbhw::GPUTileData* tileData = &tilePatternData->m_tiles[m_unsignedTileIndex];
 			QRgb* destData = (QRgb*)m_image.scanLine(0);
 

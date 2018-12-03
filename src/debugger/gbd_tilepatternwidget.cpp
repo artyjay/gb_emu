@@ -57,7 +57,7 @@ namespace gbd
 		// Update the image
 		if (m_hardware)
 		{
-			const gbhw::GPUTilePattern* tilePatternData = m_hardware->GetGPU().GetTilePattern(m_tilePatternIndex);
+			const gbhw::GPUTilePattern* tilePatternData = m_hardware->GetGPU().get_tile_pattern(m_tilePatternIndex);
 			QRgb* destData = (QRgb*)m_image.scanLine(0);
 
 			for(uint32_t tileY = 0; tileY < 16; ++tileY)
@@ -67,7 +67,7 @@ namespace gbd
 				for(uint32_t tileX = 0; tileX < 16; ++tileX)
 				{
 					const gbhw::GPUTileData* tileData = &tilePatternData->m_tiles[tileY * 16 + tileX];
-					
+
 					for(uint32_t pixelY = 0; pixelY < 8; ++pixelY)
 					{
 						QRgb* destTileLine = destLineStart + (pixelY * 128) + (tileX * 8);

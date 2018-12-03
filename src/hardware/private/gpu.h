@@ -4,54 +4,75 @@
 
 namespace gbhw
 {
+	//--------------------------------------------------------------------------
+
 	struct GPUTileData
 	{
 		bool m_bDirty;
-
-		// Row major, indexed through y,x
-		Byte m_pixels[8][8];
+		Byte m_pixels[8][8];	// Row major, indexed through y,x
 	};
+
+	//--------------------------------------------------------------------------
 
 	class GPUTilePattern
 	{
 	public:
 		GPUTilePattern();
 
-		void Reset();
-		void DirtyTileCheckAll(MMU_ptr mmu);
-		void DirtyTileCheck(Byte tileIndex, MMU_ptr mmu);
+		void reset();
+		void check_dirty_tiles(MMU_ptr mmu);
+		void check_dirty_tile(Byte tileIndex, MMU_ptr mmu);
 
-		inline const Byte* GetTileLine(Byte tileIndex, const Byte tileLineY) const;
-		inline void DirtyTile(Byte tileIndex);
+		inline const Byte* get_tile_line(Byte tileIndex, const Byte tileLineY) const;
+		inline void set_dirty_tile(Byte tileIndex);
 
-		bool m_bSignedIndex;
-		Address m_baseAddress;
-		GPUTileData m_tiles[256];
+		bool			m_bSignedIndex;
+		Address			m_baseAddress;
+		GPUTileData		m_tiles[256];
 	};
+
+	//--------------------------------------------------------------------------
+
+	inline const Byte* GPUTilePattern::get_tile_line(Byte tileIndex, const Byte tileLineY) const
+	{
+		return m_tiles[m_bSignedIndex ? (tileIndex ^ 0x80) : tileIndex].m_pixels[tileLineY];
+	}
+
+	inline void GPUTilePattern::set_dirty_tile(Byte tileIndex)
+	{
+		m_tiles[tileIndex].m_bDirty = true;
+	}
+
+	//--------------------------------------------------------------------------
 
 	class GPUSpriteData
 	{
 	public:
 		inline GPUSpriteData();
+		inline void reset();
 
-		inline void Reset();
-
-		inline Byte GetX() const;
-		inline Byte GetY() const;
-		inline Byte GetTileIndex() const;
-		inline Byte GetFlags() const;
-
-		inline void SetX(Byte x);
-		inline void SetY(Byte y);
-		inline void SetTile(Byte tile);
-		inline void SetFlags(Byte flags);
-
-	private:
-		Byte m_x;
-		Byte m_y;
-		Byte m_tileIndex;
-		Byte m_flags;
+		Byte x;
+		Byte y;
+		Byte tile;
+		Byte flags;
 	};
+
+	//--------------------------------------------------------------------------
+
+	inline GPUSpriteData::GPUSpriteData()
+	{
+		reset();
+	}
+
+	inline void GPUSpriteData::reset()
+	{
+		x		= 0;
+		y		= 0;
+		tile	= 0;
+		flags	= 0;
+	}
+
+	//--------------------------------------------------------------------------
 
 	class GPU
 	{
@@ -61,50 +82,40 @@ namespace gbhw
 		void initialise(CPU_ptr cpu, MMU_ptr mmu);
 		void release();
 
-		void Update(uint32_t cycles);
-		void Reset();
+		void update(uint32_t cycles);
+		void reset();
 
-		void SetLCDC(Byte val);
+		void set_lcdc(Byte val);
+		bool reset_vblank_notify();
+		const Byte* get_screen_data() const;
+		const GPUTilePattern* get_tile_pattern(Byte index);
 
-		bool GetResetVBlankNotify();
-		const Byte* GetScreenData() const;
+		void update_sprite_data(const Address spriteDataAddress, Byte value);
+		void update_palette(const Address hwAddress, Byte palette);
+		void update_tile_pattern_line(const Address tilePatternAddress, Byte value);
 
-		// Debug getters
-		const GPUTilePattern* GetTilePattern(Byte index);
-
-		// Update GPU data
-		void UpdateSpriteData(const Address spriteDataAddress, Byte value);
-		void UpdatePalette(const Address hwAddress, Byte palette);
-		void UpdateTilePatternLine(const Address tilePatternAddress, Byte value);
-
-		static const uint32_t kScreenWidth		= 160;
-		static const uint32_t kScreenHeight		= 144;
-
+		static const uint32_t kScreenWidth			= 160;
+		static const uint32_t kScreenHeight			= 144;
 		static const uint32_t kTilePatternWidth		= 256;
 		static const uint32_t kTilePatternHeight	= 256;
-
-		static const uint32_t kTilePatternCount = 256;
-		static const uint32_t kTileSize = 8;
+		static const uint32_t kTilePatternCount		= 256;
+		static const uint32_t kTileSize				= 8;
 
 	private:
+		void update_tile_pattern_line(Byte patternIndex, const Byte tileIndex, const Byte tileLineY, const Byte lineLow, const Byte lineHigh);
+		Byte update_lcdc_status_mode(Byte stat, HWLCDCStatus::Type mode, HWLCDCStatus::Type interrupt);
 
-		void UpdateTilePatternLine(Byte patternIndex, const Byte tileIndex, const Byte tileLineY, const Byte lineLow, const Byte lineHigh);
+		void draw_scan_line(Byte line);
+		void draw_scan_line_bg_tilemap(const Address tileMapAddress, const Byte scrollX, const Byte scrollY);
+		void draw_scan_line_window_tilemap(const Address tileMapAddress, const int16_t windowX);
+		void draw_scan_line_sprite();
 
-		void DrawScanLine(Byte line);
-		void DrawScanLineBGTileMap(const Address tileMapAddress, const Byte scrollX, const Byte scrollY);
-		void DrawScanLineWindowTileMap(const Address tileMapAddress, const int16_t windowX);
-		void DrawScanLineSprite();
-
-		inline Byte GetPaletteColour(const Byte palette, const Byte paletteIndex) const;
-		inline void UpdateScanLineSprites();
-
-		void DrawSpriteScanLine(Byte line);
-
-		void DrawTile(Byte tilePatternIndex, Byte screenX, Byte screenY, Byte line);
+		inline Byte get_palette_colour(const Byte palette, const Byte paletteIndex) const;
+		inline void update_scan_line_sprites();
 
 		struct Mode
 		{
-			enum Type
+			enum Enum
 			{
 				ScanlineOAM,
 				ScanlineVRAM,
@@ -115,7 +126,7 @@ namespace gbhw
 
 		CPU_ptr					m_cpu;
 		MMU_ptr					m_mmu;
-		Mode::Type				m_mode;
+		Mode::Enum				m_mode;
 		uint32_t				m_modeCycles;
 		Byte					m_screenData[kScreenWidth * kScreenHeight];
 
@@ -135,83 +146,18 @@ namespace gbhw
 		GPUSpriteData			m_spriteData[40];
 
 
-		// @todo palette data
+		// @todo: palette data
 	};
 
-		inline const Byte* GPUTilePattern::GetTileLine(Byte tileIndex, const Byte tileLineY) const
-	{
-		if (m_bSignedIndex)
-		{
-			tileIndex ^= 0x80;
-		}
+	//--------------------------------------------------------------------------
 
-		return m_tiles[tileIndex].m_pixels[tileLineY];
-	}
 
-	inline void GPUTilePattern::DirtyTile(Byte tileIndex)
-	{
-		m_tiles[tileIndex].m_bDirty = true;
-	}
-
-	inline GPUSpriteData::GPUSpriteData()
-	{
-		Reset();
-	}
-
-	inline void GPUSpriteData::Reset()
-	{
-		m_x			= 0;
-		m_y			= 0;
-		m_tileIndex = 0;
-		m_flags		= 0;
-	}
-
-	inline Byte GPUSpriteData::GetX() const
-	{
-		return m_x;
-	}
-
-	inline Byte GPUSpriteData::GetY() const
-	{
-		return m_y;
-	}
-
-	inline Byte GPUSpriteData::GetTileIndex() const
-	{
-		return m_tileIndex;
-	}
-
-	inline Byte GPUSpriteData::GetFlags() const
-	{
-		return m_flags;
-	}
-
-	inline void GPUSpriteData::SetX(Byte x)
-	{
-		m_x = x;
-	}
-
-	inline void GPUSpriteData::SetY(Byte y)
-	{
-		m_y = y;
-	}
-
-	inline void GPUSpriteData::SetTile(Byte tile)
-	{
-		m_tileIndex = tile;
-	}
-
-	inline void GPUSpriteData::SetFlags(Byte flags)
-	{
-		m_flags = flags;
-	}
-
-	inline Byte GPU::GetPaletteColour(const Byte palette, const Byte paletteIndex) const
+	inline Byte GPU::get_palette_colour(const Byte palette, const Byte paletteIndex) const
 	{
 		return m_paletteData[palette][paletteIndex & 0x03];
 	}
 
-	inline void GPU::UpdateScanLineSprites()
+	inline void GPU::update_scan_line_sprites()
 	{
 		m_scanLineSprites.clear();
 
@@ -221,12 +167,11 @@ namespace gbhw
 		{
 			GPUSpriteData* sprite = &m_spriteData[spriteIndex];
 
-			const Byte		x			= sprite->GetX();
-			const Byte		y			= sprite->GetY();
-			const int16_t	yProper		= y - 16;
+			const Byte		x			= sprite->x;
+			const Byte		y			= sprite->y - 16;
 
-			if ((x == 0 || x >= 168 || y == 0 || y >= 160) ||												// Visibility check
-				(m_currentScanLine < yProper || m_currentScanLine > (yProper + (spriteHeight - 1))))		// Scanline check
+			if ((x == 0 || x >= 168 || y == 0 || y >= 144) ||									// Visibility check
+				(m_currentScanLine < y || m_currentScanLine > (y + (spriteHeight - 1))))		// Scanline check
 			{
 				continue;
 			}
@@ -248,4 +193,6 @@ namespace gbhw
 // 			std::reverse(m_scanLineSprites.begin(), m_scanLineSprites.end());
 // 		}
 	}
+
+	//--------------------------------------------------------------------------
 }

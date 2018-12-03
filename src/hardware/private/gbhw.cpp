@@ -92,7 +92,7 @@ extern "C"
 		Context* context = (Context*)ctx;
 
 		if(screen)
-			*screen = context->gpu->GetScreenData();
+			*screen = context->gpu->get_screen_data();
 
 		return e_success;
 	}
@@ -145,7 +145,7 @@ extern "C"
 			{
 				cpucycles = context->cpu->update(maxcycles);
 				context->timer->update(cpucycles);
-				context->gpu->Update(cpucycles);
+				context->gpu->update(cpucycles);
 
 				if (context->cpu->is_stalled())
 				{
@@ -153,7 +153,7 @@ extern "C"
 				}
 
 				// If a vblank occurred, then we want to sync externally.
-				if (context->gpu->GetResetVBlankNotify())
+				if (context->gpu->reset_vblank_notify())
 				{
 					break;
 				}

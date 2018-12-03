@@ -31,10 +31,10 @@ namespace gbe
 
 	struct ScreenPixel
 	{
+		uint8_t a;
 		uint8_t r;
 		uint8_t g;
 		uint8_t b;
-		uint8_t a;
 	};
 
 	//--------------------------------------------------------------------------
@@ -60,8 +60,8 @@ namespace gbe
 		settings.log_callback	= hw_log_callback;
 		settings.log_level		= l_debug;
 		settings.log_userdata	= this;
-		//settings.rom_path		= "D:/Development/personal/gb_emu/roms/Zelda.gb";
-		settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb_emu/roms/Zelda.gb";
+		settings.rom_path		= "D:/Development/personal/gb_emu/roms/Zelda.gb";
+		//settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb_emu/roms/Zelda.gb";
 		//settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb-test-roms/cpu_instrs/cpu_instrs.gb";
 
 		if (gbhw_create(&settings, &m_hardware) != e_success)
@@ -172,6 +172,7 @@ namespace gbe
 		{
 			for(uint32_t x = 0; x < m_screenWidth; ++x)
 			{
+				pixels->a = 255;
 				pixels->r = pixels->g = pixels->b = (3 - *data) * 85;
 				data++;
 				pixels++;
