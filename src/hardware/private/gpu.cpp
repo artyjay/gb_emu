@@ -269,7 +269,7 @@ namespace gbhw
 
 	const Byte* GPU::get_screen_data() const
 	{
-		return m_screenData;
+		return reinterpret_cast<const Byte*>(m_screenData);
 	}
 
 	const GPUTilePattern* GPU::get_tile_pattern(Byte index)

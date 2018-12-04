@@ -29,16 +29,6 @@ namespace gbe
 
 	//--------------------------------------------------------------------------
 
-	struct ScreenPixel
-	{
-		uint8_t a;
-		uint8_t r;
-		uint8_t g;
-		uint8_t b;
-	};
-
-	//--------------------------------------------------------------------------
-
 	Emulator::Emulator()
 		: m_bQuit(false)
 		, m_screenWidth(0)
@@ -60,8 +50,9 @@ namespace gbe
 		settings.log_callback	= hw_log_callback;
 		settings.log_level		= l_debug;
 		settings.log_userdata	= this;
-		settings.rom_path		= "D:/Development/personal/gb_emu/roms/Zelda.gb";
-		//settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb_emu/roms/Zelda.gb";
+		//settings.rom_path		= "D:/Development/personal/gb_emu/roms/Zelda.gb";
+		settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb_emu/roms/Zelda.gb";
+		//settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb_emu/roms/ZeldaDX.gbc";
 		//settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb-test-roms/cpu_instrs/cpu_instrs.gb";
 
 		if (gbhw_create(&settings, &m_hardware) != e_success)
@@ -163,25 +154,8 @@ namespace gbe
 		if(gbhw_get_screen(m_hardware, &data) != e_success)
 			return;
 
-		// Pixels are 0->3 @todo: Output colour buffer from hardware directly.
-		ScreenPixel* pixels;
-		int32_t pitch;
-		SDL_LockTexture(m_texture, NULL, (void**)&pixels, &pitch);
-
-		for(uint32_t y = 0; y < m_screenHeight; ++y)
-		{
-			for(uint32_t x = 0; x < m_screenWidth; ++x)
-			{
-				pixels->a = 255;
-				pixels->r = pixels->g = pixels->b = (3 - *data) * 85;
-				data++;
-				pixels++;
-			}
-		}
-
-		SDL_UnlockTexture(m_texture);
-
-		//SDL_UpdateTexture(m_texture, nullptr, data, m_screenWidth);
+		// Screen data is generated as XRGB8 data
+		SDL_UpdateTexture(m_texture, nullptr, data, m_screenWidth * 4);
 		SDL_RenderCopy(m_renderer, m_texture, nullptr, nullptr);
 		SDL_RenderPresent(m_renderer);
 	}

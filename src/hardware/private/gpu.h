@@ -74,6 +74,16 @@ namespace gbhw
 
 	//--------------------------------------------------------------------------
 
+	struct GPUPixel
+	{
+		Byte x;
+		Byte r;
+		Byte g;
+		Byte b;
+	};
+
+	//--------------------------------------------------------------------------
+
 	class GPU
 	{
 	public:
@@ -110,7 +120,7 @@ namespace gbhw
 		void draw_scan_line_window_tilemap(const Address tileMapAddress, const int16_t windowX);
 		void draw_scan_line_sprite();
 
-		inline Byte get_palette_colour(const Byte palette, const Byte paletteIndex) const;
+		inline GPUPixel get_palette_colour(const Byte palette, const Byte paletteIndex) const;
 		inline void update_scan_line_sprites();
 
 		struct Mode
@@ -128,7 +138,7 @@ namespace gbhw
 		MMU_ptr					m_mmu;
 		Mode::Enum				m_mode;
 		uint32_t				m_modeCycles;
-		Byte					m_screenData[kScreenWidth * kScreenHeight];
+		GPUPixel				m_screenData[kScreenWidth * kScreenHeight];
 
 		bool					m_bVBlankNotify;
 
@@ -152,9 +162,13 @@ namespace gbhw
 	//--------------------------------------------------------------------------
 
 
-	inline Byte GPU::get_palette_colour(const Byte palette, const Byte paletteIndex) const
+	inline GPUPixel GPU::get_palette_colour(const Byte palette, const Byte paletteIndex) const
 	{
-		return m_paletteData[palette][paletteIndex & 0x03];
+		Byte value = m_paletteData[palette][paletteIndex & 0x03];
+
+		// @todo: Temporary, once colour support is added this will be changed.
+		value = (3 - value) * 85;
+		return { 255, value, value, value };
 	}
 
 	inline void GPU::update_scan_line_sprites()
