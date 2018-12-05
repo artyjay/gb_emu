@@ -76,7 +76,7 @@ namespace gbd
 		{
 			for (int32_t lineByte = 0; lineByte < 16; ++lineByte)
 			{
-				lineBytes[lineByte] = mmu->ReadByte(address + lineByte);
+				lineBytes[lineByte] = mmu->read_byte(address + lineByte);
 			}
 
 			QString lineText = QString::asprintf("0x%04x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x  %02x",

@@ -68,7 +68,7 @@ namespace gbhw
 
 	void Registers::reset()
 	{
-		af = 0x01B0; // @todo: GBP = 0xFFB0, GBC = 0x11B0
+		af = 0x11B0; //DMG = 0x01B0, GBP = 0xFFB0
 		bc = 0x0013;
 		de = 0x00D8;
 		hl = 0x014D;

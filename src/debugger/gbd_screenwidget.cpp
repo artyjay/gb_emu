@@ -72,12 +72,12 @@ namespace gbd
 		{
 			painter.setPen(m_gridPen);
 
-			CPU* cpu;
-			if(gbhw_get_cpu(m_hardware, &cpu) != e_success)
+			MMU* mmu;
+			if(gbhw_get_mmu(m_hardware, &mmu) != e_success)
 				return;
 
-			gbhw::Byte scrollX = cpu->read_io(gbhw::HWRegs::ScrollX);
-			gbhw::Byte scrollY = cpu->read_io(gbhw::HWRegs::ScrollY);
+			gbhw::Byte scrollX = mmu->read_io(gbhw::HWRegs::ScrollX);
+			gbhw::Byte scrollY = mmu->read_io(gbhw::HWRegs::ScrollY);
 
 			int lineX = -(scrollX % 8);
 			int lineY = -(scrollY % 8);

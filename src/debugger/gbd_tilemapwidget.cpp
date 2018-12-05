@@ -35,7 +35,7 @@ namespace gbd
 			if(gbhw_get_mmu(m_hardware, &mmu) != e_success)
 				return;
 
-			Address tilemapAddress = gbhw::HWLCDC::get_bg_tile_map_address(mmu->ReadByte(gbhw::HWRegs::LCDC));
+			Address tilemapAddress = gbhw::HWLCDC::get_bg_tile_map_address(mmu->read_byte(gbhw::HWRegs::LCDC));
 
 			QFont font;
 			font.setFamily(QStringLiteral("Consolas"));
@@ -49,7 +49,7 @@ namespace gbd
 			{
 				for (uint32_t x = 0; x < 32; ++x)
 				{
-					gbhw::Byte tileIndex = mmu->ReadByte(tilemapAddress + (y * 32) + x);
+					gbhw::Byte tileIndex = mmu->read_byte(tilemapAddress + (y * 32) + x);
 					painter.drawRect(x * tileSizeX, y * tileSizeY, tileSizeX, tileSizeY);
 					painter.drawText((x * tileSizeX) + 2, (y * tileSizeY) + 8 + ((tileSizeY - 8) / 2), QString::asprintf("%d", tileIndex));
 				}

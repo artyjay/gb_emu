@@ -51,7 +51,8 @@ namespace gbe
 		settings.log_level		= l_debug;
 		settings.log_userdata	= this;
 		//settings.rom_path		= "D:/Development/personal/gb_emu/roms/Zelda.gb";
-		settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb_emu/roms/Zelda.gb";
+		settings.rom_path		= "D:/Development/personal/gb_emu/roms/ZeldaDX.gbc";
+		//settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb_emu/roms/Zelda.gb";
 		//settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb_emu/roms/ZeldaDX.gbc";
 		//settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb-test-roms/cpu_instrs/cpu_instrs.gb";
 

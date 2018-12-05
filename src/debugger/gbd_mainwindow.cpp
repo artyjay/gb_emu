@@ -172,7 +172,7 @@ namespace gbd
 
 	void MainWindow::OnOpenRomFileTriggered(bool checked)
 	{
-		auto filename = QFileDialog::getOpenFileName(this, tr("Open Rom File"), "../../../roms/", tr("Gameboy Rom Files (*.gb)")).toStdString();
+		auto filename = QFileDialog::getOpenFileName(this, tr("Open Rom File"), "../../../roms/", tr("Gameboy Files (*.gb *.gbc)")).toStdString();
 		OpenRomFile(filename);
 	}
 

@@ -80,16 +80,16 @@ namespace gbhw
 	{
 		switch (type)
 		{
-			case Size_32kB:		return "32 KB  [ no banks]";
-			case Size_64kB:		return "64 KB  [  4 banks]";
-			case Size_128kB:	return "128 KB [  8 banks]";
-			case Size_256kB:	return "256 KB [ 16 banks]";
-			case Size_512kB:	return "512 KB [ 32 banks]";
-			case Size_1024kB:	return "1 MB   [ 64 banks]";
-			case Size_2048kB:	return "2 MB   [128 banks]";
-			case Size_1152kB:	return "1.1 MB [ 72 banks]";
-			case Size_1280kB:	return "1.2 MB [ 80 banks]";
-			case Size_1536kB:	return "1.5 MB [ 96 banks]";
+			case Size_32kB:		return "32 KB  |  no banks";
+			case Size_64kB:		return "64 KB  |   4 banks";
+			case Size_128kB:	return "128 KB |   8 banks";
+			case Size_256kB:	return "256 KB |  16 banks";
+			case Size_512kB:	return "512 KB |  32 banks";
+			case Size_1024kB:	return "1 MB   |  64 banks";
+			case Size_2048kB:	return "2 MB   | 128 banks";
+			case Size_1152kB:	return "1.1 MB |  72 banks";
+			case Size_1280kB:	return "1.2 MB |  80 banks";
+			case Size_1536kB:	return "1.5 MB |  96 banks";
 			default: break;
 		}
 
@@ -117,12 +117,12 @@ namespace gbhw
 	{
 		switch (type)
 		{
-			case None:			return "None";
-			case Size_2kB:		return "  2 KB";
-			case Size_8kB:		return "  8 KB";
-			case Size_32kB:		return " 32 KB [ 4 banks]";
-			case Size_128kB:	return "128 KB [16 banks]";
-			case Size_64kB:		return " 64 KB [ 8 banks]";
+			case None:			return "None   |  no banks";
+			case Size_2kB:		return "2 KB   |  no banks";
+			case Size_8kB:		return "8 KB   |  no banks";
+			case Size_32kB:		return "32 KB  |   4 banks";
+			case Size_128kB:	return "128 KB |  16 banks";
+			case Size_64kB:		return "64 KB  |   8 banks";
 			default: break;
 		}
 

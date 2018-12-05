@@ -57,13 +57,13 @@ namespace
 				case gbhw::RTD::PC: argstr = QString::asprintf("0x%04x", registers->pc); break;
 				case gbhw::RTD::Imm8:
 				{
-					argstr = QString::asprintf("0x%02x", mmu->ReadByte(instruction.address() + immoffset));
+					argstr = QString::asprintf("0x%02x", mmu->read_byte(instruction.address() + immoffset));
 					immoffset += 1;
 					break;
 				}
 				case gbhw::RTD::SImm8:
 				{
-					gbhw::Byte byte = mmu->ReadByte(instruction.address() + immoffset);
+					gbhw::Byte byte = mmu->read_byte(instruction.address() + immoffset);
 					int32_t signedByte = 0;
 
 					if ((byte & 0x80) == 0x80)
@@ -91,28 +91,28 @@ namespace
 				}
 				case gbhw::RTD::Imm16:
 				{
-					argstr = QString::asprintf("0x%04x", mmu->ReadWord(instruction.address() + immoffset));
+					argstr = QString::asprintf("0x%04x", mmu->read_word(instruction.address() + immoffset));
 					immoffset += 2;
 					break;
 				}
 				case gbhw::RTD::Addr8:
 				{
-					gbhw::Byte imm8 = mmu->ReadByte(instruction.address() + immoffset);
+					gbhw::Byte imm8 = mmu->read_byte(instruction.address() + immoffset);
 					immoffset += 2;
-					argstr = QString::asprintf("0xFF00 + 0x%02x [0x%02x]", imm8, mmu->ReadByte(0xFF00 + imm8));
+					argstr = QString::asprintf("0xFF00 + 0x%02x [0x%02x]", imm8, mmu->read_byte(0xFF00 + imm8));
 					break;
 				}
 				case gbhw::RTD::Addr16:
 				{
-					gbhw::Address imm16 = mmu->ReadWord(instruction.address() + immoffset);
+					gbhw::Address imm16 = mmu->read_word(instruction.address() + immoffset);
 					immoffset += 2;
-					argstr = QString::asprintf("0x%04x [0x%04x]", imm16, mmu->ReadByte(imm16));
+					argstr = QString::asprintf("0x%04x [0x%04x]", imm16, mmu->read_byte(imm16));
 					break;
 				}
-				case gbhw::RTD::AddrC: argstr = QString::asprintf("0xFF00 + 0x%02x [0x%04x]", registers->c, mmu->ReadWord(0xFF00 + registers->c)); break;
-				case gbhw::RTD::AddrBC: argstr = QString::asprintf("0x%04x [0x%04x]", registers->bc, mmu->ReadWord(registers->bc)); break;
-				case gbhw::RTD::AddrDE: argstr = QString::asprintf("0x%04x [0x%04x]", registers->de, mmu->ReadWord(registers->de)); break;
-				case gbhw::RTD::AddrHL: argstr = QString::asprintf("0x%04x [0x%04x]", registers->hl, mmu->ReadWord(registers->hl)); break;
+				case gbhw::RTD::AddrC: argstr = QString::asprintf("0xFF00 + 0x%02x [0x%04x]", registers->c, mmu->read_word(0xFF00 + registers->c)); break;
+				case gbhw::RTD::AddrBC: argstr = QString::asprintf("0x%04x [0x%04x]", registers->bc, mmu->read_word(registers->bc)); break;
+				case gbhw::RTD::AddrDE: argstr = QString::asprintf("0x%04x [0x%04x]", registers->de, mmu->read_word(registers->de)); break;
+				case gbhw::RTD::AddrHL: argstr = QString::asprintf("0x%04x [0x%04x]", registers->hl, mmu->read_word(registers->hl)); break;
 				case gbhw::RTD::FlagZ: argstr = QString::asprintf("Zero: %s", registers->is_flag_set(gbhw::RF::Zero) ? "true" : "false"); break;
 				case gbhw::RTD::FlagNZ: argstr = QString::asprintf("Not-Zero: %s", registers->is_flag_set(gbhw::RF::Zero) ? "false" : "true"); break;
 				case gbhw::RTD::FlagC: argstr = QString::asprintf("Zero: %s", registers->is_flag_set(gbhw::RF::Carry) ? "true" : "false"); break;
