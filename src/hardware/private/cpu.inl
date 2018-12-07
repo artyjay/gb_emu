@@ -198,9 +198,18 @@ namespace gbhw
 
 	inline InstructionResult::Enum CPU::inst_stop()
 	{
-		Byte empty = immediate_byte();
-		log_debug("Stopping CPU until input is detected, following byte = 0x%02x\n", empty);
-		m_bStopped = true;
+		// Prepare speed switch is low bit of Key1.
+		Byte val = m_mmu->read_io(HWRegs::Key1);
+		if(val & 0x01)
+		{
+			// Toggle speed.
+			m_speed ^= 1;
+
+			// Write current speed back to top bit of Key1.
+			val = (val & 0x7E) | (m_speed << 7);
+			m_mmu->write_byte(HWRegs::Key1, m_speed);
+		}
+
 		return InstructionResult::Passed;
 	}
 

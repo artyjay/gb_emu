@@ -130,28 +130,30 @@ namespace gbhw
 	{
 		enum Type
 		{
-			P1 = 0xFF00,
-			DIV = 0xFF04,
-			TIMA = 0xFF05,
-			TMA = 0xFF06,
-			TAC = 0xFF07,
+			P1		= 0xFF00,
+			DIV		= 0xFF04,
+			TIMA	= 0xFF05,
+			TMA		= 0xFF06,
+			TAC		= 0xFF07,
 
-			IF = 0xFF0F,
+			IF		= 0xFF0F,
 
-			LCDC = 0xFF40,
-			Stat = 0xFF41,
+			LCDC	= 0xFF40,
+			Stat	= 0xFF41,
 			ScrollY = 0xFF42,
 			ScrollX = 0xFF43,
-			LY = 0xFF44,
-			LYC = 0xFF45,
-			DMA = 0xFF46,
-			BGP = 0xFF47,
-			OBJ0P = 0xFF48,
-			OBJ1P = 0xFF49,
+			LY		= 0xFF44,
+			LYC		= 0xFF45,
+			DMA		= 0xFF46,
+			BGP		= 0xFF47,
+			OBJ0P	= 0xFF48,
+			OBJ1P	= 0xFF49,
 			WindowY = 0xFF4A,
 			WindowX = 0xFF4B,
 
-			IE = 0xFFFF
+			Key1	= 0xFF4D,
+
+			IE		= 0xFFFF
 		};
 	};
 

@@ -294,6 +294,7 @@ namespace gbhw
 
 		bool					m_bStopped;
 		bool					m_bHalted;
+		Byte					m_speed;
 
 		Byte					m_currentOpcode;
 		Byte					m_currentOpcodeExt;

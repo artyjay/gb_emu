@@ -204,8 +204,6 @@ namespace gbd
 	void AssemblyWidget::SetHardware(gbhw_context_t hardware)
 	{
 		m_hardware = hardware;
-
-		//AddBreakpoint(0xDEF8);
 	}
 
 	void AssemblyWidget::UpdateView()
@@ -219,7 +217,6 @@ namespace gbd
 
 		for(auto& lineItem : m_lines)
 		{
-			//item->data(Qt::UserRole + 1).toBool();
 			gbhw::Address itemAddress = static_cast<gbhw::Address>(lineItem->data(AssemblyData::Address).toInt());
 
 			if(itemAddress == currentPC)

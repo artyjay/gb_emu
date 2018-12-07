@@ -61,6 +61,7 @@ namespace gbhw
 	CPU::CPU()
 		: m_bStopped(false)
 		, m_bHalted(false)
+		, m_speed(0)
 		, m_currentOpcode(0)
 		, m_currentOpcodeExt(0)
 		, m_instructionCycles(0)
