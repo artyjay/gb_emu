@@ -309,6 +309,14 @@ namespace gbhw
 						region->m_memory[regionAddr] = (region->m_memory[regionAddr] & 0x07) | (byte & 0xF8);
 						break;
 					}
+					case HWRegs::SVBK:
+					{
+						// Bit 3 bits, Read/Writes, indicates bank to be selected.
+						// @todo: If 0 is specified do we want to write 0 or the actual bank 1?
+						byte &= 0x07;
+						load_wram_bank(byte);
+						region->m_memory[regionAddr] = byte;
+					}
 					default:
 					{
 						region->m_memory[regionAddr] = byte;

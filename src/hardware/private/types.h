@@ -135,9 +135,7 @@ namespace gbhw
 			TIMA	= 0xFF05,
 			TMA		= 0xFF06,
 			TAC		= 0xFF07,
-
 			IF		= 0xFF0F,
-
 			LCDC	= 0xFF40,
 			Stat	= 0xFF41,
 			ScrollY = 0xFF42,
@@ -150,9 +148,8 @@ namespace gbhw
 			OBJ1P	= 0xFF49,
 			WindowY = 0xFF4A,
 			WindowX = 0xFF4B,
-
 			Key1	= 0xFF4D,
-
+			SVBK	= 0xFF70,	// WRAM bank select.
 			IE		= 0xFFFF
 		};
 	};
