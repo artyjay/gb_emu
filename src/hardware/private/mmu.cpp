@@ -52,18 +52,20 @@ namespace gbhw
 		initialise_region(RegionType::RomBank1,			0x4000, 16384, true, true);
 		initialise_region(RegionType::VideoRam,			0x8000, 8192,  true, false);
 		initialise_region(RegionType::ExternalRam,		0xA000, 8192, false, false);
-		initialise_region(RegionType::InternalRam,		0xC000, 8192,  true, false); // This is bankable, 0xC000->0xCFFF is fixed, 0xD000->0xDFFF is bankable 1-7 on CGB.
-		initialise_region(RegionType::InternalRamEcho,	0xE000, 7680,  true, false);
+		initialise_region(RegionType::WorkingRam0,		0xC000, 4096,  true, false);
+		initialise_region(RegionType::WorkingRam1,		0xD000, 4096,  true, false); // On CGB this is banked (1->7).
+		initialise_region(RegionType::WorkingRamEcho0,	0xE000, 4096,  true, false);
+		initialise_region(RegionType::WorkingRamEcho1,	0xF000, 3584,  true, false);
 		initialise_region(RegionType::SpriteAttribute,	0xFE00, 256,   true, false);
 		initialise_region(RegionType::IO,				0xFF00, 128,   true, false);
 		initialise_region(RegionType::ZeroPageRam,		0xFF80, 128,   true, false);
 		initialise_ram();
 
-		// Echo working ram by sharing the same pointer. The 7680 byte region reserved for the
-		// echo is just ignored.
-		Region& workingRam		= m_regions[static_cast<uint32_t>(RegionType::InternalRam)];
-		Region& workingRamEcho	= m_regions[static_cast<uint32_t>(RegionType::InternalRamEcho)];
-		workingRamEcho.m_memory = workingRam.m_memory;
+		// Echo first wram bank
+		echo_region(RegionType::WorkingRam0, RegionType::WorkingRamEcho0);
+
+		// Load second wram bank from first index.
+		load_wram_bank(1);
 
 		reset();
 	}
@@ -125,8 +127,10 @@ namespace gbhw
 			case RegionType::RomBank1:
 			case RegionType::VideoRam:
 			case RegionType::ExternalRam:
-			case RegionType::InternalRam:
-			case RegionType::InternalRamEcho:
+			case RegionType::WorkingRam0:
+			case RegionType::WorkingRam1:
+			case RegionType::WorkingRamEcho0:
+			case RegionType::WorkingRamEcho1:
 			case RegionType::ZeroPageRam:	// @todo Safety checks on this.
 			{
 				return region->m_memory[regionAddr];
@@ -212,8 +216,10 @@ namespace gbhw
 				break;
 			}
 			case RegionType::ExternalRam:
-			case RegionType::InternalRam:
-			case RegionType::InternalRamEcho:
+			case RegionType::WorkingRam0:
+			case RegionType::WorkingRam1:
+			case RegionType::WorkingRamEcho0:
+			case RegionType::WorkingRamEcho1:
 			case RegionType::ZeroPageRam:	// @todo Safety checks on this.
 			{
 				region->m_memory[regionAddr] = byte;
@@ -371,19 +377,33 @@ namespace gbhw
 		}
 	}
 
-	void MMU::load_eram_bank(uint32_t sourceBankIndex)
+	void MMU::load_wram_bank(uint32_t index)
 	{
-		uint8_t* ramBankData = m_ramBanks[sourceBankIndex].m_memory;
+		// 0 indexed lookup, if 0 is specified this clamps to first.
+		if(index > 0)
+			index -= 1;
 
-		if(ramBankData)
+		uint8_t* data = m_wramBanks[index].m_memory;
+
+		if(data)
 		{
-			m_regions[RegionType::ExternalRam].m_memory = ramBankData;
+			m_regions[RegionType::WorkingRam1].m_memory = data;
+			echo_region(RegionType::WorkingRam1, RegionType::WorkingRamEcho1);
 		}
 		else
 		{
-			// @todo return error
-			log_error("Failed to load RAM bank\n");
+			log_error("Failed to load WRAM bank\n");
 		}
+	}
+
+	void MMU::load_eram_bank(uint32_t index)
+	{
+		uint8_t* bank = m_eramBanks[index].m_memory;
+
+		if(bank)
+			m_regions[RegionType::ExternalRam].m_memory = bank;
+		else
+			log_error("Failed to load ERAM bank\n");
 	}
 
 	void MMU::set_enable_eram(bool bEnabled)
@@ -422,17 +442,39 @@ namespace gbhw
 
 	void MMU::initialise_ram()
 	{
+		// 7 x 4KiB banks available for 2nd half of WRAM.
+		for(uint32_t i = 0; i < 7; ++i)
+		{
+			MemoryBank bank;
+			bank.m_memory = new uint8_t[4096];
+			m_wramBanks.push_back(bank);
+		}
+
+		// 16 x 8KiB banks available for eram.
 		for(uint32_t i = 0; i < 16; ++i)
 		{
 			MemoryBank bank;
 			bank.m_memory = new uint8_t[8192];
-			m_ramBanks.push_back(bank);
+			m_eramBanks.push_back(bank);
 		}
+	}
+
+	void MMU::echo_region(RegionType::Enum src, RegionType::Enum dst)
+	{
+		Region& srcRegion = m_regions[static_cast<uint32_t>(src)];
+		Region& dstRegion = m_regions[static_cast<uint32_t>(dst)];
+		dstRegion.m_memory = srcRegion.m_memory;
 	}
 
 	void MMU::reset()
 	{
 		memset(m_memory, 0, kMemorySize);
+
+		for(auto& bank : m_wramBanks)
+			memset(bank.m_memory, 0, 4096);
+
+		for(auto& bank : m_eramBanks)
+			memset(bank.m_memory, 0, 8192);
 
 		m_memory[HWRegs::P1] = 0xFF;
 

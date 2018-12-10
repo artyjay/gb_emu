@@ -14,8 +14,10 @@ namespace gbhw
 	// 16kB				- [0x4000 -> 0x7FFF]	Cartridge ROM (switchable bank)
 	// 8kB				- [0x8000 -> 0x9FFF]	Video RAM
 	// 8kB				- [0xA000 -> 0xBFFF]	External RAM
-	// 8KB				- [0xC000 -> 0xDFFF]	Internal RAM
-	// 8kB - 512 bytes	- [0xE000 -> 0xFDFF]	Echo of internal RAM - upto last 512 bytes, at which point other things happen. Ignore this range and translate address to internal RAM.
+	// 4KB				- [0xC000 -> 0xCFFF]	Working RAM (bank 0)
+	// 4KB				- [0xD000 -> 0xDFFF]	Working RAM (switchable bank)
+	// 4KB				- [0xE000 -> 0xEFFF]	Echo of Working RAM (bank 0)
+	// 3584 bytes		- [0xF000 -> 0xFDFF]	Echo of Working RAM (switchable bank) - upto last 512 bytes, at which point other things happen. Ignore this range and translate address to internal RAM.
 	// 160 bytes		- [0xFE00 -> 0xFE9F]	Sprite attribute memory (OAM)
 	// 96 bytes			- [0xFEA0 -> 0xFEFF]	Empty but unusable for I/o
 	// 128 bytes		- [0xFF00 -> 0xFF7F]	Memory mapped I/O
@@ -48,8 +50,10 @@ namespace gbhw
 				RomBank1,
 				VideoRam,
 				ExternalRam,
-				InternalRam,
-				InternalRamEcho,
+				WorkingRam0,
+				WorkingRam1,
+				WorkingRamEcho0,
+				WorkingRamEcho1,
 				SpriteAttribute,
 				IO,
 				ZeroPageRam,
@@ -89,6 +93,7 @@ namespace gbhw
 		void set_button_state(gbhw_button_t button, gbhw_button_state_t state);
 
 		void load_rom_bank(uint32_t sourceBankIndex, RegionType::Enum destRegion = RegionType::RomBank1);
+		void load_wram_bank(uint32_t index);
 		void load_eram_bank(uint32_t sourceBankIndex);
 		void set_enable_eram(bool bEnabled);
 
@@ -97,6 +102,7 @@ namespace gbhw
 	private:
 		void initialise_region(RegionType::Enum type, Address baseaddress, uint16_t size, bool bEnabled, bool bReadOnly);
 		void initialise_ram();
+		void echo_region(RegionType::Enum src, RegionType::Enum dst);
 		void reset();
 
 		static const uint32_t	kMemorySize				= 65536;
@@ -110,7 +116,8 @@ namespace gbhw
 		Region					m_regions[static_cast<uint32_t>(RegionType::Count)];
 		Region*					m_regionsLUT[kRegionLutCount];
 		MBC*					m_mbc;
-		MemoryBanks				m_ramBanks;
+		MemoryBanks				m_wramBanks;
+		MemoryBanks				m_eramBanks;
 
 		Byte					m_buttonColumn;
 		Byte					m_buttonsDirection;
