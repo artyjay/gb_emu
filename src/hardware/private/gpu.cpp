@@ -239,6 +239,10 @@ namespace gbhw
 		m_modeCycles		= 0;
 		m_bVBlankNotify		= false;
 		m_scanLineSprites.reserve(10);
+
+
+
+		// @todo: Reset tile ram.
 	}
 
 	void GPU::set_lcdc(Byte val)
@@ -277,6 +281,60 @@ namespace gbhw
 		return &m_tilePatterns[index];
 	}
 
+	void GPU::set_tileram_data(Address vramAddress, Byte data)
+	{
+		if(vramAddress < 0x9800)
+		{
+			// Offset into 0->0x17FF range.
+			vramAddress -= 0x8000;
+
+			// Data contains 4 pixels worth of data, let's expand to internal representation.
+			const uint32_t	tileIndex	= vramAddress >> 4;
+			const uint32_t	tileByte	= vramAddress % 16;
+			const uint32_t	tileRow		= tileByte >> 1;	// Each row is 2 bytes.
+			const Byte		tileBit		= (tileByte % 2);	// Indicates which bit we're affecting in each pixel on this row.
+															// As the pixels bits are interleaved across low/high bytes.
+
+			// @todo: Investigate if this needs optimising.
+			Byte* tileCol = &m_tileRam.tileData[m_tileRam.bank][tileIndex].m_pixels[tileRow][7];
+
+			for(uint32_t i = 0; i < 8; ++i)
+			{
+				// Bits are reversed.
+				*tileCol = (*tileCol & ~(tileBit + 1)) | ((data & 0x1) << tileBit);
+				data >>= 1;
+
+				tileCol--;
+			}
+		}
+		else
+		{
+			// Figure out tile index and tile map index based upon address ranges
+			// 9800 -> 9BFF = tilemap 0
+			// 9C00 -> 9FFF = tilemap 1
+
+			// Offset into 0->0X7FF range.
+			vramAddress -= 0x9800;
+			const uint32_t tilemapIndex = vramAddress >> 10;						// 11th bit set when >= 1024.
+			const uint32_t tileIndex	= vramAddress & ~GPUTileRam::kTileMapSize;	// Mask off top-bit
+
+			if(m_tileRam.bank == 0)
+			{
+				m_tileRam.tileMap[tilemapIndex][tileIndex] = data;
+			}
+			else
+			{
+				m_tileRam.tileAttr[tilemapIndex][tileIndex] = data;
+			}
+		}
+
+	}
+
+	void GPU::set_tileram_bank(Byte bank)
+	{
+		m_tileRam.bank = bank;
+	}
+
 	void GPU::update_sprite_data(const Address spriteDataAddress, Byte value)
 	{
 		Byte spriteIndex = (spriteDataAddress - HWLCDC::Addresses::SpriteData) >> 2;
@@ -312,12 +370,20 @@ namespace gbhw
 		}
 	}
 
-	void GPU::update_bg_colour_palette(Byte index, Byte palette)
+	void GPU::update_colour_palette(GPUPalette::Type type, Byte index, Byte value)
 	{
-	}
+		const Byte entryIndex = index >> 2;
+		const Byte byteIndex = index % 2;
 
-	void GPU::update_sprite_colour_palette(Byte index, Byte palette)
-	{
+		GPUPaletteEntry& entry = m_palette[type].entries[entryIndex];
+		entry.values[byteIndex] = value;
+
+		// Construct pixel colour.
+		GPUPixel& colour = entry.colour;
+		const Word pixel = entry.values[0] | (entry.values[1] << 8);
+		colour.r = pixel & 0x3f;
+		colour.g = (pixel >> 5) & 0x3f;
+		colour.b = (pixel >> 10) & 0x3f;
 	}
 
 	void GPU::update_tile_pattern_line(const Address tilePatternAddress, Byte value)

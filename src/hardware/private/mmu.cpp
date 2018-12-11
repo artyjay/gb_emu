@@ -207,6 +207,8 @@ namespace gbhw
 			{
 				region->m_memory[regionAddr] = byte;
 
+				m_gpu->set_tileram_data(address, byte);
+
 				if (regionAddr < 0x1800)
 				{
 					m_gpu->update_tile_pattern_line(address, byte);
@@ -312,10 +314,10 @@ namespace gbhw
 						Byte indexValue = read_byte(HWRegs::BGPI);
 						Byte index = indexValue & 0x3F;
 
-						m_gpu->update_bg_colour_palette(index & 0x3F, byte);
+						m_gpu->update_colour_palette(GPUPalette::BG, index & 0x3F, byte);
 
 						// Auto-increment, accounting for wrap around.
-						if(indexValue & 0x80 != 0)
+						if((indexValue & 0x80) != 0)
 						{
 							indexValue = 0x80 & ((index + 1) & 0x3F);
 							write_byte(HWRegs::BGPI, indexValue);
@@ -327,10 +329,10 @@ namespace gbhw
 						Byte indexValue = read_byte(HWRegs::OBPI);
 						Byte index = indexValue & 0x3F;
 
-						m_gpu->update_sprite_colour_palette(index & 0x3F, byte);
+						m_gpu->update_colour_palette(GPUPalette::Sprite, index & 0x3F, byte);
 
 						// Auto-increment, accounting for wrap around.
-						if (indexValue & 0x80 != 0)
+						if ((indexValue & 0x80) != 0)
 						{
 							indexValue = 0x80 & ((index + 1) & 0x3F);
 							write_byte(HWRegs::OBPI, indexValue);
@@ -347,6 +349,9 @@ namespace gbhw
 					{
 						byte &= 0x01;
 						load_vram_bank(byte);
+
+						m_gpu->set_tileram_bank(byte);
+
 						region->m_memory[regionAddr] = byte;
 					}
 					case HWRegs::SVBK:

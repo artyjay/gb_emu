@@ -84,6 +84,49 @@ namespace gbhw
 
 	//--------------------------------------------------------------------------
 
+	struct GPUPaletteEntry
+	{
+		// pallete is made up of 4 colours.
+		GPUPixel	colour;
+		Byte		values[2];
+	};
+
+	struct GPUPalette
+	{
+		enum Type
+		{
+			BG = 0,
+			Sprite,
+			Count
+		};
+
+		GPUPaletteEntry entries[4];
+	};
+
+	//--------------------------------------------------------------------------
+
+	struct GPUTile
+	{
+		Byte m_pixels[8][8];	// Row major, indexed through y,x
+	};
+
+	struct GPUTileRam
+	{
+		static const uint32_t kTileDataBankCount		= 2;
+		static const uint32_t kTileDataCount			= 384;	// Addressable range is 0x8000->0x97FF
+		static const uint32_t kTileMapWidth				= 32;
+		static const uint32_t kTileMapHeight			= 32;
+		static const uint32_t kTileMapSize				= kTileMapWidth * kTileMapHeight;
+		static const uint32_t kTileMapCount				= 2;
+
+		Byte	bank = 0;
+		GPUTile tileData[kTileDataBankCount][kTileDataCount];		// Banked for read & write.
+		Byte	tileMap[kTileMapCount][kTileMapSize];				// Only written when bank = 0
+		Byte	tileAttr[kTileMapCount][kTileMapSize];				// Only written when bank = 1. Should only be used for GBC rom.
+	};
+
+	//--------------------------------------------------------------------------
+
 	class GPU
 	{
 	public:
@@ -100,11 +143,16 @@ namespace gbhw
 		const Byte* get_screen_data() const;
 		const GPUTilePattern* get_tile_pattern(Byte index);
 
+
+		// New refactor to manage tile-data.
+		void set_tileram_data(Address vramAddress, Byte data);
+		void set_tileram_bank(Byte bank);
+
 		void update_sprite_data(const Address spriteDataAddress, Byte value);
 		void update_palette(const Address hwAddress, Byte palette);
 
-		void update_bg_colour_palette(Byte index, Byte palette);
-		void update_sprite_colour_palette(Byte index, Byte palette);
+		void update_colour_palette(GPUPalette::Type type, Byte index, Byte value);
+
 
 		void update_tile_pattern_line(const Address tilePatternAddress, Byte value);
 
@@ -114,6 +162,7 @@ namespace gbhw
 		static const uint32_t kTilePatternHeight	= 256;
 		static const uint32_t kTilePatternCount		= 256;
 		static const uint32_t kTileSize				= 8;
+		static const uint32_t kPaletteSize			= 64;
 
 	private:
 		void update_tile_pattern_line(Byte patternIndex, const Byte tileIndex, const Byte tileLineY, const Byte lineLow, const Byte lineHigh);
@@ -144,6 +193,12 @@ namespace gbhw
 		uint32_t				m_modeCycles;
 		GPUPixel				m_screenData[kScreenWidth * kScreenHeight];
 
+		GPUTileRam				m_tileRam;
+
+
+		GPUPixel				m_bgPalette[kPaletteSize];
+		GPUPixel				m_spritePalette[kPaletteSize];
+
 		bool					m_bVBlankNotify;
 
 		Byte					m_lcdc;
@@ -152,6 +207,8 @@ namespace gbhw
 		Byte					m_windowReadY;
 
 		std::vector<Byte>		m_scanLineSprites;
+
+		GPUPalette				m_palette[GPUPalette::Count];
 
 		Byte					m_paletteData[3][4];
 
