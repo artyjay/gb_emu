@@ -67,6 +67,9 @@ namespace gbhw
 		// Load second wram bank from first index.
 		load_wram_bank(1);
 
+		// Load first vram bank.
+		load_vram_bank(0);
+
 		reset();
 	}
 
@@ -303,11 +306,48 @@ namespace gbhw
 						region->m_memory[regionAddr] = byte;
 						break;
 					}
+
+					case HWRegs::BGPD:
+					{
+						Byte indexValue = read_byte(HWRegs::BGPI);
+						Byte index = indexValue & 0x3F;
+
+						m_gpu->update_bg_colour_palette(index & 0x3F, byte);
+
+						// Auto-increment, accounting for wrap around.
+						if(indexValue & 0x80 != 0)
+						{
+							indexValue = 0x80 & ((index + 1) & 0x3F);
+							write_byte(HWRegs::BGPI, indexValue);
+						}
+						break;
+					}
+					case HWRegs::OBPD:
+					{
+						Byte indexValue = read_byte(HWRegs::OBPI);
+						Byte index = indexValue & 0x3F;
+
+						m_gpu->update_sprite_colour_palette(index & 0x3F, byte);
+
+						// Auto-increment, accounting for wrap around.
+						if (indexValue & 0x80 != 0)
+						{
+							indexValue = 0x80 & ((index + 1) & 0x3F);
+							write_byte(HWRegs::OBPI, indexValue);
+						}
+						break;
+					}
 					case HWRegs::Stat:
 					{
 						// Bottom 3 bits are read-only when from an instruction...
 						region->m_memory[regionAddr] = (region->m_memory[regionAddr] & 0x07) | (byte & 0xF8);
 						break;
+					}
+					case HWRegs::VBK:
+					{
+						byte &= 0x01;
+						load_vram_bank(byte);
+						region->m_memory[regionAddr] = byte;
 					}
 					case HWRegs::SVBK:
 					{
@@ -385,6 +425,20 @@ namespace gbhw
 		}
 	}
 
+	void MMU::load_vram_bank(uint32_t index)
+	{
+		uint8_t* data = m_vramBanks[index].m_memory;
+
+		if (data)
+		{
+			m_regions[RegionType::VideoRam].m_memory = data;
+		}
+		else
+		{
+			log_error("Failed to load VRAM bank\n");
+		}
+	}
+
 	void MMU::load_wram_bank(uint32_t index)
 	{
 		// 0 indexed lookup, if 0 is specified this clamps to first.
@@ -450,6 +504,14 @@ namespace gbhw
 
 	void MMU::initialise_ram()
 	{
+		// 2 x 8KiB banks available for VRAM.
+		for(uint32_t i = 0; i < 2; ++i)
+		{
+			MemoryBank bank;
+			bank.m_memory = new uint8_t[8192];
+			m_vramBanks.push_back(bank);
+		}
+
 		// 7 x 4KiB banks available for 2nd half of WRAM.
 		for(uint32_t i = 0; i < 7; ++i)
 		{

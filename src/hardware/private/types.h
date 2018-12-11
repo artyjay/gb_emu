@@ -149,7 +149,21 @@ namespace gbhw
 			WindowY = 0xFF4A,
 			WindowX = 0xFF4B,
 			Key1	= 0xFF4D,
-			SVBK	= 0xFF70,	// WRAM bank select.
+
+			HDMA1	= 0xFF51,
+			HDMA2	= 0xFF52,
+			HDMA3	= 0xFF53,
+			HDMA4	= 0xFF54,
+			HDMA5	= 0xFF55,
+
+			BGPI	= 0xFF68,	// Background palette index
+			BGPD	= 0xFF69,	// Background palette data
+			OBPI	= 0xFF6A,	// Sprite palette index
+			OBPD	= 0xFF6B,	// Sprite paletee data
+
+			VBK		= 0xFF4F,	// VRAM bank
+
+			SVBK	= 0xFF70,	// WRAM bank
 			IE		= 0xFFFF
 		};
 	};

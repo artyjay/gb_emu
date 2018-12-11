@@ -93,6 +93,7 @@ namespace gbhw
 		void set_button_state(gbhw_button_t button, gbhw_button_state_t state);
 
 		void load_rom_bank(uint32_t sourceBankIndex, RegionType::Enum destRegion = RegionType::RomBank1);
+		void load_vram_bank(uint32_t index);
 		void load_wram_bank(uint32_t index);
 		void load_eram_bank(uint32_t sourceBankIndex);
 		void set_enable_eram(bool bEnabled);
@@ -118,6 +119,7 @@ namespace gbhw
 		MBC*					m_mbc;
 		MemoryBanks				m_wramBanks;
 		MemoryBanks				m_eramBanks;
+		MemoryBanks				m_vramBanks;
 
 		Byte					m_buttonColumn;
 		Byte					m_buttonsDirection;

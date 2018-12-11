@@ -312,6 +312,14 @@ namespace gbhw
 		}
 	}
 
+	void GPU::update_bg_colour_palette(Byte index, Byte palette)
+	{
+	}
+
+	void GPU::update_sprite_colour_palette(Byte index, Byte palette)
+	{
+	}
+
 	void GPU::update_tile_pattern_line(const Address tilePatternAddress, Byte value)
 	{
 		if (tilePatternAddress >= HWLCDC::TilePattern0 && tilePatternAddress < 0x9000)

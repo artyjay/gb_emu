@@ -102,6 +102,10 @@ namespace gbhw
 
 		void update_sprite_data(const Address spriteDataAddress, Byte value);
 		void update_palette(const Address hwAddress, Byte palette);
+
+		void update_bg_colour_palette(Byte index, Byte palette);
+		void update_sprite_colour_palette(Byte index, Byte palette);
+
 		void update_tile_pattern_line(const Address tilePatternAddress, Byte value);
 
 		static const uint32_t kScreenWidth			= 160;
