@@ -53,11 +53,11 @@ namespace gbd
 
 			// Read tile index from tilemap.
 
-			const GPUTileRam*	ram			= gpu->get_tile_ram();
-			const Byte*			tileMap		= ram->tileMap[m_map];
-			const Byte*			tileAttr	= ram->tileAttr[m_map];
-			const GPUTile*		tiles		= ram->tileData[ram->bank];
-			QRgb*				destData	= (QRgb*)m_image.scanLine(0);
+			const GPUTileRam*			ram			= gpu->get_tile_ram();
+			const Byte*					tileMap		= ram->tileMap[m_map];
+			const GPUTileAttributes*	tileAttr	= ram->tileAttr[m_map];
+			const GPUPalette*			palette		= gpu->get_palette(GPUPalette::BG);
+			QRgb*						destData	= (QRgb*)m_image.scanLine(0);
 
 			// Map 0 tiles start at 0x8800
 			// Map 1 tiles start at 0x8000
@@ -68,7 +68,6 @@ namespace gbd
 
 			for(uint32_t tileY = 0; tileY < kTilesDown; ++tileY)
 			{
-
 				for(uint32_t tileX = 0; tileX < kTilesAcross; ++tileX)
 				{
 					QRgb* tileStart = destData + (tileY * kTileSize * kImageWidth) + (tileX * kTileSize);
@@ -80,7 +79,9 @@ namespace gbd
 					if(m_map == 0)
 						tileIndex ^= 0x80;
 
-					const GPUTile* tile = &tiles[baseIndex + tileIndex];
+					const GPUTileAttributes*	attr	= &tileAttr[baseIndex + tileIndex];
+					const GPUTile*				tile	= &ram->tileData[attr->bank][baseIndex + tileIndex];
+ 					const GPUPaletteColour*		colours = palette->entries[attr->palette];
 
 					for(uint32_t pixelY = 0; pixelY < kTileSize; ++pixelY)
 					{
@@ -88,67 +89,13 @@ namespace gbd
 
 						for(uint32_t pixelX = 0; pixelX < kTileSize; ++pixelX)
 						{
-							// @todo: Colourise.
-							const Byte pixel = (3 - tile->m_pixels[pixelY][pixelX]) * 85;
-							tileLine[pixelX] = qRgb(pixel, pixel, pixel);
+							const Byte pixel = tile->pixels[pixelY][pixelX];
+							const GPUPaletteColour* colour = &colours[pixel];
+							tileLine[pixelX] = qRgb(colour->pixel.r, colour->pixel.g, colour->pixel.b);
 						}
 					}
 				}
 			}
-
-
-
-#if 0
-
-			Address tilemapAddress = gbhw::HWLCDC::get_bg_tile_map_address(mmu->read_byte(gbhw::HWRegs::LCDC));
-
-			QFont font;
-			font.setFamily(QStringLiteral("Consolas"));
-			font.setPointSize(8);
-			painter.setFont(font);
-
-			uint32_t tileSizeX = 24;
-			uint32_t tileSizeY = 16;
-
-			for (uint32_t y = 0; y < 32; ++y)
-			{
-				for (uint32_t x = 0; x < 32; ++x)
-				{
-					gbhw::Byte tileIndex = mmu->read_byte(tilemapAddress + (y * 32) + x);
-					painter.drawRect(x * tileSizeX, y * tileSizeY, tileSizeX, tileSizeY);
-					painter.drawText((x * tileSizeX) + 2, (y * tileSizeY) + 8 + ((tileSizeY - 8) / 2), QString::asprintf("%d", tileIndex));
-				}
-			}
-
-			GPU* gpu;
-			if(gbhw_get_gpu(m_hardware, &gpu) != e_success)
-				return;
-
-			const GPUTilePattern* tilePatternData = gpu->get_tile_pattern(0);
-			QRgb* destData = (QRgb*)m_image.scanLine(0);
-
-			for (uint32_t tileY = 0; tileY < 16; ++tileY)
-			{
-				QRgb* destLineStart = &destData[(tileY * 4096)];
-
-				for (uint32_t tileX = 0; tileX < 16; ++tileX)
-				{
-					// Nearest upsample the tile-data.
-					const gbhw::GPUTileData* tileData = &tilePatternData->m_tiles[tileY * 16 + tileX];
-
-					for (uint32_t pixelY = 0; pixelY < 16; ++pixelY)
-					{
-						QRgb* destTileLine = destLineStart + (pixelY * 256) + (tileX * 16);
-
-						for (uint32_t pixelX = 0; pixelX < 16; ++pixelX)
-						{
-							gbhw::Byte pixelColour = (3 - tileData->m_pixels[pixelY >> 1][pixelX >> 1]) * 85;
-							destTileLine[pixelX] = qRgb(pixelColour, pixelColour, pixelColour);
-						}
-					}
-				}
-			}
-#endif
 		}
 		else
 		{

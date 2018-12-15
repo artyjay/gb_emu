@@ -35,7 +35,7 @@
     </rect>
    </property>
    <property name="currentIndex">
-    <number>2</number>
+    <number>1</number>
    </property>
    <property name="usesScrollButtons">
     <bool>true</bool>
@@ -145,7 +145,7 @@
       </property>
      </widget>
     </widget>
-    <widget class="QFrame" name="frame">
+    <widget class="QFrame" name="m_tileDataBankFrame">
      <property name="geometry">
       <rect>
        <x>10</x>
@@ -186,25 +186,67 @@
     <attribute name="title">
      <string>Tile Map</string>
     </attribute>
-    <widget class="gbd::TileMapWidget" name="m_tileMap0" native="true">
+    <widget class="QFrame" name="m_tileMapFrame">
      <property name="geometry">
       <rect>
        <x>10</x>
        <y>10</y>
-       <width>256</width>
-       <height>256</height>
+       <width>541</width>
+       <height>281</height>
       </rect>
      </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <widget class="gbd::TileMapWidget" name="m_tileMap0" native="true">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>256</width>
+        <height>256</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="gbd::TileMapWidget" name="m_tileMap1" native="true">
+      <property name="geometry">
+       <rect>
+        <x>276</x>
+        <y>10</y>
+        <width>256</width>
+        <height>256</height>
+       </rect>
+      </property>
+     </widget>
     </widget>
-    <widget class="gbd::TileMapWidget" name="m_tileMap1" native="true">
+    <widget class="QFrame" name="m_bgPaletteFrame">
      <property name="geometry">
       <rect>
-       <x>276</x>
+       <x>560</x>
        <y>10</y>
-       <width>256</width>
-       <height>256</height>
+       <width>84</width>
+       <height>148</height>
       </rect>
      </property>
+     <property name="frameShape">
+      <enum>QFrame::Box</enum>
+     </property>
+     <property name="frameShadow">
+      <enum>QFrame::Raised</enum>
+     </property>
+     <widget class="gbd::PaletteWidget" name="m_bgPalette" native="true">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>10</y>
+        <width>64</width>
+        <height>128</height>
+       </rect>
+      </property>
+     </widget>
     </widget>
    </widget>
    <widget class="QWidget" name="m_tabSprites">
@@ -237,6 +279,12 @@
    <class>gbd::TileMapWidget</class>
    <extends>QWidget</extends>
    <header>gbd_tilemapwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>gbd::PaletteWidget</class>
+   <extends>QWidget</extends>
+   <header>gbd_palettewidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

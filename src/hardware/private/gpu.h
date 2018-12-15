@@ -84,10 +84,9 @@ namespace gbhw
 
 	//--------------------------------------------------------------------------
 
-	struct GPUPaletteEntry
+	struct GPUPaletteColour
 	{
-		// pallete is made up of 4 colours.
-		GPUPixel	colour;
+		GPUPixel	pixel;
 		Byte		values[2];
 	};
 
@@ -100,18 +99,38 @@ namespace gbhw
 			Count
 		};
 
-		GPUPaletteEntry entries[4];
+		GPUPaletteColour entries[8][4];
 	};
 
 	//--------------------------------------------------------------------------
 
 	struct GPUTile
 	{
-		Byte m_pixels[8][8];	// Row major, indexed through y,x
+		Byte pixels[8][8];	// Row major, indexed through y,x
+	};
+
+	struct GPUTileAttributes
+	{
+		inline GPUTileAttributes(Byte data = 0)
+		{
+			palette		= data & 0x07;
+			bank		= (data >> 3) & 0x01;
+			hFlip		= static_cast<bool>((data >> 5) & 0x01);
+			vFlip		= static_cast<bool>((data >> 6) & 0x01);
+			priority	= static_cast<bool>((data >> 7) & 0x01);
+		}
+
+		Byte palette;
+		Byte bank;
+		bool hFlip;
+		bool vFlip;
+		bool priority;
 	};
 
 	struct GPUTileRam
 	{
+		void reset();
+
 		static const uint32_t kTileDataBankCount		= 2;
 		static const uint32_t kTileDataCount			= 384;	// Addressable range is 0x8000->0x97FF
 		static const uint32_t kTileMapWidth				= 32;
@@ -119,10 +138,10 @@ namespace gbhw
 		static const uint32_t kTileMapSize				= kTileMapWidth * kTileMapHeight;
 		static const uint32_t kTileMapCount				= 2;
 
-		Byte	bank = 0;
-		GPUTile tileData[kTileDataBankCount][kTileDataCount];		// Banked for read & write.
-		Byte	tileMap[kTileMapCount][kTileMapSize];				// Only written when bank = 0
-		Byte	tileAttr[kTileMapCount][kTileMapSize];				// Only written when bank = 1. Should only be used for GBC rom.
+		Byte				bank = 0;
+		GPUTile				tileData[kTileDataBankCount][kTileDataCount];		// Banked for read & write.
+		Byte				tileMap[kTileMapCount][kTileMapSize];				// Only written when bank = 0
+		GPUTileAttributes	tileAttr[kTileMapCount][kTileMapSize];				// Only written when bank = 1. Should only be used for GBC rom.
 	};
 
 	//--------------------------------------------------------------------------
@@ -150,12 +169,14 @@ namespace gbhw
 		void set_tile_ram_bank(Byte bank);
 		inline const GPUTileRam* get_tile_ram() const;
 
+		void set_palette(GPUPalette::Type type, Byte index, Byte value);
+		inline const GPUPalette* get_palette(GPUPalette::Type type);
 
 
 		void update_sprite_data(const Address spriteDataAddress, Byte value);
 		void update_palette(const Address hwAddress, Byte palette);
 
-		void update_colour_palette(GPUPalette::Type type, Byte index, Byte value);
+		
 
 
 		void update_tile_pattern_line(const Address tilePatternAddress, Byte value);
@@ -200,6 +221,8 @@ namespace gbhw
 		GPUTileRam				m_tileRam;
 
 
+
+
 		GPUPixel				m_bgPalette[kPaletteSize];
 		GPUPixel				m_spritePalette[kPaletteSize];
 
@@ -229,6 +252,11 @@ namespace gbhw
 	inline const GPUTileRam* GPU::get_tile_ram() const
 	{
 		return &m_tileRam;
+	}
+
+	inline const GPUPalette* GPU::get_palette(GPUPalette::Type type)
+	{
+		return &m_palette[type];
 	}
 
 	inline GPUPixel GPU::get_palette_colour(const Byte palette, const Byte paletteIndex) const

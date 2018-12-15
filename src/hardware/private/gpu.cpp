@@ -12,6 +12,14 @@ namespace gbhw
 		static const uint32_t kScanlineReadOAMCycles	= 80;
 		static const uint32_t kScanlineReadVRAMCycles	= 172;
 		static const uint32_t kHBlankCycles				= 204;
+
+		inline Byte palette_colour_scale(Byte val)
+		{
+			// 0->63 to 0->255.
+			// @todo: Colouring is probably non-linear, a LUT is probably going to be
+			//		  the best solution.
+			return ((val + 1) * 4) - 1;
+		}
 	}
 
 	//--------------------------------------------------------------------------
@@ -65,6 +73,16 @@ namespace gbhw
 
 			tileData.m_bDirty = false;
 		}
+	}
+
+	//--------------------------------------------------------------------------
+
+	void GPUTileRam::reset()
+	{
+		bank = 0;
+		memset(tileData, 0, sizeof(GPUTile) * kTileDataBankCount * kTileDataCount);
+		memset(tileMap,  0, sizeof(Byte) * kTileMapCount * kTileMapSize);
+		memset(tileAttr, 0, sizeof(GPUTileAttributes) * kTileMapCount * kTileMapSize);
 	}
 
 	//--------------------------------------------------------------------------
@@ -240,9 +258,7 @@ namespace gbhw
 		m_bVBlankNotify		= false;
 		m_scanLineSprites.reserve(10);
 
-
-
-		// @todo: Reset tile ram.
+		m_tileRam.reset();
 	}
 
 	void GPU::set_lcdc(Byte val)
@@ -296,7 +312,7 @@ namespace gbhw
 															// As the pixels bits are interleaved across low/high bytes.
 
 			// @todo: Investigate if this needs optimising.
-			Byte* tileCol = &m_tileRam.tileData[m_tileRam.bank][tileIndex].m_pixels[tileRow][7];
+			Byte* tileCol = &m_tileRam.tileData[m_tileRam.bank][tileIndex].pixels[tileRow][7];
 
 			for(uint32_t i = 0; i < 8; ++i)
 			{
@@ -324,7 +340,8 @@ namespace gbhw
 			}
 			else
 			{
-				m_tileRam.tileAttr[tilemapIndex][tileIndex] = data;
+				GPUTileAttributes attr(data);
+				m_tileRam.tileAttr[tilemapIndex][tileIndex] = attr;
 			}
 		}
 	}
@@ -369,20 +386,23 @@ namespace gbhw
 		}
 	}
 
-	void GPU::update_colour_palette(GPUPalette::Type type, Byte index, Byte value)
+	void GPU::set_palette(GPUPalette::Type type, Byte index, Byte value)
 	{
-		const Byte entryIndex = index >> 2;
-		const Byte byteIndex = index % 2;
+		const Byte entryIndex	= index >> 3;		// 8-bytes per entry.
+		const Byte byteIndex	= index % 2;		// Low/high byte.
+		const Byte colourIndex = (index % 8) >> 1;	// 4 colours per entry.
 
-		GPUPaletteEntry& entry = m_palette[type].entries[entryIndex];
+		// @todo: Do we need to store the values.
+		GPUPaletteColour& entry = m_palette[type].entries[entryIndex][colourIndex];
 		entry.values[byteIndex] = value;
 
 		// Construct pixel colour.
-		GPUPixel& colour = entry.colour;
-		const Word pixel = entry.values[0] | (entry.values[1] << 8);
-		colour.r = pixel & 0x3f;
-		colour.g = (pixel >> 5) & 0x3f;
-		colour.b = (pixel >> 10) & 0x3f;
+		GPUPixel& pixel = entry.pixel;
+		const Word val = entry.values[0] | (entry.values[1] << 8);
+		pixel.x = 255;
+		pixel.r = palette_colour_scale(val & 0x3f);
+		pixel.g = palette_colour_scale((val >> 5) & 0x3f);
+		pixel.b = palette_colour_scale((val >> 10) & 0x3f);
 	}
 
 	void GPU::update_tile_pattern_line(const Address tilePatternAddress, Byte value)

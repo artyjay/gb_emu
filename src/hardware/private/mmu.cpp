@@ -176,12 +176,6 @@ namespace gbhw
 			  Region*	region = m_regionsLUT[lutindex];
 		const Address	regionAddr = address - region->m_baseAddress;
 
-		if(address >= 0x9800 && address < 0x9810)
-		{
-			int a = 0;
-			a++;
-		}
-
 		// If this is an MBC write then consume the byte.
 		// The MBC can prevent writes when they occur inside
 		// certain address ranges that manipulate the MMU in
@@ -308,34 +302,20 @@ namespace gbhw
 						region->m_memory[regionAddr] = byte;
 						break;
 					}
-
 					case HWRegs::BGPD:
+					case HWRegs::OBPD:
 					{
-						Byte indexValue = read_byte(HWRegs::BGPI);
+						Address indexAddress = (address == HWRegs::BGPD) ? HWRegs::BGPI : HWRegs::OBPI;
+						Byte indexValue = read_byte(indexAddress);
 						Byte index = indexValue & 0x3F;
 
-						m_gpu->update_colour_palette(GPUPalette::BG, index & 0x3F, byte);
+						m_gpu->set_palette((address == HWRegs::BGPD) ? GPUPalette::BG : GPUPalette::Sprite, index, byte);
 
 						// Auto-increment, accounting for wrap around.
 						if((indexValue & 0x80) != 0)
 						{
-							indexValue = 0x80 & ((index + 1) & 0x3F);
-							write_byte(HWRegs::BGPI, indexValue);
-						}
-						break;
-					}
-					case HWRegs::OBPD:
-					{
-						Byte indexValue = read_byte(HWRegs::OBPI);
-						Byte index = indexValue & 0x3F;
-
-						m_gpu->update_colour_palette(GPUPalette::Sprite, index & 0x3F, byte);
-
-						// Auto-increment, accounting for wrap around.
-						if ((indexValue & 0x80) != 0)
-						{
-							indexValue = 0x80 & ((index + 1) & 0x3F);
-							write_byte(HWRegs::OBPI, indexValue);
+							indexValue = 0x80 | ((index + 1) & 0x3F);
+							write_byte(indexAddress, indexValue);
 						}
 						break;
 					}

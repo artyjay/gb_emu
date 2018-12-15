@@ -84,9 +84,7 @@ namespace gbd
 
 					for(uint32_t pixelX = 0; pixelX < kTileSize; ++pixelX)
 					{
-						//tileLine[pixelX] = qRgb(pixelX * 31, pixelY * 31, 0);
-
- 						const Byte pixel = (3 - tile->m_pixels[pixelY][pixelX]) * 85;
+ 						const Byte pixel = (3 - tile->pixels[pixelY][pixelX]) * 85;
  						tileLine[pixelX] = qRgb(pixel, pixel, pixel);
 					}
 				}

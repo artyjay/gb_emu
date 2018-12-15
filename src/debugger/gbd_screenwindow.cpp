@@ -1,6 +1,8 @@
 #include "gbd_screenwindow.h"
 #include "gbd_log.h"
 
+using namespace gbhw;
+
 namespace gbd
 {
 	ScreenWindow::ScreenWindow(QWidget* parent, gbhw_context_t hardware)
@@ -28,6 +30,8 @@ namespace gbd
 		// Tile Map tab
 		m_ui.m_tileMap0->initialise(m_hardware, 0);
 		m_ui.m_tileMap1->initialise(m_hardware, 1);
+
+		m_ui.m_bgPalette->initialise(m_hardware, GPUPalette::BG);
 
 		// Sprites tab
 
