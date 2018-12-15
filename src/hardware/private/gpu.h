@@ -128,6 +128,7 @@ namespace gbhw
 	//--------------------------------------------------------------------------
 
 	class GPU
+
 	{
 	public:
 		GPU();
@@ -145,8 +146,11 @@ namespace gbhw
 
 
 		// New refactor to manage tile-data.
-		void set_tileram_data(Address vramAddress, Byte data);
-		void set_tileram_bank(Byte bank);
+		void set_tile_ram_data(Address vramAddress, Byte data);
+		void set_tile_ram_bank(Byte bank);
+		inline const GPUTileRam* get_tile_ram() const;
+
+
 
 		void update_sprite_data(const Address spriteDataAddress, Byte value);
 		void update_palette(const Address hwAddress, Byte palette);
@@ -222,6 +226,10 @@ namespace gbhw
 
 	//--------------------------------------------------------------------------
 
+	inline const GPUTileRam* GPU::get_tile_ram() const
+	{
+		return &m_tileRam;
+	}
 
 	inline GPUPixel GPU::get_palette_colour(const Byte palette, const Byte paletteIndex) const
 	{

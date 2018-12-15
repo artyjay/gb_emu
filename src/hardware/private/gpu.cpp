@@ -281,7 +281,7 @@ namespace gbhw
 		return &m_tilePatterns[index];
 	}
 
-	void GPU::set_tileram_data(Address vramAddress, Byte data)
+	void GPU::set_tile_ram_data(Address vramAddress, Byte data)
 	{
 		if(vramAddress < 0x9800)
 		{
@@ -327,10 +327,9 @@ namespace gbhw
 				m_tileRam.tileAttr[tilemapIndex][tileIndex] = data;
 			}
 		}
-
 	}
 
-	void GPU::set_tileram_bank(Byte bank)
+	void GPU::set_tile_ram_bank(Byte bank)
 	{
 		m_tileRam.bank = bank;
 	}

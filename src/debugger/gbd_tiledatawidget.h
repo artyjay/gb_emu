@@ -6,20 +6,18 @@
 
 namespace gbd
 {
-	class TilePatternWidget : public QWidget
+	class TileDataWidget : public QWidget
 	{
 		Q_OBJECT
 
 	public:
-		TilePatternWidget(QWidget* parent = nullptr);
-		~TilePatternWidget();
+		TileDataWidget(QWidget* parent = nullptr);
+		~TileDataWidget();
 
-		void SetHardware(gbhw_context_t hardware);
-		void SetTilePatternIndex(uint32_t tilePatternIndex);
+		void initialise(gbhw_context_t hardware, uint32_t bank);
 
 	protected:
 		void paintEvent(QPaintEvent* evt);
-		void mouseMoveEvent(QMouseEvent* evt);
 		void mousePressEvent(QMouseEvent* evt);
 
 	signals:
@@ -35,12 +33,10 @@ namespace gbd
 
 		QImage				m_image;
 		gbhw_context_t		m_hardware;
-		uint32_t			m_tilePatternIndex;
+		uint32_t			m_bank;
 		float				m_scaleX;
 		float				m_scaleY;
-		QPen				m_gridPen;
 		QPen				m_lockedPen;
-
 		int32_t				m_lockedTileIndex;
 	};
 }

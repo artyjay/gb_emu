@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>1041</width>
-    <height>681</height>
+    <width>831</width>
+    <height>693</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -520,10 +520,10 @@
    <widget class="QGroupBox" name="m_assemblyGroup">
     <property name="geometry">
      <rect>
-      <x>270</x>
+      <x>140</x>
       <y>10</y>
-      <width>761</width>
-      <height>611</height>
+      <width>681</width>
+      <height>621</height>
      </rect>
     </property>
     <property name="title">
@@ -551,11 +551,47 @@
      </item>
     </layout>
    </widget>
+   <widget class="QGroupBox" name="m_statusGroup">
+    <property name="geometry">
+     <rect>
+      <x>10</x>
+      <y>10</y>
+      <width>120</width>
+      <height>51</height>
+     </rect>
+    </property>
+    <property name="title">
+     <string>Status</string>
+    </property>
+    <widget class="QLabel" name="m_status">
+     <property name="geometry">
+      <rect>
+       <x>10</x>
+       <y>20</y>
+       <width>101</width>
+       <height>21</height>
+      </rect>
+     </property>
+     <property name="font">
+      <font>
+       <pointsize>10</pointsize>
+       <weight>75</weight>
+       <bold>true</bold>
+      </font>
+     </property>
+     <property name="text">
+      <string>Paused</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignCenter</set>
+     </property>
+    </widget>
+   </widget>
    <widget class="QGroupBox" name="m_flagsGroup">
     <property name="geometry">
      <rect>
-      <x>140</x>
-      <y>10</y>
+      <x>10</x>
+      <y>520</y>
       <width>120</width>
       <height>111</height>
      </rect>
@@ -628,49 +664,13 @@
      </property>
     </widget>
    </widget>
-   <widget class="QGroupBox" name="m_statusGroup">
-    <property name="geometry">
-     <rect>
-      <x>10</x>
-      <y>10</y>
-      <width>120</width>
-      <height>51</height>
-     </rect>
-    </property>
-    <property name="title">
-     <string>Status</string>
-    </property>
-    <widget class="QLabel" name="m_status">
-     <property name="geometry">
-      <rect>
-       <x>10</x>
-       <y>20</y>
-       <width>101</width>
-       <height>21</height>
-      </rect>
-     </property>
-     <property name="font">
-      <font>
-       <pointsize>10</pointsize>
-       <weight>75</weight>
-       <bold>true</bold>
-      </font>
-     </property>
-     <property name="text">
-      <string>Paused</string>
-     </property>
-     <property name="alignment">
-      <set>Qt::AlignCenter</set>
-     </property>
-    </widget>
-   </widget>
   </widget>
   <widget class="QMenuBar" name="m_menubar">
    <property name="geometry">
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>1041</width>
+     <width>831</width>
      <height>21</height>
     </rect>
    </property>

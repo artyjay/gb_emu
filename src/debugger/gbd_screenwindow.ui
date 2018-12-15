@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>784</width>
-    <height>378</height>
+    <width>743</width>
+    <height>481</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -30,12 +30,12 @@
     <rect>
      <x>10</x>
      <y>10</y>
-     <width>761</width>
-     <height>361</height>
+     <width>721</width>
+     <height>461</height>
     </rect>
    </property>
    <property name="currentIndex">
-    <number>0</number>
+    <number>2</number>
    </property>
    <property name="usesScrollButtons">
     <bool>true</bool>
@@ -112,26 +112,29 @@
      </widget>
     </widget>
    </widget>
-   <widget class="QWidget" name="m_tabTilePatterns">
+   <widget class="QWidget" name="m_tabTileRam">
     <attribute name="title">
-     <string>Tile Patterns</string>
+     <string>Tile RAM</string>
     </attribute>
     <widget class="QFrame" name="m_patternFrameZoom">
      <property name="geometry">
       <rect>
-       <x>590</x>
+       <x>550</x>
        <y>10</y>
        <width>151</width>
        <height>151</height>
       </rect>
      </property>
      <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
+      <enum>QFrame::Box</enum>
      </property>
      <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
+      <enum>QFrame::Raised</enum>
      </property>
-     <widget class="gbd::TilePatternZoomWidget" name="m_patternZoom" native="true">
+     <property name="lineWidth">
+      <number>1</number>
+     </property>
+     <widget class="gbd::TilePatternZoomWidget" name="m_tileZoom" native="true">
       <property name="geometry">
        <rect>
         <x>10</x>
@@ -142,88 +145,65 @@
       </property>
      </widget>
     </widget>
-    <widget class="QLabel" name="m_pattern0Coord">
+    <widget class="QFrame" name="frame">
      <property name="geometry">
       <rect>
-       <x>300</x>
-       <y>300</y>
-       <width>281</width>
-       <height>21</height>
+       <x>10</x>
+       <y>10</y>
+       <width>531</width>
+       <height>411</height>
       </rect>
      </property>
      <property name="frameShape">
       <enum>QFrame::Box</enum>
      </property>
-     <property name="text">
-      <string/>
-     </property>
-    </widget>
-    <widget class="QFrame" name="m_pattern0Frame">
-     <property name="geometry">
-      <rect>
-       <x>300</x>
-       <y>10</y>
-       <width>281</width>
-       <height>281</height>
-      </rect>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
      <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
+      <enum>QFrame::Raised</enum>
      </property>
-     <widget class="gbd::TilePatternWidget" name="m_pattern0" native="true">
+     <widget class="gbd::TileDataWidget" name="m_tileDataBank0" native="true">
       <property name="geometry">
        <rect>
         <x>10</x>
         <y>10</y>
-        <width>256</width>
-        <height>256</height>
+        <width>512</width>
+        <height>192</height>
+       </rect>
+      </property>
+     </widget>
+     <widget class="gbd::TileDataWidget" name="m_tileDataBank1" native="true">
+      <property name="geometry">
+       <rect>
+        <x>10</x>
+        <y>210</y>
+        <width>512</width>
+        <height>192</height>
        </rect>
       </property>
      </widget>
     </widget>
-    <widget class="QFrame" name="m_pattern1Frame">
+   </widget>
+   <widget class="QWidget" name="m_tabTileMap">
+    <attribute name="title">
+     <string>Tile Map</string>
+    </attribute>
+    <widget class="gbd::TileMapWidget" name="m_tileMap0" native="true">
      <property name="geometry">
       <rect>
        <x>10</x>
        <y>10</y>
-       <width>281</width>
-       <height>281</height>
+       <width>256</width>
+       <height>256</height>
       </rect>
      </property>
-     <property name="frameShape">
-      <enum>QFrame::StyledPanel</enum>
-     </property>
-     <property name="frameShadow">
-      <enum>QFrame::Plain</enum>
-     </property>
-     <widget class="gbd::TilePatternWidget" name="m_pattern1" native="true">
-      <property name="geometry">
-       <rect>
-        <x>10</x>
-        <y>10</y>
-        <width>256</width>
-        <height>256</height>
-       </rect>
-      </property>
-     </widget>
     </widget>
-    <widget class="QLabel" name="m_pattern1Coord">
+    <widget class="gbd::TileMapWidget" name="m_tileMap1" native="true">
      <property name="geometry">
       <rect>
-       <x>10</x>
-       <y>300</y>
-       <width>281</width>
-       <height>21</height>
+       <x>276</x>
+       <y>10</y>
+       <width>256</width>
+       <height>256</height>
       </rect>
-     </property>
-     <property name="frameShape">
-      <enum>QFrame::Box</enum>
-     </property>
-     <property name="text">
-      <string/>
      </property>
     </widget>
    </widget>
@@ -242,15 +222,21 @@
    <container>1</container>
   </customwidget>
   <customwidget>
-   <class>gbd::TilePatternWidget</class>
-   <extends>QWidget</extends>
-   <header>gbd_tilepatternwidget.h</header>
-   <container>1</container>
-  </customwidget>
-  <customwidget>
    <class>gbd::TilePatternZoomWidget</class>
    <extends>QWidget</extends>
    <header>gbd_tilepatternzoomwidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>gbd::TileDataWidget</class>
+   <extends>QWidget</extends>
+   <header>gbd_tiledatawidget.h</header>
+   <container>1</container>
+  </customwidget>
+  <customwidget>
+   <class>gbd::TileMapWidget</class>
+   <extends>QWidget</extends>
+   <header>gbd_tilemapwidget.h</header>
    <container>1</container>
   </customwidget>
  </customwidgets>

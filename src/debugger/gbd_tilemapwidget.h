@@ -13,7 +13,7 @@ namespace gbd
 		TileMapWidget(QWidget* parent = nullptr);
 		~TileMapWidget();
 
-		void SetHardware(gbhw_context_t hardware);
+		void initialise(gbhw_context_t hardware, uint32_t map);
 
 	protected:
 		void paintEvent(QPaintEvent* evt);
@@ -21,6 +21,6 @@ namespace gbd
 	private:
 		QImage				m_image;
 		gbhw_context_t		m_hardware;
+		uint32_t			m_map;
 	};
 }
-#pragma once

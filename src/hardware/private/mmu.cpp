@@ -207,7 +207,7 @@ namespace gbhw
 			{
 				region->m_memory[regionAddr] = byte;
 
-				m_gpu->set_tileram_data(address, byte);
+				m_gpu->set_tile_ram_data(address, byte);
 
 				if (regionAddr < 0x1800)
 				{
@@ -350,7 +350,7 @@ namespace gbhw
 						byte &= 0x01;
 						load_vram_bank(byte);
 
-						m_gpu->set_tileram_bank(byte);
+						m_gpu->set_tile_ram_bank(byte);
 
 						region->m_memory[regionAddr] = byte;
 					}
