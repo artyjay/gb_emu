@@ -1,5 +1,5 @@
 #include "gbd_tilemapwidget.h"
-
+#include <QMouseEvent>
 #include <QPainter>
 
 using namespace gbhw;
@@ -22,6 +22,7 @@ namespace gbd
 		, m_image(kImageWidth, kImageHeight, QImage::Format::Format_RGBX8888)
 		, m_hardware(nullptr)
 		, m_map(0)
+		, m_focusIndex(kTilesAcross * kTilesDown)
 	{
 		setMouseTracking(true);
 	}
@@ -64,7 +65,7 @@ namespace gbd
 			// 16-bytes per tile. Total tile count is 384 (per-bank). 128-tile
 			// overlap per-map.
 			// Address already translated to indices in storage.
-			const uint32_t		baseIndex	= m_map == 1 ? 0 : 128;
+			const uint32_t				baseIndex	= m_map == 0 ? 128 : 0;
 
 			for(uint32_t tileY = 0; tileY < kTilesDown; ++tileY)
 			{
@@ -79,9 +80,10 @@ namespace gbd
 					if(m_map == 0)
 						tileIndex ^= 0x80;
 
-					const GPUTileAttributes*	attr	= &tileAttr[baseIndex + tileIndex];
-					const GPUTile*				tile	= &ram->tileData[attr->bank][baseIndex + tileIndex];
- 					const GPUPaletteColour*		colours = palette->entries[attr->palette];
+					//const GPUTileAttributes*	attr	= &tileAttr[baseIndex + tileIndex];
+					const GPUTile*				tile	= &ram->tileData[tileAttr->bank][baseIndex + tileIndex];
+ 					const GPUPaletteColour*		colours = palette->entries[tileAttr->palette];
+					tileAttr++;
 
 					for(uint32_t pixelY = 0; pixelY < kTileSize; ++pixelY)
 					{
@@ -91,7 +93,7 @@ namespace gbd
 						{
 							const Byte pixel = tile->pixels[pixelY][pixelX];
 							const GPUPaletteColour* colour = &colours[pixel];
-							tileLine[pixelX] = qRgb(colour->pixel.r, colour->pixel.g, colour->pixel.b);
+							tileLine[pixelX] = qRgb(colour->pixel.b, colour->pixel.g, colour->pixel.r);
 						}
 					}
 				}
@@ -105,4 +107,27 @@ namespace gbd
 		// Draw the image
 		painter.drawImage(QPoint(0, 0), m_image);
 	}
-} // gbd
+
+	void TileMapWidget::mouseMoveEvent(QMouseEvent* evt)
+	{
+		if(m_hardware)
+		{
+			const uint32_t tileX = evt->pos().x() / kTileSize;
+			const uint32_t tileY = evt->pos().y() / kTileSize;
+
+			if(tileX > kTilesAcross || tileY > kTilesDown)
+				return;
+
+			const uint32_t tileIndex = (tileY * kTilesAcross) + tileX;
+
+			if(m_focusIndex != tileIndex)
+			{
+				m_focusIndex = tileIndex;
+
+				TileMapFocusArgs args = { m_map, m_focusIndex };
+
+				emit on_focus_change(args);
+			}
+		}
+	}
+}

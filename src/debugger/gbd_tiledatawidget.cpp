@@ -21,8 +21,8 @@ namespace gbd
 			return signedTileIndex;
 		}
 
-		static const uint32_t kTilesAcross	= 32;
-		static const uint32_t kTilesDown	= 12;
+		static const uint32_t kTilesAcross	= 16;
+		static const uint32_t kTilesDown	= 24;
 		static const uint32_t kTileSize		= 8;
 		static const uint32_t kImageWidth	= kTilesAcross * kTileSize;
 		static const uint32_t kImageHeight	= kTilesDown * kTileSize;

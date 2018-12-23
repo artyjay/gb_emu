@@ -5,6 +5,12 @@
 
 namespace gbd
 {
+	struct TileMapFocusArgs
+	{
+		uint32_t map;
+		uint32_t tile;
+	};
+
 	class TileMapWidget : public QWidget
 	{
 		Q_OBJECT
@@ -17,10 +23,15 @@ namespace gbd
 
 	protected:
 		void paintEvent(QPaintEvent* evt);
+		void mouseMoveEvent(QMouseEvent* evt);
+
+	signals:
+		void on_focus_change(TileMapFocusArgs args);
 
 	private:
 		QImage				m_image;
 		gbhw_context_t		m_hardware;
 		uint32_t			m_map;
+		uint32_t			m_focusIndex;
 	};
 }

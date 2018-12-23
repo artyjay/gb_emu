@@ -1,5 +1,5 @@
 #include "gbd_palettewidget.h"
-
+#include <QMouseEvent>
 #include <QPainter>
 
 using namespace gbhw;
@@ -20,6 +20,8 @@ namespace gbd
 		, m_image(kImageWidth, kImageHeight, QImage::Format::Format_RGBX8888)
 		, m_hardware(nullptr)
 		, m_type(GPUPalette::Count)
+		, m_focusEntryIndex(kEntries)
+		, m_focusColourIndex(kColoursPerEntry)
 	{
 		setMouseTracking(true);
 	}
@@ -38,7 +40,6 @@ namespace gbd
 	{
 		QPainter painter(this);
 
-		// Update the image
 		if (m_hardware)
 		{
 			GPU* gpu = nullptr;
@@ -59,7 +60,7 @@ namespace gbd
 				{
 					QRgb* entryStart = dest + (entry * kBlockSize * kImageWidth) + (colour * kBlockSize);
 					const GPUPixel* pixel = &palette->entries[entry][colour].pixel;
-					QRgb pixelColour = qRgb(pixel->r, pixel->g, pixel->b);
+					QRgb pixelColour = qRgb(pixel->b, pixel->g, pixel->r);
 
 					// Block fill colour.
 					// @todo: Improve this widgets drawing, this is likely very inefficient.
@@ -80,7 +81,39 @@ namespace gbd
 			m_image.fill(QColor(255, 255, 255, 255));
 		}
 
-		// Draw the image
 		painter.drawImage(QPoint(0, 0), m_image);
 	}
-} // gbd
+
+	void PaletteWidget::mouseMoveEvent(QMouseEvent* evt)
+	{
+		// Update the image
+		if (m_hardware)
+		{
+			uint32_t colourIndex = evt->pos().x() / kBlockSize;
+			uint32_t entryIndex = evt->pos().y() / kBlockSize;
+
+			if(colourIndex > kColoursPerEntry || entryIndex > kEntries)
+				return;
+
+			if(entryIndex != m_focusEntryIndex ||
+			   colourIndex != m_focusColourIndex)
+			{
+				m_focusEntryIndex = entryIndex;
+				m_focusColourIndex = colourIndex;
+
+				// Emit colour.
+				GPU* gpu = nullptr;
+				if(gbhw_get_gpu(m_hardware, &gpu) != e_success)
+					return;
+
+				const auto palette = gpu->get_palette(m_type);
+				auto& colour = palette->entries[entryIndex][colourIndex];
+
+				PaletteFocusArgs args = { (uint32_t)(colour.values[0] | (colour.values[1] << 8)),
+										  colour.pixel.r, colour.pixel.g, colour.pixel.b };
+
+				emit on_focus_change(args);
+			}
+		}
+	}
+}

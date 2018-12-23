@@ -51,10 +51,11 @@ namespace gbe
 		settings.log_level		= l_debug;
 		settings.log_userdata	= this;
 		//settings.rom_path		= "D:/Development/personal/gb_emu/roms/Zelda.gb";
-		//settings.rom_path		= "D:/Development/personal/gb_emu/roms/ZeldaDX.gbc";
+		settings.rom_path		= "D:/Development/personal/gb_emu/roms/ZeldaDX.gbc";
+//		settings.rom_path		= "D:/Development/personal/gb_emu/roms/PokemonRed.gb";
 		//settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb_emu/roms/Zelda.gb";
 		//settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb_emu/roms/ZeldaDX.gbc";
-		settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb-test-roms/cpu_instrs/cpu_instrs.gb";
+		//settings.rom_path		= "C:/Users/robert.johnson/Documents/personal/gb-test-roms/cpu_instrs/cpu_instrs.gb";
 
 		if (gbhw_create(&settings, &m_hardware) != e_success)
 			return false;
@@ -86,7 +87,7 @@ namespace gbe
 		}
 
 		m_texture = SDL_CreateTexture(m_renderer,
-									  SDL_PIXELFORMAT_RGBX8888,
+									  SDL_PIXELFORMAT_BGRX8888,
 									  SDL_TEXTUREACCESS_STREAMING,
 									  m_screenWidth,
 									  m_screenHeight);

@@ -16,6 +16,9 @@ namespace gbd
 	private:
 		void OnShowTileGrid(bool bChecked);
 
+		void on_palette_focus_change(PaletteFocusArgs args);
+		void on_tilemap_focus_change(TileMapFocusArgs args);
+
 		Ui::GBDScreenWindowClass	m_ui;
 		gbhw_context_t				m_hardware;
 	};

@@ -92,6 +92,8 @@ namespace gbhw
 
 	struct GPUPalette
 	{
+		void reset();
+
 		enum Type
 		{
 			BG = 0,
@@ -138,6 +140,18 @@ namespace gbhw
 		static const uint32_t kTileMapSize				= kTileMapWidth * kTileMapHeight;
 		static const uint32_t kTileMapCount				= 2;
 
+		inline void get_tilemap_row(Byte index, Byte y, Byte** map, GPUTileAttributes** attr)
+		{
+			const Word offset = y * kTileMapWidth;
+			*map = &tileMap[index][offset];
+			*attr = &tileAttr[index][offset];
+		}
+
+		inline const Byte* get_tiledata_row(Byte bank, Word index, Byte y) const
+		{
+			return &tileData[bank][index].pixels[y][0];
+		}
+
 		Byte				bank = 0;
 		GPUTile				tileData[kTileDataBankCount][kTileDataCount];		// Banked for read & write.
 		Byte				tileMap[kTileMapCount][kTileMapSize];				// Only written when bank = 0
@@ -173,10 +187,18 @@ namespace gbhw
 		inline const GPUPalette* get_palette(GPUPalette::Type type);
 
 
+
+
+
+
+
+
+
+
+
+
 		void update_sprite_data(const Address spriteDataAddress, Byte value);
 		void update_palette(const Address hwAddress, Byte palette);
-
-		
 
 
 		void update_tile_pattern_line(const Address tilePatternAddress, Byte value);
@@ -190,6 +212,12 @@ namespace gbhw
 		static const uint32_t kPaletteSize			= 64;
 
 	private:
+
+		void scan_line(Byte line);
+		void scan_line_bg_tilemap();
+
+
+
 		void update_tile_pattern_line(Byte patternIndex, const Byte tileIndex, const Byte tileLineY, const Byte lineLow, const Byte lineHigh);
 		Byte update_lcdc_status_mode(Byte stat, HWLCDCStatus::Type mode, HWLCDCStatus::Type interrupt);
 
