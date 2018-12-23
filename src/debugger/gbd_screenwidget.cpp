@@ -8,133 +8,84 @@ using namespace gbhw;
 
 namespace gbd
 {
+	namespace
+	{
+		static const uint32_t kImageWidth = 160;
+		static const uint32_t kImageHeight = 144;
+	}
+
 	ScreenWidget::ScreenWidget(QWidget* parent)
 		: QWidget(parent)
 		, m_hardware(nullptr)
-		, m_image(160, 144, QImage::Format::Format_RGBX8888)
-		, m_bShowTilemapGrid(false)
+		, m_image(kImageWidth, kImageHeight, QImage::Format::Format_RGBX8888)
 		, m_scaleX(2.0f)
 		, m_scaleY(2.0f)
 	{
 		setMouseTracking(true);
-		m_gridPen.setColor(QColor(100, 100, 100, 100));
+		setEnabled(true);
+		setFocusPolicy(Qt::FocusPolicy::ClickFocus);
 	}
 
 	ScreenWidget::~ScreenWidget()
 	{
 	}
 
-	void ScreenWidget::SetHardware(gbhw_context_t hardware)
+	void ScreenWidget::initialise(gbhw_context_t hardware)
 	{
 		m_hardware = hardware;
-	}
-
-	void ScreenWidget::SetShowTilemapGrid(bool bShow)
-	{
-		m_bShowTilemapGrid = bShow;
-		repaint();
 	}
 
 	void ScreenWidget::paintEvent(QPaintEvent* evt)
 	{
 		QPainter painter(this);
 
-		// Update the image
 		if(m_hardware)
 		{
-			const uint8_t* screenData = nullptr;
-			uint32_t width, height;
-			gbhw_get_screen(m_hardware, &screenData);
-			gbhw_get_screen_resolution(m_hardware, &width, &height);
+			QRgb* dst = (QRgb*)m_image.scanLine(0);
+			const uint8_t* src = nullptr;
+			gbhw_get_screen(m_hardware, &src);
 
-			QRgb* destData = (QRgb*)m_image.scanLine(0);
-
-			for (uint32_t y = 0; y < height; ++y)
+			for (uint32_t y = 0; y < kImageHeight; ++y)
 			{
-				for (uint32_t x = 0; x < width; ++x)
+				for (uint32_t x = 0; x < kImageWidth; ++x)
 				{
-					gbhw::Byte hwpixel = (3 - *screenData) * 85;
-					*destData = qRgb(hwpixel, hwpixel, hwpixel);
-					destData++;
-					screenData++;
+					*dst = qRgb(src[3], src[2], src[1]);
+					dst++;
+					src += 4;
 				}
 			}
 		}
 
-		// Paint the widget contents.
 		painter.scale(m_scaleX, m_scaleY);
-
-		// Screen image
 		painter.drawImage(QPoint(0, 0), m_image);
-
-		// Tile map grid.
-		if (m_bShowTilemapGrid)
-		{
-			painter.setPen(m_gridPen);
-
-			MMU* mmu;
-			if(gbhw_get_mmu(m_hardware, &mmu) != e_success)
-				return;
-
-			gbhw::Byte scrollX = mmu->read_io(gbhw::HWRegs::ScrollX);
-			gbhw::Byte scrollY = mmu->read_io(gbhw::HWRegs::ScrollY);
-
-			int lineX = -(scrollX % 8);
-			int lineY = -(scrollY % 8);
-
-			// Draw horizontal lines
-			for (uint32_t y = 0; y < 19; ++y)
-			{
-				painter.drawLine(0, lineY, 160, lineY);
-				lineY += 8;
-			}
-
-			// Draw vertical lines
-			for (uint32_t x = 0; x < 21; ++x)
-			{
-				painter.drawLine(lineX, 0, lineX, 144);
-				lineX += 8;
-			}
-		}
 	}
 
-	void ScreenWidget::mouseMoveEvent(QMouseEvent* evt)
+	void ScreenWidget::keyPressEvent(QKeyEvent* evt)
 	{
-#if 0
-		gbhw::CPU& cpu = m_hardware->GetCPU();
-		gbhw::MMU& mmu = cpu.GetMMU();
+		on_key(evt, button_pressed);
+	}
 
-		gbhw::Byte scrollX = cpu.ReadIO(gbhw::HWRegs::ScrollX);
-		gbhw::Byte scrollY = cpu.ReadIO(gbhw::HWRegs::ScrollY);
+	void ScreenWidget::keyReleaseEvent(QKeyEvent* evt)
+	{
+		on_key(evt, button_released);
+	}
 
-		int posX = evt->pos().x();
-		int posY = evt->pos().y();
+	void ScreenWidget::on_key(QKeyEvent* evt, gbhw_button_state_t state)
+	{
+		if(!m_hardware)
+			return;
 
-		int tileX = (posX + scrollX) / (8 * m_scaleX);
-		int tileY = (posY + scrollY) / (8 * m_scaleY);
-
-		gbhw::Address tilemapAddress = gbhw::HWLCDC::GetBGTileMapAddress(mmu.ReadByte(gbhw::HWRegs::LCDC));
-		gbhw::Byte tileIndex = mmu.ReadByte(tilemapAddress + (tileY * 32) + tileX);
-		QString str;
-
-		if (gbhw::HWLCDC::GetTilePatternIndex(mmu.ReadByte(gbhw::HWRegs::LCDC)) == 0)
+		switch(evt->key())
 		{
-			int32_t unsignedTileIndex = tileIndex ^ 0x80;
-			int32_t signedTileIndex = static_cast<int32_t>((gbhw::SByte)(tileIndex));
-
-// 			if (signedTileIndex >= 128)
-// 			{
-// 				signedTileIndex -= 256;
-// 			}
-
-			str = QString::asprintf("Tile: %d, %d - Index: %d (%d)", tileX, tileY, signedTileIndex, unsignedTileIndex);
+			case Qt::Key_Left:		gbhw_set_button_state(m_hardware, button_dpad_left, state); break;
+			case Qt::Key_Right:		gbhw_set_button_state(m_hardware, button_dpad_right, state); break;
+			case Qt::Key_Up:		gbhw_set_button_state(m_hardware, button_dpad_up, state); break;
+			case Qt::Key_Down:		gbhw_set_button_state(m_hardware, button_dpad_down, state); break;
+			case Qt::Key_Return:	gbhw_set_button_state(m_hardware, button_start, state); break;
+			case Qt::Key_Backspace: gbhw_set_button_state(m_hardware, button_select, state); break;
+			case Qt::Key_Space:		gbhw_set_button_state(m_hardware, button_a, state); break;
+			case Qt::Key_B:			gbhw_set_button_state(m_hardware, button_b, state); break;
+			default: break;
 		}
-		else
-		{
-			str = QString::asprintf("Tile: %d, %d - Index: %d", tileX, tileY, tileIndex);
-		}
-
-		emit UpdateCoordText(str);
-#endif
 	}
 }

@@ -258,6 +258,8 @@ namespace gbhw
 			case CartridgeType::RomMBC3:
 			case CartridgeType::RomMBC3Ram:
 			case CartridgeType::RomMBC3RamBatt:
+			case CartridgeType::RomMBC3TimerBatt:		// @todo: Implement timer functionality, some roms will still work without it.
+			case CartridgeType::RomMBC3TimerRamBatt:
 			{
 				return new MBC3(mmu);
 			}
@@ -274,8 +276,6 @@ namespace gbhw
 			case CartridgeType::RomMMMM01:
 			case CartridgeType::RomMMMM01Ram:
 			case CartridgeType::RomMMMM01RamBatt:
-			case CartridgeType::RomMBC3TimerBatt:
-			case CartridgeType::RomMBC3TimerRamBatt:
 			case CartridgeType::RomMBC4:
 			case CartridgeType::RomMBC4Ram:
 			case CartridgeType::RomMBC4RamBatt:

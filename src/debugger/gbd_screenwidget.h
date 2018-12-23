@@ -14,22 +14,19 @@ namespace gbd
 		ScreenWidget(QWidget* parent = nullptr);
 		~ScreenWidget();
 
-		void SetHardware(gbhw_context_t hardware);
-		void SetShowTilemapGrid(bool bShow);
+		void initialise(gbhw_context_t hardware);
 
 	protected:
 		void paintEvent(QPaintEvent* evt);
-		void mouseMoveEvent(QMouseEvent* evt);
-
-	signals:
-		void UpdateCoordText(const QString& str);
+		void keyPressEvent(QKeyEvent* evt);
+		void keyReleaseEvent(QKeyEvent* evt);
 
 	private:
+		void on_key(QKeyEvent* evt, gbhw_button_state_t state);
+
 		gbhw_context_t		m_hardware;
 		QImage				m_image;
-		bool				m_bShowTilemapGrid;
 		float				m_scaleX;
 		float				m_scaleY;
-		QPen				m_gridPen;
 	};
 }

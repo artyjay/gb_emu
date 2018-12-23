@@ -14,8 +14,6 @@ namespace gbd
 		~ScreenWindow();
 
 	private:
-		void OnShowTileGrid(bool bChecked);
-
 		void on_palette_focus_change(PaletteFocusArgs args);
 		void on_tilemap_focus_change(TileMapFocusArgs args);
 

@@ -159,7 +159,7 @@ namespace gbhw
 			BGPI	= 0xFF68,	// Background palette index
 			BGPD	= 0xFF69,	// Background palette data
 			OBPI	= 0xFF6A,	// Sprite palette index
-			OBPD	= 0xFF6B,	// Sprite paletee data
+			OBPD	= 0xFF6B,	// Sprite palette data
 
 			VBK		= 0xFF4F,	// VRAM bank
 
