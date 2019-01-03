@@ -13,7 +13,6 @@ cmake_minimum_required(VERSION 3.7 FATAL_ERROR)
 # Project options
 #-------------------------------------------------------------------------------
 option(GB_ENABLE_FRONTEND_DESKTOP	"Enable building the Game Boy desktop application"	ON)
-option(GB_ENABLE_FRONTEND_ANDROID 	"Enable building the Android application"			OFF)
 option(GB_ENABLE_DEBUGGER			"Enable building the Game Boy debugger application"	OFF)
 option(GB_ENABLE_TESTS				"Enable building the unit tests"					OFF)
 
@@ -48,16 +47,10 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
 # Project configuration
 #-------------------------------------------------------------------------------
 
-add_subdirectory(src/common)
 add_subdirectory(src/hardware)
-add_subdirectory(src/emulator)
 
 if(GB_ENABLE_FRONTEND_DESKTOP)
 	add_subdirectory(src/desktop)
-endif()
-
-if(GB_ENABLE_FRONTEND_ANDROID)
-	# @todo: 
 endif()
 
 if(GB_ENABLE_DEBUGGER)

@@ -25,9 +25,6 @@ if(GB_ENABLE_DEBUGGER)
 		PRIVATE		HWEnableDebug)
 endif()
 
-target_link_libraries(hardware
-	PUBLIC gb::common)
-
 # Alias
 add_library(gb::hw ALIAS hardware)
 
