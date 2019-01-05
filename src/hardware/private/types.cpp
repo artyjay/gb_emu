@@ -169,43 +169,43 @@ namespace gbhw
 		return "InterruptType - Error";
 	}
 
-	Byte HWLCDC::get_tile_pattern_index(Byte lcdc)
-	{
-		return ((lcdc & TilePattern) == 0) ? 0 : 1;
-	}
-
-	Address HWLCDC::get_tile_pattern_address(Byte index)
-	{
-		return (index == 0) ? Addresses::TilePattern0 : Addresses::TilePattern1;
-	}
-
-	Address HWLCDC::get_bg_tile_map_address(Byte lcdc)
-	{
-		return ((lcdc & BGTileMap) == 0) ? TileMap0 : TileMap1;
-	}
-
-	Address HWLCDC::get_window_tile_map_address(Byte lcdc)
-	{
-		return ((lcdc & WindowTileMap) == 0) ? TileMap0 : TileMap1;
-	}
-
-	bool HWLCDC::get_bg_enabled(Byte lcdc)
+	bool HWLCDC::bg_enabled(Byte lcdc)
 	{
 		return ((lcdc & BGEnabled) != 0);
 	}
 
-	bool HWLCDC::get_window_enabled(Byte lcdc)
-	{
-		return ((lcdc & WindowEnabled) != 0);
-	}
-
-	bool HWLCDC::get_sprite_enabled(Byte lcdc)
+	bool HWLCDC::sprite_enabled(Byte lcdc)
 	{
 		return ((lcdc & SpriteEnabled) != 0);
 	}
 
-	bool HWLCDC::get_sprite_double_height(Byte lcdc)
+	bool HWLCDC::sprite_double_height(Byte lcdc)
 	{
 		return ((lcdc & SpriteSize) != 0);
+	}
+
+	Byte HWLCDC::bg_tile_map_index(Byte lcdc)
+	{
+		return ((lcdc & BGTileMap) == 0) ? 0 : 1;
+	}
+
+	Byte HWLCDC::tile_data_index(Byte lcdc)
+	{
+		return ((lcdc & TileData) == 0) ? 0 : 1;
+	}
+
+	bool HWLCDC::window_enabled(Byte lcdc)
+	{
+		return ((lcdc & WindowEnabled) != 0);
+	}
+
+	Byte HWLCDC::window_tile_map_index(Byte lcdc)
+	{
+		return ((lcdc & WindowTileMap) == 0) ? 0 : 1;
+	}
+
+	bool HWLCDC::enabled(Byte lcdc)
+	{
+		return ((lcdc & Enabled) != 0);
 	}
 }

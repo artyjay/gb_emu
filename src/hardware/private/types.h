@@ -163,20 +163,16 @@ namespace gbhw
 			WindowY = 0xFF4A,
 			WindowX = 0xFF4B,
 			Key1	= 0xFF4D,
-
 			HDMA1	= 0xFF51,
 			HDMA2	= 0xFF52,
 			HDMA3	= 0xFF53,
 			HDMA4	= 0xFF54,
 			HDMA5	= 0xFF55,
-
 			BGPI	= 0xFF68,	// Background palette index
 			BGPD	= 0xFF69,	// Background palette data
 			OBPI	= 0xFF6A,	// Sprite palette index
 			OBPD	= 0xFF6B,	// Sprite palette data
-
 			VBK		= 0xFF4F,	// VRAM bank
-
 			SVBK	= 0xFF70,	// WRAM bank
 			IE		= 0xFFFF
 		};
@@ -216,7 +212,7 @@ namespace gbhw
 			SpriteEnabled = 0x02,
 			SpriteSize = 0x04,
 			BGTileMap = 0x08,
-			TilePattern = 0x10,
+			TileData = 0x10,
 			WindowEnabled = 0x20,
 			WindowTileMap = 0x40,
 			Enabled = 0x80
@@ -231,15 +227,15 @@ namespace gbhw
 			SpriteData = 0xFE00,
 		};
 
-		static Byte get_tile_pattern_index(Byte lcdc);
-		static Address get_tile_pattern_address(Byte index);
-		static Address get_bg_tile_map_address(Byte lcdc);
-		static Address get_window_tile_map_address(Byte lcdc);
+		static bool bg_enabled(Byte lcdc);
+		static bool sprite_enabled(Byte lcdc);
+		static bool sprite_double_height(Byte lcdc);
+		static Byte bg_tile_map_index(Byte lcdc);
+		static Byte tile_data_index(Byte lcdc);
+		static bool window_enabled(Byte lcdc);
+		static Byte window_tile_map_index(Byte lcdc);
+		static bool enabled(Byte lcdc);
 
-		static bool get_bg_enabled(Byte lcdc);
-		static bool get_window_enabled(Byte lcdc);
-		static bool get_sprite_enabled(Byte lcdc);
-		static bool get_sprite_double_height(Byte lcdc);
 	};
 
 	struct HWLCDCStatus
@@ -266,10 +262,13 @@ namespace gbhw
 	{
 		enum Type
 		{
-			Palette = (1 << 4),
-			FlipX = (1 << 5),
-			FlipY = (1 << 6),
-			Priority = (1 << 7)
+			PaletteCGB		= (0x7),					// Mask for bottom 3 bits.
+			BankCGBShift	= 3,
+			BankCGB			= (1 << BankCGBShift),
+			Palette			= (1 << 4),
+			FlipX			= (1 << 5),
+			FlipY			= (1 << 6),
+			Priority		= (1 << 7)
 		};
 	};
 }

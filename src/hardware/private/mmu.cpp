@@ -200,18 +200,7 @@ namespace gbhw
 			case RegionType::VideoRam:
 			{
 				region->m_memory[regionAddr] = byte;
-
 				m_gpu->set_tile_ram_data(address, byte);
-
-				if (regionAddr < 0x1800)
-				{
-					m_gpu->update_tile_pattern_line(address, byte);
-				}
-				else
-				{
-					// update tilemap...
-				}
-
 				break;
 			}
 			case RegionType::ExternalRam:
@@ -228,7 +217,7 @@ namespace gbhw
 			{
 				if (regionAddr < 160)
 				{
-					m_gpu->update_sprite_data(address, byte);
+					m_gpu->set_sprite_data(address, byte);
 					region->m_memory[regionAddr] = byte;
 				}
 				break;
@@ -272,7 +261,7 @@ namespace gbhw
 						for(Address i = 0; i < 160; ++i)
 						{
 							const Address dstAddress = dest + i;
-							m_gpu->update_sprite_data(dstAddress, m_memory[dstAddress]);
+							m_gpu->set_sprite_data(dstAddress, m_memory[dstAddress]);
 						}
 
 						break;
@@ -285,21 +274,19 @@ namespace gbhw
 						break;
 					}
 					case HWRegs::BGP:
-					{
-						m_gpu->update_palette(HWRegs::BGP, byte);
-						region->m_memory[regionAddr] = byte;
-						break;
-					}
 					case HWRegs::OBJ0P:
-					{
-						m_gpu->update_palette(HWRegs::OBJ0P, byte);
-						region->m_memory[regionAddr] = byte;
-						break;
-					}
 					case HWRegs::OBJ1P:
 					{
-						m_gpu->update_palette(HWRegs::OBJ1P, byte);
 						region->m_memory[regionAddr] = byte;
+						break;
+					}
+					case HWRegs::HDMA1:
+					case HWRegs::HDMA2:
+					case HWRegs::HDMA3:
+					case HWRegs::HDMA4:
+					case HWRegs::HDMA5:
+					{
+						log_debug("HDMA not implemented\n");
 						break;
 					}
 					case HWRegs::BGPD:
