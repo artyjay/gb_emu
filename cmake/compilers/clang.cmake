@@ -6,13 +6,13 @@
 # 
 # Copyright 2018
 #-------------------------------------------------------------------------------
-set(COMPILER_NAME "gcc")
-set(GCC ON)
+set(COMPILER_NAME "clang")
+set(CLANG ON)
 
 set(COMPILER_DEFS
-	_SCL_SECURE_NO_WARNINGS			# Allow calling any one of the potentially unsafe methods in the Standard C++ Library
-	_CRT_SECURE_NO_WARNINGS			# Disable CRT deprecation warnings
-	GCC)
+	_SCL_SECURE_NO_WARNINGS
+	_CRT_SECURE_NO_WARNINGS
+	CLANG)
 
 set(COMPILER_FLAGS
 	-g3
@@ -24,7 +24,7 @@ set(COMPILER_FLAGS
 	-ffunction-sections
 	-funwind-tables
 	-fstack-protector
-	$<$<CONFIG:Debug>:-O0>
+	$<$<CONFIG:Deug>:-O0>
 	$<$<CONFIG:Release>:-O2>)
 
 set(LINKER_FLAGS
