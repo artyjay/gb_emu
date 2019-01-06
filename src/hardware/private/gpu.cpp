@@ -447,22 +447,25 @@ namespace gbhw
 
 		// Setup basics.
 		const Address	lineOffset = m_currentScanLine * kScreenWidth;
-		Byte			tileX = windowX % 8;											// X-coordinate within the tile to start off with.
+		Byte			tileX = 0;											// X-coordinate within the tile to start off with.
 		Byte			tileY = m_windowReadY % 8;										// Y-coordinate within the tile
 
 		// Calculate tile map/pattern addresses.
-		const Byte		tileDataIndex		= HWLCDC::tile_data_index(m_lcdc);
-		const Byte		tileMapINdex		= HWLCDC::window_tile_map_index(m_lcdc);
+
+		static Byte dataidx = 0;
+		static Byte mapidx = 0;
+		const Byte		tileDataIndex		= dataidx; // HWLCDC::tile_data_index(m_lcdc);
+		const Byte		tileMapIndex		= mapidx; // HWLCDC::window_tile_map_index(m_lcdc);
 		const Word		tileOffset			= tileDataIndex == 0 ? 128 : 0;
 		const Byte		tileMapY			= m_windowReadY >> 3;
-		Byte			tileMapX			= windowX >> 3;
+		Byte			tileMapX			= 0;
 
 		// Step down next read line.
 		m_windowReadY++;
 
 		Byte* mapRow = nullptr;
 		GPUTileAttributes* attrRow = nullptr;
-		m_tileRam.get_tilemap_row(tileMapINdex, tileMapY, &mapRow, &attrRow);
+		m_tileRam.get_tilemap_row(tileMapIndex, tileMapY, &mapRow, &attrRow);
 
 		GPUPaletteColour* colours = m_palette[GPUPalette::BG].entries[attrRow[tileMapX].palette];
 		Byte tileIndex = mapRow[tileMapX];
@@ -472,15 +475,19 @@ namespace gbhw
 
 		const Byte* tileRow = m_tileRam.get_tiledata_row(attrRow[tileMapX].bank, tileIndex + tileOffset, tileY);
 
-		for (Byte screenX = 0; screenX < kScreenWidth; ++screenX)
+		for (Byte screenX = windowX; screenX < kScreenWidth; ++screenX)
 		{
+#if 1
+			Byte col = (3 - tileRow[tileX]) * 85;
+			m_screenData[lineOffset + screenX] = { 255, col, col, col };
+#else
 			m_screenData[lineOffset + screenX] = colours[tileRow[tileX]].pixel;
-
+#endif
 			if (tileX++ == 7)
 			{
 				// Move across the tile source x, catching end of tile.
 				tileX = 0;
-				tileMapX = (tileMapX + 1) & 0x1f;	// Wrap tile x to 0->31.
+				tileMapX++; // = (tileMapX + 1) & 0x1f;	// Wrap tile x to 0->31.
 
 				tileIndex = mapRow[tileMapX];
 
@@ -492,6 +499,46 @@ namespace gbhw
 			}
 		}
 	}
+
+#if 0
+		void GPU::draw_scan_line_window_tilemap(const Address tileMapAddress, const int16_t windowX)
+	{
+		// Setup basics.
+		const Address	screenAddr = m_currentScanLine * kScreenWidth;
+		Byte			tileX = 0;														// X-coordinate within the tile to start off with.
+		Byte			tileY = (m_windowReadY) % 8;									// Y-coordinate within the tile
+
+		// Calculate tile map/pattern addresses.
+		const Byte		tilePatternIndex = HWLCDC::get_tile_pattern_index(m_lcdc);
+		const Address	tileMapBase = tileMapAddress + ((m_windowReadY >> 3) << 5);		// Get line of tiles to use. base + (mapline / 8) * 32.
+		Byte			tileMapX = 0;													// Get first tile to use. offsetx / 8.
+
+		m_windowReadY++;
+
+																						// Load first tile in the line.
+		Byte tileIndex = m_mmu->read_byte(tileMapBase + tileMapX);
+		const Byte* tileLine = m_tilePatterns[tilePatternIndex].get_tile_line(tileIndex, tileY);
+
+		for (int16_t screenX = windowX; screenX < (int16_t)kScreenWidth; ++screenX)
+		{
+			if (screenX < 0)
+				continue;
+
+			m_screenData[screenAddr + screenX] = get_palette_colour(0, tileLine[tileX]);
+
+
+			if (tileX++ == 7)
+
+			{
+				// Move across the tile source x, catching end of tile.
+				tileX = 0;
+				tileMapX++;// = (tileMapX + 1) & 0x1f;	// Wrap tile x to 0->31.
+				tileIndex = m_mmu->read_byte(tileMapBase + tileMapX);
+				tileLine = m_tilePatterns[tilePatternIndex].get_tile_line(tileIndex, tileY);
+			}
+		}
+	}
+#endif
 
 	void GPU::scan_line_sprite()
 	{

@@ -52,7 +52,7 @@ namespace gbhw
 		{
 		}
 
-		bool MBC1::write(const Address& address, Byte value)
+		bool write(const Address& address, Byte value)
 		{
 			// Mode 0 = Rom banking mode (8kB none-switchable ram, 2mB switchable rom)
 			// Mode 1 = Ram banking mode, (32kB switchable ram, 512kB switchable rom)
@@ -131,7 +131,7 @@ namespace gbhw
 		{
 		}
 
-		bool MBC3::write(const Address& address, Byte value)
+		bool write(const Address& address, Byte value)
 		{
 			if (address < 0x8000)
 			{

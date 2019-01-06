@@ -1270,7 +1270,7 @@ namespace gbhw
 	Byte CPU::inst_ext_reset(Byte val)
 	{
 		static_assert(Bit >= 0 && Bit <= 7, "Bit is invalid, must be between 0 and 7 inclusive");
-		static const Byte kBitMask = ~(1 << Bit);
+		static const Byte kBitMask = (Byte)~(1 << Bit);
 		return (val & kBitMask);
 	}
 

@@ -2,6 +2,7 @@
 #include <SDL.h>
 #include <stdio.h>
 #include <type_traits>
+#include <utility>
 
 #ifdef WIN32
 #define WIN32_LEAN_AND_MEAN
@@ -41,7 +42,7 @@ int main(int argc, char* args[])
 	{
 		log_message("Invalid command line specified\n");
 		log_message("\tUsage: EXE <ROM PATH>\n");
-		return false;
+		return -1;
 	}
 
 	// Create hardware

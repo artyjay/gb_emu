@@ -106,9 +106,6 @@ namespace gbhw
 
 	class GPU
 	{
-		static const uint32_t kScreenWidth	= 160;
-		static const uint32_t kScreenHeight	= 144;
-
 	public:
 		GPU();
 
@@ -133,6 +130,9 @@ namespace gbhw
 		// Palette
 		void set_palette(GPUPalette::Type type, Byte index, Byte value);
 		inline const GPUPalette* get_palette(GPUPalette::Type type);
+
+		static const uint32_t kScreenWidth	= 160;
+		static const uint32_t kScreenHeight	= 144;
 
 	private:
 		Byte update_lcdc_status_mode(Byte stat, HWLCDCStatus::Type mode, HWLCDCStatus::Type interrupt);

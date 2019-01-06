@@ -7,6 +7,7 @@
 #include <inttypes.h>
 #include <type_traits>
 #include <array>
+#include <cstring>
 #include <functional>
 #include <string>
 #include <type_traits>

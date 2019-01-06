@@ -23,6 +23,9 @@ if(GB_ENABLE_DEBUGGER)
 					"${PROJECT_SOURCE_DIR}/src/hardware/debug")
 	target_compile_definitions(hardware
 		PRIVATE		HWEnableDebug)
+else()
+	target_include_directories(hardware
+		PRIVATE		"${PROJECT_SOURCE_DIR}/src/hardware/debug")
 endif()
 
 # Alias

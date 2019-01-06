@@ -12,7 +12,8 @@ set(CLANG ON)
 set(COMPILER_DEFS
 	_SCL_SECURE_NO_WARNINGS
 	_CRT_SECURE_NO_WARNINGS
-	CLANG)
+	CLANG
+	COMPILER=CLANG)
 
 set(COMPILER_FLAGS
 	-g3
@@ -21,17 +22,14 @@ set(COMPILER_FLAGS
 	-pthread
 	-fPIC
 	-Wunused
+	-Wno-format-security
 	-ffunction-sections
 	-funwind-tables
 	-fstack-protector
 	$<$<CONFIG:Deug>:-O0>
 	$<$<CONFIG:Release>:-O2>)
 
-set(LINKER_FLAGS
-	-Wl
-	--no-as-needed
-	-pthread
-	--exclude-libs,ALL)
+set(LINKER_FLAGS "")
 
 set(LINKER_FLAGS_DEBUG
 	${LINKER_FLAGS})

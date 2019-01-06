@@ -12,7 +12,8 @@ set(MSVC ON)
 set(COMPILER_DEFS
 	_SCL_SECURE_NO_WARNINGS			# Allow calling any one of the potentially unsafe methods in the Standard C++ Library
 	_CRT_SECURE_NO_WARNINGS			# Disable CRT deprecation warnings
-	MSVC)
+	MSVC
+	COMPILER=MSVC)
 
 set(COMPILER_FLAGS
 	#/MT$<$<CONFIG:Debug>:d>		# Use multi-threaded runtime, choosing either /MT or /MTd depending on the config.

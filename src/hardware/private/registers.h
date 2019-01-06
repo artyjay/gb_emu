@@ -104,6 +104,27 @@ namespace gbhw
 
 	//--------------------------------------------------------------------------
 
+	using RT	= RegisterType;
+	using RTD	= RegisterTypeDecode;
+	using RF	= RegisterFlag;
+	using RFB	= RegisterFlagBehaviour;
+
+	//--------------------------------------------------------------------------
+	// Helper to prevent incorrect usage at compile time through static assert.
+
+	template<RT::Enum T, RT::Enum... Rest>
+	struct IsRegisterAny : std::false_type {};
+
+	template<RT::Enum T, RT::Enum First>
+	struct IsRegisterAny<T, First> : std::integral_constant<bool, T == First> {};
+
+	template<RT::Enum T, RT::Enum First, RT::Enum... Rest>
+	struct IsRegisterAny<T, First, Rest...>
+		: std::integral_constant<bool, T == First || IsRegisterAny<T, Rest...>::value>
+	{};
+
+	//--------------------------------------------------------------------------
+
 	class Registers
 	{
 	public:
@@ -219,27 +240,6 @@ namespace gbhw
 	{
 		f &= ~static_cast<Byte>(flags);
 	}
-
-	//--------------------------------------------------------------------------
-
-	using RT	= RegisterType;
-	using RTD	= RegisterTypeDecode;
-	using RF	= RegisterFlag;
-	using RFB	= RegisterFlagBehaviour;
-
-	//--------------------------------------------------------------------------
-	// Helper to prevent incorrect usage at compile time through static assert.
-
-	template<RT::Enum T, RT::Enum... Rest>
-	struct IsRegisterAny : std::false_type {};
-
-	template<RT::Enum T, RT::Enum First>
-	struct IsRegisterAny<T, First> : std::integral_constant<bool, T == First> {};
-
-	template<RT::Enum T, RT::Enum First, RT::Enum... Rest>
-	struct IsRegisterAny<T, First, Rest...>
-		: std::integral_constant<bool, T == First || IsRegisterAny<T, Rest...>::value>
-	{};
 
 	//--------------------------------------------------------------------------
 }

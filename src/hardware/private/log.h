@@ -48,8 +48,13 @@ namespace gbhw
 		if(level < m_level)
 			return;
 
+#ifdef MSVC
 		sprintf_s(m_buffer[0], format, parameters...);
 		sprintf_s(m_buffer[1], "%s | %s", type, m_buffer[0]);
+#else
+		sprintf(m_buffer[0], format, parameters...);
+		sprintf(m_buffer[1], "%s | %s", type, m_buffer[0]);
+#endif
 
 		m_callback.trigger(level, m_buffer[1]);
 	}

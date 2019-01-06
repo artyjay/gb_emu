@@ -41,10 +41,10 @@ namespace gbhw
 	}
 
 	MMU::MMU()
-		: m_regionsLUT { nullptr }
-		, m_gpu(nullptr)
+		: m_gpu(nullptr)
 		, m_cpu(nullptr)
 		, m_rom(nullptr)
+		, m_regionsLUT { nullptr }
 		, m_mbc(nullptr)
 	{
 		// @todo: Initialise all memory with "random" data.
@@ -151,6 +151,7 @@ namespace gbhw
 			{
 				return region->m_memory[regionAddr];
 			}
+			default: break;
 		}
 
 		log_error("Unhandled memory read occurred: [0x%04x]\n", address);
@@ -336,6 +337,10 @@ namespace gbhw
 					}
 				}
 
+				break;
+			}
+			default:
+			{
 				break;
 			}
 		}
