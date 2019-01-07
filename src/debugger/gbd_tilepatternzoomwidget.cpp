@@ -43,6 +43,7 @@ namespace gbd
 
 	void TilePatternZoomWidget::paintEvent(QPaintEvent* evt)
 	{
+#if 0
 		QPainter painter(this);
 
 		// Update the image
@@ -92,6 +93,6 @@ namespace gbd
 			painter2.drawLine(lineX, 0, lineX, 128);
 			lineX += 16;
 		}
+#endif
 	}
-
-} // gbd
+}

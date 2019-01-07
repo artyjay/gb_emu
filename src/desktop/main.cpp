@@ -60,7 +60,7 @@ int main(int argc, char* args[])
 	// Grab screen details and setup SDL.
 	uint32_t screenWidth = 0;
 	uint32_t screenHeight = 0;
-	uint32_t screenScale = 4;
+	uint32_t screenScale = 1;
 
 	if (gbhw_get_screen_resolution(hardware, &screenWidth, &screenHeight) != e_success)
 		return -1;

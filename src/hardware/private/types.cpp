@@ -201,7 +201,7 @@ namespace gbhw
 
 	Byte HWLCDC::window_tile_map_index(Byte lcdc)
 	{
-		return ((lcdc & WindowTileMap) == 0) ? 1 : 0;
+		return ((lcdc & WindowTileMap) == 0) ? 0 : 1;
 	}
 
 	bool HWLCDC::enabled(Byte lcdc)

@@ -414,7 +414,12 @@ namespace gbhw
 
 		for (uint32_t screenX = 0; screenX < kScreenWidth; ++screenX)
 		{
+#if 1
+			Byte col = (3 - tileRow[tileX]) * 85;
+			m_screenData[lineOffset + screenX] = { 255, col, col, col };
+#else
 			m_screenData[lineOffset + screenX] = colours[tileRow[tileX]].pixel;
+#endif
 
 			if (tileX++ == 7)
 			{
@@ -438,8 +443,8 @@ namespace gbhw
 		// @todo: Re-implement this properly. Can be modified between interrupts.
 		Byte windowX = static_cast<SWord>(m_mmu->read_io(HWRegs::WindowX));
 
-		// Only draw on this scanline when visible.
-		if (windowX > 166 || m_windowPosY > 144)
+		// Start drawing when window is visible, and scanline is on or past vertical position.
+		if (windowX > 166 || m_currentScanLine < m_windowPosY)
 			return;
 
 		// Offset accordingly.
@@ -448,14 +453,14 @@ namespace gbhw
 		// Setup basics.
 		const Address	lineOffset = m_currentScanLine * kScreenWidth;
 		Byte			tileX = 0;											// X-coordinate within the tile to start off with.
-		Byte			tileY = m_windowReadY % 8;										// Y-coordinate within the tile
+		Byte			tileY = m_windowReadY % 8;							// Y-coordinate within the tile
 
 		// Calculate tile map/pattern addresses.
 
 		static Byte dataidx = 0;
 		static Byte mapidx = 0;
-		const Byte		tileDataIndex		= dataidx; // HWLCDC::tile_data_index(m_lcdc);
-		const Byte		tileMapIndex		= mapidx; // HWLCDC::window_tile_map_index(m_lcdc);
+		const Byte		tileDataIndex		= HWLCDC::tile_data_index(m_lcdc);
+		const Byte		tileMapIndex		= HWLCDC::window_tile_map_index(m_lcdc);
 		const Word		tileOffset			= tileDataIndex == 0 ? 128 : 0;
 		const Byte		tileMapY			= m_windowReadY >> 3;
 		Byte			tileMapX			= 0;
@@ -487,7 +492,7 @@ namespace gbhw
 			{
 				// Move across the tile source x, catching end of tile.
 				tileX = 0;
-				tileMapX++; // = (tileMapX + 1) & 0x1f;	// Wrap tile x to 0->31.
+				tileMapX++;
 
 				tileIndex = mapRow[tileMapX];
 
