@@ -416,7 +416,12 @@ namespace gbhw
 		{
 #if 1
 			Byte col = (3 - tileRow[tileX]) * 85;
+
+#if EMSCRIPTEN
+			m_screenData[lineOffset + screenX] = { col, col, col, 255 };
+#else
 			m_screenData[lineOffset + screenX] = { 255, col, col, col };
+#endif
 #else
 			m_screenData[lineOffset + screenX] = colours[tileRow[tileX]].pixel;
 #endif
@@ -481,7 +486,11 @@ namespace gbhw
 		{
 #if 1
 			Byte col = (3 - tileRow[tileX]) * 85;
+#if EMSCRIPTEN
+			m_screenData[lineOffset + screenX] = { col, col, col, 255 };
+#else
 			m_screenData[lineOffset + screenX] = { 255, col, col, col };
+#endif
 #else
 			m_screenData[lineOffset + screenX] = colours[tileRow[tileX]].pixel;
 #endif

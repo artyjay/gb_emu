@@ -1,4 +1,7 @@
 /build
 /build_cmake
+/build_web
 /roms
 /.vscode
+
+/src/web/libgb_hw.js
