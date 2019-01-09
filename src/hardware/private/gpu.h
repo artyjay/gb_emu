@@ -153,6 +153,7 @@ namespace gbhw
 			};
 		};
 
+		GPUPixel				m_screenData[kScreenWidth * kScreenHeight];
 		CPU_ptr					m_cpu;
 		MMU_ptr					m_mmu;
 		Mode::Enum				m_mode;
@@ -162,7 +163,6 @@ namespace gbhw
 		Byte					m_currentScanLine;
 		Byte					m_windowPosY;
 		Byte					m_windowReadY;
-		GPUPixel				m_screenData[kScreenWidth * kScreenHeight];
 		GPUTileRam				m_tileRam;
 		std::vector<Byte>		m_scanLineSprites;
 		GPUSpriteData			m_spriteData[40];

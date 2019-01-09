@@ -28,6 +28,23 @@ else()
 		PRIVATE		"${PROJECT_SOURCE_DIR}/src/hardware/debug")
 endif()
 
+# Compile the Javascript bytecode output into a .js file.
+if(EMSCRIPTEN)
+	set(BC_FILE ${PLATFORM_BINARIES_PATH}/${CMAKE_STATIC_LIBRARY_PREFIX}gb_hw${CMAKE_STATIC_LIBRARY_SUFFIX})
+	set(JS_FILE ${PLATFORM_BINARIES_PATH}/${CMAKE_STATIC_LIBRARY_PREFIX}gb_hw.js)
+	set(HW_FUNCTIONS 
+		"_gbhw_create_web"
+		"_gbhw_destroy"
+		"_gbhw_load_rom_memory"
+		"_gbhw_get_screen_web"
+		"_gbhw_get_screen_resolution_width"
+		"_gbhw_get_screen_resolution_height"
+		"_gbhw_step"
+		"_gbhw_set_button_state")
+
+	add_custom_command(TARGET hardware POST_BUILD COMMAND python ${PROJECT_SOURCE_DIR}/cmake/scripts/generate_js.py -i ${BC_FILE} -o ${JS_FILE} -f "${HW_FUNCTIONS}")
+endif()
+
 # Alias
 add_library(gb::hw ALIAS hardware)
 

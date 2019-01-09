@@ -26,18 +26,27 @@ set(CMAKE_SKIP_BUILD_RPATH TRUE)
 set(CMAKE_BUILD_WITH_INSTALL_RPATH FALSE)
 set(CMAKE_INSTALL_RPATH "")
 set(CMAKE_INSTALL_RPATH_USE_LINK_PATH FALSE)
+set (CMAKE_CXX_STANDARD 11)
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)		# Used by the IDEs for grouping source files.
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/functions.cmake)
 include(${CMAKE_CURRENT_SOURCE_DIR}/cmake/conan.cmake)
 
 gb_setup_platform()
 
+if(EMSCRIPTEN)
+	set(GB_ENABLE_FRONTEND_DESKTOP	OFF)
+	set(GB_ENABLE_DEBUGGER			OFF)
+	set(GB_ENABLE_TESTS				OFF)
+endif()
+
 #-------------------------------------------------------------------------------
 # Conan configuration
 #-------------------------------------------------------------------------------
+if(NOT EMSCRIPTEN)
 conan_cmake_run(CONANFILE conanfile.py
 				BASIC_SETUP CMAKE_TARGETS
 				BUILD missing)
+endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})

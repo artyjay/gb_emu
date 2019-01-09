@@ -98,5 +98,14 @@ HWPublicAPI gbhw_errorcode_t gbhw_set_button_state(gbhw_context_t ctx, gbhw_butt
 /*----------------------------------------------------------------------------*/
 
 #ifdef __cplusplus
+#ifdef EMSCRIPTEN
+
+HWPublicAPI gbhw_context_t gbhw_create_web(const uint8_t* rom, uint32_t rom_size);
+HWPublicAPI const uint8_t* gbhw_get_screen_web(gbhw_context_t ctx);
+HWPublicAPI uint32_t gbhw_get_screen_resolution_width(gbhw_context_t ctx);
+HWPublicAPI uint32_t gbhw_get_screen_resolution_height(gbhw_context_t ctx);
+
+#endif
+
 }
 #endif

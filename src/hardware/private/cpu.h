@@ -27,7 +27,9 @@ namespace gbhw
 	public:
 		Instruction();
 
-		void set(Byte opcode, Byte extended, Byte byteSize, Byte cycles0, Byte cycles1, RFB::Enum behaviour0, RFB::Enum behaviour1, RFB::Enum behaviour2, RFB::Enum behaviour3, RTD::Enum args0, RTD::Enum args1, const char* assembly);
+		void set(Byte opcode, Byte extended, Byte byteSize, Byte cycles0, Byte cycles1,
+				 RFB::Enum behaviour0, RFB::Enum behaviour1, RFB::Enum behaviour2,
+				 RFB::Enum behaviour3, RTD::Enum args0, RTD::Enum args1, const char* assembly);
 		void set(InstructionFunction fn);
 		void set(Address address);
 

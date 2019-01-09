@@ -174,6 +174,50 @@ extern "C"
 		return e_success;
 	}
 
+#ifdef EMSCRIPTEN
+
+	static void gbhw_log_callback_web(void* userdata, gbhw_log_level_t level, const char* msg)
+	{
+		printf("%s", msg);
+		fflush(stdout);
+	}
+
+	HWPublicAPI gbhw_context_t gbhw_create_web(const uint8_t* rom, uint32_t rom_size)
+	{
+		gbhw_settings_t settings = {0};
+		settings.rom			= rom;
+		settings.rom_size		= rom_size;
+		settings.log_callback	= gbhw_log_callback_web;
+		settings.log_level		= l_debug;
+
+		gbhw_context_t res = nullptr;
+		gbhw_create(&settings, &res);
+		return res;
+	}
+
+	HWPublicAPI const uint8_t* gbhw_get_screen_web(gbhw_context_t ctx)
+	{
+		const uint8_t* screen;
+		gbhw_get_screen(ctx, &screen);
+		return screen;
+	}
+
+	HWPublicAPI uint32_t gbhw_get_screen_resolution_width(gbhw_context_t ctx)
+	{
+		uint32_t w, h;
+		gbhw_get_screen_resolution(ctx, &w, &h);
+		return w;
+	}
+
+	HWPublicAPI uint32_t gbhw_get_screen_resolution_height(gbhw_context_t ctx)
+	{
+		uint32_t w, h;
+		gbhw_get_screen_resolution(ctx, &w, &h);
+		return h;
+	}
+
+#endif
+
 	//--------------------------------------------------------------------------
 	// Debug API
 	//--------------------------------------------------------------------------

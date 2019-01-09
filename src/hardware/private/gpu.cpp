@@ -456,9 +456,6 @@ namespace gbhw
 		Byte			tileY = m_windowReadY % 8;							// Y-coordinate within the tile
 
 		// Calculate tile map/pattern addresses.
-
-		static Byte dataidx = 0;
-		static Byte mapidx = 0;
 		const Byte		tileDataIndex		= HWLCDC::tile_data_index(m_lcdc);
 		const Byte		tileMapIndex		= HWLCDC::window_tile_map_index(m_lcdc);
 		const Word		tileOffset			= tileDataIndex == 0 ? 128 : 0;
