@@ -414,12 +414,7 @@ namespace gbhw
 
 		for (uint32_t screenX = 0; screenX < kScreenWidth; ++screenX)
 		{
-#if 1
-			Byte col = (3 - tileRow[tileX]) * 85;
-			m_screenData[lineOffset + screenX] = { 255, col, col, col };
-#else
 			m_screenData[lineOffset + screenX] = colours[tileRow[tileX]].pixel;
-#endif
 
 			if (tileX++ == 7)
 			{
@@ -479,12 +474,8 @@ namespace gbhw
 
 		for (Byte screenX = windowX; screenX < kScreenWidth; ++screenX)
 		{
-#if 1
-			Byte col = (3 - tileRow[tileX]) * 85;
-			m_screenData[lineOffset + screenX] = { 255, col, col, col };
-#else
 			m_screenData[lineOffset + screenX] = colours[tileRow[tileX]].pixel;
-#endif
+
 			if (tileX++ == 7)
 			{
 				// Move across the tile source x, catching end of tile.

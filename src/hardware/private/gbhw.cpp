@@ -125,7 +125,7 @@ extern "C"
 
  		if (mode == step_vsync)
  		{
- 			maxcycles = 40;
+ 			maxcycles = 1;
  			bLoop = true;
  		}
 

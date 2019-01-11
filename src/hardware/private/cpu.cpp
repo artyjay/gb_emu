@@ -110,7 +110,7 @@ namespace gbhw
 			m_instructionCycles = 0;
 		}
 
-		return cycles;
+		return cycles >> m_speed;
 	}
 
 	void CPU::update_stalled()
