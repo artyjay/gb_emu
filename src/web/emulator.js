@@ -21,24 +21,43 @@ export default class Emulator
 		this._romdata = null;
 		this._screenw = 0;
 		this._screenh = 0;
+		this._scaling = 4;
 	}
 
 	step(timestamp)
 	{
 		if(this._handle !== null)
 		{
-			var res = Module._gbhw_step(this._handle, 0);	// V-Sync stepping.
-
-			if(res != 0)
+			// V-Sync stepping.
+			if(Module._gbhw_step(this._handle, 0) != 0)
 			{
 				console.log("Stepping produced error: " + res);
 			}
 
+			// Load in screen to image data.
 			var screendata = Module._gbhw_get_screen_web(this._handle);
 			var screen = new Uint8ClampedArray(Module.HEAPU8.buffer, screendata, this._screenw * this._screenh * 4);
 			var imageData = this._ctx.getImageData(0, 0, this._screenw, this._screenh);
 			imageData.data.set(screen);
-			this._ctx.putImageData(imageData, 0, 0);
+
+			// Async load up image data into a bitmap that can be drawn scaled.
+			var ctx = this._ctx;
+			var scaling = this._scaling;
+			createImageBitmap(imageData).then(function(image)
+			{
+				ctx.setTransform(scaling, 0, 0, scaling, 0, 0);
+				ctx.drawImage(image, 0, 0);
+			});
+			//this._ctx.putImageData(imageData, 0, 0);
+		}
+	}
+
+	modify_button_state(button, state)
+	{
+		if(this._handle !== null)
+		{
+			console.log("button state: " + button + ", " + state)
+			Module._gbhw_set_button_state(this._handle, button, state);
 		}
 	}
 
@@ -65,8 +84,8 @@ export default class Emulator
 		this._screenh = Module._gbhw_get_screen_resolution_height(this._handle);
 
 		this._canvas = document.getElementById("screen");
-		this._canvas.width = this._screenw;
-		this._canvas.height = this._screenh;
+		this._canvas.width = this._screenw * this._scaling;
+		this._canvas.height = this._screenh * this._scaling;
 		this._ctx = this._canvas.getContext("2d");
 	}
 }

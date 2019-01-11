@@ -8,10 +8,17 @@ namespace gbhw
 
 	struct GPUPixel
 	{
+#if EMSCRIPTEN
+		Byte r;
+		Byte g;
+		Byte b;
+		Byte x;
+#else
 		Byte x;
 		Byte r;
 		Byte g;
 		Byte b;
+#endif
 	};
 
 	//--------------------------------------------------------------------------
