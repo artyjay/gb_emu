@@ -1,22 +1,24 @@
 #pragma once
 
-#include "context.h"
+#include "types.h"
 
 namespace gbhw
 {
+	class MMU;
+
 	//--------------------------------------------------------------------------
 
 	class MBC
 	{
 	public:
-		MBC(MMU_ptr mmu);
+		MBC(MMU* mmu);
 		virtual ~MBC();
 		virtual bool write(const Address& address, Byte value);
 
-		static MBC* create(MMU_ptr mmu, CartridgeType::Type cartridge);
+		static MBC* create(MMU* mmu, CartridgeType::Type cartridge);
 
 	protected:
-		MMU_ptr m_mmu;
+		MMU* m_mmu;
 	};
 
 	//--------------------------------------------------------------------------

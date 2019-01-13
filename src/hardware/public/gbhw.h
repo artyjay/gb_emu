@@ -24,7 +24,7 @@ extern "C" {
 
 /*----------------------------------------------------------------------------*/
 
-typedef void* gbhw_context_t;
+typedef struct gbhw_context *gbhw_context_t;
 
 typedef enum gbhw_step_mode
 {

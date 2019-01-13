@@ -72,16 +72,11 @@ namespace gbhw
 	{
 	}
 
-	void CPU::initialise(MMU_ptr mmu)
+	void CPU::initialise(MMU* mmu)
 	{
 		m_mmu = mmu;
 
 		load_instructions();
-	}
-
-	void CPU::release()
-	{
-		m_mmu = nullptr;
 	}
 
 	uint16_t CPU::update(uint16_t maxcycles)

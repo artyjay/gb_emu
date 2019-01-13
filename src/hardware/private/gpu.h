@@ -1,9 +1,12 @@
 #pragma once
 
-#include "context.h"
+#include "types.h"
 
 namespace gbhw
 {
+	class CPU;
+	class MMU;
+
 	//--------------------------------------------------------------------------
 
 	struct GPUPixel
@@ -116,8 +119,7 @@ namespace gbhw
 	public:
 		GPU();
 
-		void initialise(CPU_ptr cpu, MMU_ptr mmu);
-		void release();
+		void initialise(CPU* cpu, MMU* mmu);
 
 		void update(uint32_t cycles);
 		void reset();
@@ -161,8 +163,8 @@ namespace gbhw
 		};
 
 		GPUPixel				m_screenData[kScreenWidth * kScreenHeight];
-		CPU_ptr					m_cpu;
-		MMU_ptr					m_mmu;
+		CPU*					m_cpu;
+		MMU*					m_mmu;
 		Mode::Enum				m_mode;
 		uint32_t				m_modeCycles;
 		bool					m_bVBlankNotify;

@@ -24,7 +24,7 @@ namespace gbhw
 	// MBC
 	//--------------------------------------------------------------------------
 
-	MBC::MBC(MMU_ptr mmu)
+	MBC::MBC(MMU* mmu)
 		: m_mmu(mmu)
 	{
 	}
@@ -45,7 +45,7 @@ namespace gbhw
 	class MBC1 : public MBC
 	{
 	public:
-		MBC1(MMU_ptr mmu, bool bDefaultMode0)
+		MBC1(MMU* mmu, bool bDefaultMode0)
 		: MBC(mmu)
 		, m_bMode0(bDefaultMode0)
 		, m_romBank(0)
@@ -126,7 +126,7 @@ namespace gbhw
 	class MBC3 : public MBC
 	{
 	public:
-		MBC3(MMU_ptr mmu)
+		MBC3(MMU* mmu)
 		: MBC(mmu)
 		{
 		}
@@ -184,7 +184,7 @@ namespace gbhw
 	class MBC5 : public MBC
 	{
 	public:
-		MBC5(MMU_ptr mmu)
+		MBC5(MMU* mmu)
 			: MBC(mmu)
 			, m_romBankLow(0)
 			, m_romBankHigh(0)
@@ -238,7 +238,7 @@ namespace gbhw
 
 	// ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-	MBC* MBC::create(MMU_ptr mmu, CartridgeType::Type cartridge)
+	MBC* MBC::create(MMU* mmu, CartridgeType::Type cartridge)
 	{
 		switch (cartridge)
 		{

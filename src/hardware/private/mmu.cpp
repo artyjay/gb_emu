@@ -81,18 +81,11 @@ namespace gbhw
 		}
 	}
 
-	void MMU::initialise(CPU_ptr cpu, GPU_ptr gpu, Rom_ptr rom)
+	void MMU::initialise(CPU* cpu, GPU* gpu, Rom* rom)
 	{
 		m_cpu = cpu;
 		m_gpu = gpu;
 		m_rom = rom;
-	}
-
-	void MMU::release()
-	{
-		m_cpu = nullptr;
-		m_gpu = nullptr;
-		m_rom = nullptr;
 	}
 
 	void MMU::reset(CartridgeType::Type cartridgeType)
@@ -102,7 +95,7 @@ namespace gbhw
 			delete m_mbc;
 		}
 
-		m_mbc = MBC::create(MMU_ptr(this), cartridgeType);
+		m_mbc = MBC::create(this, cartridgeType);
 
 		reset();
 

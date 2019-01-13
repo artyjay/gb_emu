@@ -1,6 +1,5 @@
 #include "gbhw.h"
 #include "gbhw_debug.h"
-#include "context.h"
 #include "cpu.h"
 #include "gpu.h"
 #include "log.h"
@@ -12,6 +11,15 @@ using namespace gbhw;
 
 extern "C"
 {
+	typedef struct gbhw_context
+	{
+		CPU		cpu;
+		GPU		gpu;
+		MMU		mmu;
+		Rom		rom;
+		Timer	timer;
+	} gbhw_context, *gbhw_context_t;
+
 	HWPublicAPI gbhw_errorcode_t gbhw_create(gbhw_settings_t* settings, gbhw_context_t* ctx)
 	{
 		if(!settings || !ctx)
@@ -20,15 +28,13 @@ extern "C"
 		// Hook up logging mechanism.
 		Log::instance().initialise(settings->log_level, settings->log_callback, settings->log_userdata);
 
-		// Create context.
-		Context* context = new Context();
-		if(!context->initialise())
-		{
-			delete ctx;
-			return e_failed;
-		}
-
-		*ctx = (gbhw_context_t*)context;
+		// Initialise components.
+		gbhw_context_t res = new gbhw_context;
+		res->cpu.initialise(&res->mmu);
+		res->gpu.initialise(&res->cpu, &res->mmu);
+		res->mmu.initialise(&res->cpu, &res->gpu, &res->rom);
+		res->timer.initialise(&res->cpu, &res->mmu);
+		*ctx = res;
 
 		// Attempt to load ROM.
 		if(settings->rom_path)
@@ -44,8 +50,7 @@ extern "C"
 		if(!ctx)
 			return;
 
-		Context* context = (Context*)ctx;
-		delete context;
+		delete ctx;
 	}
 
 	HWPublicAPI gbhw_errorcode_t gbhw_load_rom_file(gbhw_context_t ctx, const char* path)
@@ -73,11 +78,10 @@ extern "C"
 		if(!ctx || !memory || !length)
 			return e_invalidparam;
 
-		Context* context = (Context*)ctx;
-		context->rom->load(memory, length);
+		ctx->rom.load(memory, length);
 
 		// Reset the mmu with rom cartridge type
-		context->mmu->reset(context->rom->get_cartridge_type());
+		ctx->mmu.reset(ctx->rom.get_cartridge_type());
 
 		// @todo: Reset a whole bunch of other stuff too.
 
@@ -89,10 +93,8 @@ extern "C"
 		if(!ctx)
 			return e_invalidparam;
 
-		Context* context = (Context*)ctx;
-
 		if(screen)
-			*screen = context->gpu->get_screen_data();
+			*screen = ctx->gpu.get_screen_data();
 
 		return e_success;
 	}
@@ -116,8 +118,6 @@ extern "C"
 		if(!ctx)
 			return e_invalidparam;
 
-		Context* context = (Context*)ctx;
-
 		// single cycle.
 		uint16_t cpucycles = 0;
 		uint16_t maxcycles = 1;
@@ -130,9 +130,9 @@ extern "C"
  		}
 
 		// Just updates interrupts when stop or halt is called.
-		if (context->cpu->is_stalled())
+		if (ctx->cpu.is_stalled())
 		{
-			context->cpu->update_stalled();
+			ctx->cpu.update_stalled();
 		}
 		else
 		{
@@ -143,17 +143,17 @@ extern "C"
 			// 16742005 nanoseconds.
 			do
 			{
-				cpucycles = context->cpu->update(maxcycles);
-				context->timer->update(cpucycles);
-				context->gpu->update(cpucycles);
+				cpucycles = ctx->cpu.update(maxcycles);
+				ctx->timer.update(cpucycles);
+				ctx->gpu.update(cpucycles);
 
-				if (context->cpu->is_stalled())
+				if (ctx->cpu.is_stalled())
 				{
 					break;
 				}
 
 				// If a vblank occurred, then we want to sync externally.
-				if (context->gpu->reset_vblank_notify())
+				if (ctx->gpu.reset_vblank_notify())
 				{
 					break;
 				}
@@ -169,8 +169,7 @@ extern "C"
 		if(!ctx)
 			return e_invalidparam;
 
-		Context* context = (Context*)ctx;
-		context->mmu->set_button_state(button, state);
+		ctx->mmu.set_button_state(button, state);
 		return e_success;
 	}
 
@@ -229,12 +228,7 @@ extern "C"
 		if(!ctx)
 			return e_invalidparam;
 
-		Context* context = (Context*)ctx;
-		*cpu = context->cpu.get();
-
-		if(!*cpu)
-			return e_failed;
-
+		*cpu = &ctx->cpu;
 		return e_success;
 	}
 
@@ -243,12 +237,7 @@ extern "C"
 		if(!ctx)
 			return e_invalidparam;
 
-		Context* context = (Context*)ctx;
-		*gpu = context->gpu.get();
-
-		if(!*gpu)
-			return e_failed;
-
+		*gpu = &ctx->gpu;
 		return e_success;
 	}
 
@@ -257,12 +246,7 @@ extern "C"
 		if(!ctx)
 			return e_invalidparam;
 
-		Context* context = (Context*)ctx;
-		*mmu = context->mmu.get();
-
-		if(!*mmu)
-			return e_failed;
-
+		*mmu = &ctx->mmu;
 		return e_success;
 	}
 
@@ -271,12 +255,7 @@ extern "C"
 		if(!ctx)
 			return e_invalidparam;
 
-		Context* context = (Context*)ctx;
-
-		if(!context->cpu)
-			return e_failed;
-
-		*registers = context->cpu->get_registers();
+		*registers = ctx->cpu.get_registers();
 		return e_success;
 	}
 
@@ -285,16 +264,11 @@ extern "C"
 		if(!ctx)
 			return e_invalidparam;
 
-		Context* context = (Context*)ctx;
+		MMU& mmu = ctx->mmu;
+		CPU& cpu = ctx->cpu;
 
-		if(!context->mmu || !context->cpu)
-			return e_failed;
-
-		MMU* mmu = context->mmu.get();
-		CPU* cpu = context->cpu.get();
-
-		const uint8_t* instructionAddress = mmu->get_memory_ptr_from_addr(address);
-		const uint8_t* baseInstruction = mmu->get_memory_ptr_from_addr(0);
+		const uint8_t* instructionAddress = mmu.get_memory_ptr_from_addr(address);
+		const uint8_t* baseInstruction = mmu.get_memory_ptr_from_addr(0);
 		int32_t instructionsProcessed = 0;
 
 		while (true)
@@ -305,11 +279,11 @@ extern "C"
 			if (opcode == 0xCB)
 			{
 				Byte extended = *(instructionAddress + 1);
-				instruction = cpu->get_instruction(extended, true);
+				instruction = cpu.get_instruction(extended, true);
 			}
 			else
 			{
-				instruction = cpu->get_instruction(opcode, false);
+				instruction = cpu.get_instruction(opcode, false);
 			}
 
 			instruction.set(address);

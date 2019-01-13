@@ -1,23 +1,24 @@
 #pragma once
 
-#include "context.h"
+#include "types.h"
 
 namespace gbhw
 {
+	class CPU;
+	class MMU;
+
 	class Timer
 	{
 	public:
 		Timer();
 
-		void initialise(CPU_ptr cpu, MMU_ptr mmu);
-		void release();
-
+		void initialise(CPU* cpu, MMU* mmu);
 		void update(uint32_t cycles);
 		void reset();
 
 	private:
-		CPU_ptr		m_cpu;
-		MMU_ptr		m_mmu;
+		CPU*		m_cpu;
+		MMU*		m_mmu;
 		uint32_t	m_tima;
 		uint32_t	m_divt;
 	};

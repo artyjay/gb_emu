@@ -13,16 +13,10 @@ namespace gbhw
 		reset();
 	}
 
-	void Timer::initialise(CPU_ptr cpu, MMU_ptr mmu)
+	void Timer::initialise(CPU* cpu, MMU* mmu)
 	{
 		m_cpu = cpu;
 		m_mmu = mmu;
-	}
-
-	void Timer::release()
-	{
-		m_cpu = nullptr;
-		m_mmu = nullptr;
 	}
 
 	void Timer::update(uint32_t cycles)

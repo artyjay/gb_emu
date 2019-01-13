@@ -39,16 +39,10 @@ namespace gbhw
 		reset();
 	}
 
-	void GPU::initialise(CPU_ptr cpu, MMU_ptr mmu)
+	void GPU::initialise(CPU* cpu, MMU* mmu)
 	{
 		m_cpu = cpu;
 		m_mmu = mmu;
-	}
-
-	void GPU::release()
-	{
-		m_cpu = nullptr;
-		m_mmu = nullptr;
 	}
 
 	void GPU::update(uint32_t cycles)

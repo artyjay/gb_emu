@@ -1,11 +1,13 @@
 #pragma once
 
-#include "context.h"
 #include "log.h"
 #include "registers.h"
 
 namespace gbhw
 {
+	class CPU;
+	class MMU;
+
 	//--------------------------------------------------------------------------
 	// Instruction
 	//--------------------------------------------------------------------------
@@ -19,7 +21,6 @@ namespace gbhw
 		};
 	};
 
-	class CPU;
 	using InstructionFunction = InstructionResult::Enum (CPU::*)();
 
 	class Instruction
@@ -69,8 +70,7 @@ namespace gbhw
 		CPU();
 		virtual ~CPU();
 
-		void initialise(MMU_ptr mmu);
-		void release();
+		void initialise(MMU* mmu);
 
 		uint16_t update(uint16_t maxcycles);
 		void update_stalled();
@@ -291,7 +291,7 @@ namespace gbhw
 
 		static const uint32_t kInstructionCount = 256;
 
-		MMU_ptr					m_mmu;
+		MMU*					m_mmu;
 		Registers				m_registers;
 
 		bool					m_bStopped;

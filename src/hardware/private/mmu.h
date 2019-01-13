@@ -1,11 +1,14 @@
 #pragma once
 
-#include "context.h"
 #include "gbhw.h"
 #include "mbc.h"
 
 namespace gbhw
 {
+	class CPU;
+	class GPU;
+	class Rom;
+
 	// The Gameboy has a total addressable memory size of 65536, which is divided
 	// into regions. Behavior changes depending on the region accessed. Below is
 	// an outline of the memory regions.
@@ -37,9 +40,6 @@ namespace gbhw
 
 	using MemoryBanks = std::vector<MemoryBank>;
 
-	class CPU;
-	class GPU;
-	class Rom;
 	class MMU
 	{
 		struct RegionType
@@ -77,9 +77,7 @@ namespace gbhw
 		MMU();
 		~MMU();
 
-		void initialise(CPU_ptr cpu, GPU_ptr gpu, Rom_ptr rom);
-		void release();
-
+		void initialise(CPU* cpu, GPU* gpu, Rom* rom);
 		void reset(CartridgeType::Type cartridgeType);
 
 		Byte read_byte(Address address) const;
@@ -110,9 +108,9 @@ namespace gbhw
 		static const uint32_t	kLutShiftGranularity	= 7;	// Shift right for / 128.
 		static const uint32_t	kRegionLutCount			= kMemorySize >> kLutShiftGranularity;
 
-		GPU_ptr					m_gpu;
-		CPU_ptr					m_cpu;
-		Rom_ptr					m_rom;
+		GPU*					m_gpu;
+		CPU*					m_cpu;
+		Rom*					m_rom;
 		uint8_t					m_memory[kMemorySize];
 		Region					m_regions[static_cast<uint32_t>(RegionType::Count)];
 		Region*					m_regionsLUT[kRegionLutCount];
