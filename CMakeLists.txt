@@ -37,24 +37,27 @@ if(EMSCRIPTEN)
 	set(GB_ENABLE_FRONTEND_DESKTOP	OFF)
 	set(GB_ENABLE_DEBUGGER			OFF)
 	set(GB_ENABLE_TESTS				OFF)
-endif()
+	endif()
 
 #-------------------------------------------------------------------------------
 # Conan configuration
 #-------------------------------------------------------------------------------
 if(NOT EMSCRIPTEN)
-conan_cmake_run(CONANFILE conanfile.py
-				BASIC_SETUP CMAKE_TARGETS
-				BUILD missing)
-endif()
+	if(NOT CMAKE_BUILD_TYPE)
+		set(CMAKE_BUILD_TYPE Release)
+	endif()
 
-set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
-set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
-set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
+	conan_cmake_run(CONANFILE conanfile.py
+					BASIC_SETUP CMAKE_TARGETS NO_OUTPUT_DIRS
+					BUILD missing)
+endif()
 
 #-------------------------------------------------------------------------------
 # Project configuration
 #-------------------------------------------------------------------------------
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${PLATFORM_BINARIES_PATH})
 
 add_subdirectory(src/hardware)
 
