@@ -58,9 +58,9 @@ int main(int argc, char* args[])
 		return -1;
 
 	// Grab screen details and setup SDL.
-	uint32_t screenWidth = 0;
-	uint32_t screenHeight = 0;
-	uint32_t screenScale = 1;
+	uint32_t screenWidth	= 0;
+	uint32_t screenHeight	= 0;
+	uint32_t screenScale	= 4;	// @todo: This should be more configurable.
 
 	if (gbhw_get_screen_resolution(hardware, &screenWidth, &screenHeight) != e_success)
 		return -1;
@@ -72,7 +72,7 @@ int main(int argc, char* args[])
 		SDL_WINDOWPOS_UNDEFINED,
 		screenWidth * screenScale,
 		screenHeight * screenScale,
-		SDL_WINDOW_SHOWN);
+		SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE);
 
 	if (!window)
 	{
