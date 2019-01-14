@@ -243,33 +243,17 @@ namespace gbhw
 	{
 		enum Type
 		{
-			ModeHBlank = 0x00,
-			ModeVBlank = 0x01,
-			ModeOAM = 0x02,
-			ModeOAMVRam = 0x03,
-			ModeMask = 0x03,
-
-			Coincidence = 0x04,
-
-			InterruptHBlank = 0x08,
-			InterruptVBlank = 0x10,
-			InterruptOAM = 0x20,
-			InterruptCoincidence = 0x40,
-			InterruptNone = 0xFF	// Used to not send an interrupt.
-		};
-	};
-
-	struct HWSpriteFlags
-	{
-		enum Type
-		{
-			PaletteCGB		= (0x7),					// Mask for bottom 3 bits.
-			BankCGBShift	= 3,
-			BankCGB			= (1 << BankCGBShift),
-			Palette			= (1 << 4),
-			FlipX			= (1 << 5),
-			FlipY			= (1 << 6),
-			Priority		= (1 << 7)
+			ModeHBlank				= 0x00,
+			ModeVBlank				= 0x01,
+			ModeOAM					= 0x02,
+			ModeOAMVRam				= 0x03,
+			ModeMask				= 0x03,
+			Coincidence				= 0x04,
+			InterruptHBlank			= 0x08,
+			InterruptVBlank			= 0x10,
+			InterruptOAM			= 0x20,
+			InterruptCoincidence	= 0x40,
+			InterruptNone			= 0xFF	// Used to not send an interrupt.
 		};
 	};
 }

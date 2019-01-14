@@ -37,7 +37,7 @@ namespace gbhw
 		bank = 0;
 		memset(tileData, 0, sizeof(GPUTile) * kTileDataBankCount * kTileDataCount);
 		memset(tileMap,  0, sizeof(Byte) * kTileMapCount * kTileMapSize);
-		memset(tileAttr, 0, sizeof(GPUTileAttributes) * kTileMapCount * kTileMapSize);
+		memset(tileAttr, 0, sizeof(GPUAttributes) * kTileMapCount * kTileMapSize);
 	}
 
 	//--------------------------------------------------------------------------
@@ -263,7 +263,7 @@ namespace gbhw
 			}
 			else
 			{
-				GPUTileAttributes attr(data);
+				GPUAttributes attr(data);
 				m_tileRam.tileAttr[tilemapIndex][tileIndex] = attr;
 			}
 		}
@@ -287,7 +287,7 @@ namespace gbhw
 				case 0: sprite->y = value; break;
 				case 1: sprite->x = value; break;
 				case 2: sprite->tile = value; break;
-				case 3: sprite->flags = value; break;
+				case 3: sprite->attr = GPUAttributes(value); break;
 				default: log_error("Invalid sprite data address\n"); break;
 			}
 		}
@@ -393,7 +393,7 @@ namespace gbhw
 
 		// Grab tilemap line data.
 		Byte*				mapRow	= nullptr;
-		GPUTileAttributes*	attrRow = nullptr;
+		GPUAttributes*	attrRow = nullptr;
 		m_tileRam.get_tilemap_row(tileMapIndex, tileMapY, &mapRow, &attrRow);
 
 		GPUPaletteColour* colours = m_palette[GPUPalette::BG].entries[attrRow[tileMapX].palette];
@@ -405,8 +405,7 @@ namespace gbhw
 		bool  flipH = attrRow[tileMapX].hFlip;
 		SByte stepH = flipH ? -1 : 1;
 		Byte  tileL = attrRow[tileMapX].vFlip ? 7 - tileY : tileY;
-		bool priority = attrRow[tileMapX].priority;
-			//m_scanLinePriority[]
+		bool  priority = attrRow[tileMapX].priority;
 
 		if(flipH)
 			tileX = 7 - tileX;
@@ -446,6 +445,7 @@ namespace gbhw
 	void GPU::scan_line_window()
 	{
 		// @todo: Re-implement this properly. Can be modified between interrupts.
+		// @todo: This should use virtual the same impl as bg scanline, including tile attributes.
 		Byte windowX = static_cast<SWord>(m_mmu->read_io(HWRegs::WindowX));
 
 		// Start drawing when window is visible, and scanline is on or past vertical position.
@@ -471,7 +471,7 @@ namespace gbhw
 		m_windowReadY++;
 
 		Byte* mapRow = nullptr;
-		GPUTileAttributes* attrRow = nullptr;
+		GPUAttributes* attrRow = nullptr;
 		m_tileRam.get_tilemap_row(tileMapIndex, tileMapY, &mapRow, &attrRow);
 
 		GPUPaletteColour* colours = m_palette[GPUPalette::BG].entries[attrRow[tileMapX].palette];
@@ -503,46 +503,6 @@ namespace gbhw
 		}
 	}
 
-#if 0
-		void GPU::draw_scan_line_window_tilemap(const Address tileMapAddress, const int16_t windowX)
-	{
-		// Setup basics.
-		const Address	screenAddr = m_currentScanLine * kScreenWidth;
-		Byte			tileX = 0;														// X-coordinate within the tile to start off with.
-		Byte			tileY = (m_windowReadY) % 8;									// Y-coordinate within the tile
-
-		// Calculate tile map/pattern addresses.
-		const Byte		tilePatternIndex = HWLCDC::get_tile_pattern_index(m_lcdc);
-		const Address	tileMapBase = tileMapAddress + ((m_windowReadY >> 3) << 5);		// Get line of tiles to use. base + (mapline / 8) * 32.
-		Byte			tileMapX = 0;													// Get first tile to use. offsetx / 8.
-
-		m_windowReadY++;
-
-																						// Load first tile in the line.
-		Byte tileIndex = m_mmu->read_byte(tileMapBase + tileMapX);
-		const Byte* tileLine = m_tilePatterns[tilePatternIndex].get_tile_line(tileIndex, tileY);
-
-		for (int16_t screenX = windowX; screenX < (int16_t)kScreenWidth; ++screenX)
-		{
-			if (screenX < 0)
-				continue;
-
-			m_screenData[screenAddr + screenX] = get_palette_colour(0, tileLine[tileX]);
-
-
-			if (tileX++ == 7)
-
-			{
-				// Move across the tile source x, catching end of tile.
-				tileX = 0;
-				tileMapX++;// = (tileMapX + 1) & 0x1f;	// Wrap tile x to 0->31.
-				tileIndex = m_mmu->read_byte(tileMapBase + tileMapX);
-				tileLine = m_tilePatterns[tilePatternIndex].get_tile_line(tileIndex, tileY);
-			}
-		}
-	}
-#endif
-
 	void GPU::scan_line_sprite()
 	{
 		// Calculate sprites visible on scanline.
@@ -556,9 +516,9 @@ namespace gbhw
 			GPUSpriteData* sprite = &m_spriteData[spriteIndex];
 
 			const Byte x = sprite->x;
-			const Byte y = sprite->y - 16;
+			const int16_t y = sprite->y - 16;
 
-			if ((x == 0 || x >= 168 || y == 0 || y >= 144) ||								// Visibility check
+			if ((x == 0 || x >= 168 || sprite->y == 0 || y >= 144) ||						// Visibility check
 				(m_currentScanLine < y || m_currentScanLine > (y + (spriteHeight - 1))))	// Scanline check
 			{
 				continue;
@@ -570,7 +530,9 @@ namespace gbhw
 				break;
 		}
 
-		// @todo: Re-work sprite flags.
+		// GBC prioritises lower indexed sprites. Draw back to front
+		// (alternatively priority bit could be set during drawing).
+		std::sort(m_scanLineSprites.rbegin(), m_scanLineSprites.rend());
 
 		// Draw each visible sprite
 		const Address lineOffset = m_currentScanLine * kScreenWidth;
@@ -582,14 +544,12 @@ namespace gbhw
 			int16_t spriteX = sprite->x - 8;
 			int16_t spriteY = sprite->y - 16;
 			Byte tileIndex	= sprite->tile;
-			Byte flags		= sprite->flags;
 
-			const bool bFlipX	= (flags & HWSpriteFlags::FlipX) != 0;
-			const bool bFlipY	= (flags & HWSpriteFlags::FlipY) != 0;
-			const Byte palette	= (flags & HWSpriteFlags::PaletteCGB);
-			const Byte bank		= (flags & HWSpriteFlags::BankCGB) >> HWSpriteFlags::BankCGBShift;
+			const bool bFlipX	= sprite->attr.hFlip;
+			const bool bFlipY	= sprite->attr.vFlip;
+			const Byte palette	= sprite->attr.palette;
+			const Byte bank		= sprite->attr.bank;
 
-			// Always from tile pattern 1 (i.e. 0x8000)
 			const Byte tileY			= m_currentScanLine - spriteY;
 			const Byte tileYIndex		= bFlipY ? (bDouble ? (15 - tileY) : (7 - tileY)) : tileY;
 			const Byte tileOffset		= (bDouble && (tileYIndex > 7)) ? 1 : 0;

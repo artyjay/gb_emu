@@ -24,16 +24,34 @@ namespace gbhw
 #endif
 	};
 
+	struct GPUAttributes
+	{
+		inline GPUAttributes(Byte data = 0)
+		{
+			palette		= data & 0x07;
+			bank		= (data >> 3) & 0x01;
+			hFlip		= static_cast<bool>((data >> 5) & 0x01);
+			vFlip		= static_cast<bool>((data >> 6) & 0x01);
+			priority	= static_cast<bool>((data >> 7) & 0x01);
+		}
+
+		Byte palette;
+		Byte bank;
+		bool hFlip;
+		bool vFlip;
+		bool priority;
+	};
+
 	//--------------------------------------------------------------------------
 
 	struct GPUSpriteData
 	{
-		inline GPUSpriteData() : x(0), y(0), tile(0), flags(0) {}
+		inline GPUSpriteData() : x(0), y(0), tile(0) {}
 
-		Byte x;
-		Byte y;
-		Byte tile;
-		Byte flags;
+		Byte			x;
+		Byte			y;
+		Byte			tile;
+		GPUAttributes	attr;
 	};
 
 	//--------------------------------------------------------------------------
@@ -65,24 +83,6 @@ namespace gbhw
 		Byte pixels[8][8];	// Row major, indexed through y,x
 	};
 
-	struct GPUTileAttributes
-	{
-		inline GPUTileAttributes(Byte data = 0)
-		{
-			palette		= data & 0x07;
-			bank		= (data >> 3) & 0x01;
-			hFlip		= static_cast<bool>((data >> 5) & 0x01);
-			vFlip		= static_cast<bool>((data >> 6) & 0x01);
-			priority	= static_cast<bool>((data >> 7) & 0x01);
-		}
-
-		Byte palette;
-		Byte bank;
-		bool hFlip;
-		bool vFlip;
-		bool priority;
-	};
-
 	struct GPUTileRam
 	{
 		GPUTileRam();
@@ -94,7 +94,7 @@ namespace gbhw
 		static const uint32_t kTileMapSize				= kTileMapWidth * kTileMapHeight;
 		static const uint32_t kTileMapCount				= 2;
 
-		inline void get_tilemap_row(Byte index, Byte y, Byte** map, GPUTileAttributes** attr)
+		inline void get_tilemap_row(Byte index, Byte y, Byte** map, GPUAttributes** attr)
 		{
 			const Word offset = y * kTileMapWidth;
 			*map	= &tileMap[index][offset];
@@ -106,10 +106,10 @@ namespace gbhw
 			return &tileData[bank][index].pixels[y][0];
 		}
 
-		Byte				bank = 0;
-		GPUTile				tileData[kTileDataBankCount][kTileDataCount];		// Banked for read & write.
-		Byte				tileMap[kTileMapCount][kTileMapSize];				// Only written when bank = 0
-		GPUTileAttributes	tileAttr[kTileMapCount][kTileMapSize];				// Only written when bank = 1. Should only be used for GBC rom.
+		Byte			bank = 0;
+		GPUTile			tileData[kTileDataBankCount][kTileDataCount];		// Banked for read & write.
+		Byte			tileMap[kTileMapCount][kTileMapSize];				// Only written when bank = 0
+		GPUAttributes	tileAttr[kTileMapCount][kTileMapSize];				// Only written when bank = 1. Should only be used for GBC rom.
 	};
 
 	//--------------------------------------------------------------------------
