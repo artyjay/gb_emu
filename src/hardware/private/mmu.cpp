@@ -91,9 +91,7 @@ namespace gbhw
 	void MMU::reset(CartridgeType::Type cartridgeType)
 	{
 		if(m_mbc)
-		{
 			delete m_mbc;
-		}
 
 		m_mbc = MBC::create(this, cartridgeType);
 

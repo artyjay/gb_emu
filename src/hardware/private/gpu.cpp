@@ -12,11 +12,19 @@ namespace gbhw
 		static const uint32_t kScanlineReadOAMCycles	= 80;
 		static const uint32_t kScanlineReadVRAMCycles	= 172;
 		static const uint32_t kHBlankCycles				= 204;
+
+		inline Byte palette_colour_scale(Byte val)
+		{
+			// 0->63 to 0->255.
+			// @todo: Colouring is probably non-linear, a LUT is probably going to be
+			//		  the best solution.
+			return ((val + 1) * 8) - 1;
+		}
 	}
 
 	//--------------------------------------------------------------------------
 
-	void GPUPalette::reset()
+	GPUPalette::GPUPalette()
 	{
 		// Set to white.
 		memset(entries, 0xFF, sizeof(GPUPaletteColour) * 8 * 4);
@@ -24,7 +32,7 @@ namespace gbhw
 
 	//--------------------------------------------------------------------------
 
-	void GPUTileRam::reset()
+	GPUTileRam::GPUTileRam()
 	{
 		bank = 0;
 		memset(tileData, 0, sizeof(GPUTile) * kTileDataBankCount * kTileDataCount);
@@ -35,14 +43,26 @@ namespace gbhw
 	//--------------------------------------------------------------------------
 
 	GPU::GPU()
+		: m_screenData(nullptr)
 	{
-		reset();
+		m_mode				= Mode::ScanlineOAM;
+		m_modeCycles		= 0;
+		m_bVBlankNotify		= false;
+		m_scanLineSprites.reserve(10);
+	}
+
+	GPU::~GPU()
+	{
+		if(m_screenData)
+			delete[] m_screenData;
 	}
 
 	void GPU::initialise(CPU* cpu, MMU* mmu)
 	{
 		m_cpu = cpu;
 		m_mmu = mmu;
+
+		m_screenData = new GPUPixel[kScreenWidth * kScreenHeight];
 	}
 
 	void GPU::update(uint32_t cycles)
@@ -134,8 +154,6 @@ namespace gbhw
 					if(m_modeCycles > kHBlankCycles)
 					{
 						m_modeCycles -= kHBlankCycles;
-
-						// Move down a line.
 						++ly;
 
 						if(ly >= 144)
@@ -161,8 +179,6 @@ namespace gbhw
 					if(m_modeCycles >= kHBlankCycles)
 					{
 						m_modeCycles -= kHBlankCycles;
-
-						// Move down a line.
 						++ly;
 
 						if(ly == 154)
@@ -179,19 +195,6 @@ namespace gbhw
 
 		m_mmu->write_io(HWRegs::LY, ly);
 		m_mmu->write_io(HWRegs::Stat, stat);
-	}
-
-	void GPU::reset()
-	{
-		m_mode				= Mode::ScanlineOAM;
-		m_modeCycles		= 0;
-		m_bVBlankNotify		= false;
-		m_scanLineSprites.reserve(10);
-
-		m_tileRam.reset();
-
-		for(auto& palette : m_palette)
-			palette.reset();
 	}
 
 	void GPU::set_lcdc(Byte val)
@@ -270,15 +273,15 @@ namespace gbhw
 		m_tileRam.bank = bank;
 	}
 
-	void GPU::set_sprite_data(const Address spriteDataAddress, Byte value)
+	void GPU::set_sprite_data(const Address spriteAddress, Byte value)
 	{
-		Byte spriteIndex = (spriteDataAddress - HWLCDC::Addresses::SpriteData) >> 2;
+		Byte spriteIndex = (spriteAddress - HWLCDC::Addresses::SpriteData) >> 2;
 
 		if(spriteIndex < 40)
 		{
 			GPUSpriteData* sprite = &m_spriteData[spriteIndex];
 
-			switch(spriteDataAddress % 4)
+			switch(spriteAddress % 4)
 			{
 				case 0: sprite->y = value; break;
 				case 1: sprite->x = value; break;
@@ -291,14 +294,6 @@ namespace gbhw
 		{
 			log_error("Invalid sprite index specified: %d\n", spriteIndex);
 		}
-	}
-
-	inline Byte palette_colour_scale(Byte val)
-	{
-		// 0->63 to 0->255.
-		// @todo: Colouring is probably non-linear, a LUT is probably going to be
-		//		  the best solution.
-		return ((val + 1) * 8) - 1;
 	}
 
 	void GPU::set_palette(GPUPalette::Type type, Byte index, Byte value)
@@ -383,7 +378,7 @@ namespace gbhw
 		// Setup basics.
 		const Byte scrollX	= m_mmu->read_io(HWRegs::ScrollX);
 		const Byte scrollY	= m_mmu->read_io(HWRegs::ScrollY);
-		const Byte tileY	= (m_currentScanLine + scrollY) % 8;	// Y-coordinate within the tile
+			  Byte tileY	= (m_currentScanLine + scrollY) % 8;	// Y-coordinate within the tile
 			  Byte tileX	= scrollX % 8;							// X-coordinate within the tile to start off with.
 
 		// Calculate tile map/pattern addresses.
@@ -404,25 +399,39 @@ namespace gbhw
 		if(tileDataIndex == 0)
 			tileIndex ^= 0x80;
 
-		const Byte* tileRow = m_tileRam.get_tiledata_row(attrRow[tileMapX].bank, tileIndex + tileOffset, tileY);
+		bool  flipH = attrRow[tileMapX].hFlip;
+		SByte stepH = flipH ? -1 : 1;
+		Byte  tileL = attrRow[tileMapX].vFlip ? 7 - tileY : tileY;
+
+		if(flipH)
+			tileX = 7 - tileX;
+
+		const Byte* tileRow = m_tileRam.get_tiledata_row(attrRow[tileMapX].bank, tileIndex + tileOffset, tileL);
 
 		for (uint32_t screenX = 0; screenX < kScreenWidth; ++screenX)
 		{
 			m_screenData[lineOffset + screenX] = colours[tileRow[tileX]].pixel;
 
-			if (tileX++ == 7)
+			if ((flipH && (tileX == 0)) || (!flipH && (tileX == 7)))
 			{
-				// Move across the tile source x, catching end of tile.
-				tileX = 0;
 				tileMapX = (tileMapX + 1) & 0x1f;	// Wrap tile x to 0->31.
+
+				flipH = attrRow[tileMapX].hFlip;
+				tileL = attrRow[tileMapX].vFlip ? 7 - tileY : tileY;
+				stepH = flipH ? -1 : 1;
+				tileX = flipH ? 7 : 0;
 
 				tileIndex = mapRow[tileMapX];
 
 				if(tileDataIndex == 0)
 					tileIndex ^= 0x80;
 
-				tileRow = m_tileRam.get_tiledata_row(attrRow[tileMapX].bank, tileIndex + tileOffset, tileY);
+				tileRow = m_tileRam.get_tiledata_row(attrRow[tileMapX].bank, tileIndex + tileOffset, tileL);
 				colours = m_palette[GPUPalette::BG].entries[attrRow[tileMapX].palette];
+			}
+			else
+			{
+				tileX += stepH;
 			}
 		}
 	}

@@ -7,16 +7,16 @@ namespace gbhw
 
 	namespace
 	{
-		static const uint32_t kTitleOffset						= 0x134;
-		static const uint32_t kTitleLength						= 16;
-		static const uint32_t kHWTypeOffset						= 0x143;
-		static const uint32_t kSGBIndicatorOffset				= 0x146;
-		static const uint32_t kCartridgeTypeOffset				= 0x147;
-		static const uint32_t kRomSizeOffset					= 0x148;
-		static const uint32_t kRamSizeOffset					= 0x149;
-		static const uint32_t kDestinationCodeOffset			= 0x14A;
-		static const uint32_t kLicenseeCodeOldOffset			= 0x14B;
-		static const uint32_t kBankSize							= 16384;
+		static const uint32_t kTitleOffset				= 0x134;
+		static const uint32_t kTitleLength				= 16;
+		static const uint32_t kHWTypeOffset				= 0x143;
+		static const uint32_t kSGBIndicatorOffset		= 0x146;
+		static const uint32_t kCartridgeTypeOffset		= 0x147;
+		static const uint32_t kRomSizeOffset			= 0x148;
+		static const uint32_t kRamSizeOffset			= 0x149;
+		static const uint32_t kDestinationCodeOffset	= 0x14A;
+		static const uint32_t kLicenseeCodeOldOffset	= 0x14B;
+		static const uint32_t kBankSize					= 16384;
 	}
 
 	//--------------------------------------------------------------------------
@@ -28,19 +28,6 @@ namespace gbhw
 
 	Rom::~Rom()
 	{
-	}
-
-	void Rom::reset()
-	{
-		m_romData.resize(0);
-		m_title				= "";
-		m_cartridgeType		= CartridgeType::Unknown;
-		m_hardwareType		= HardwareType::Unknown;
-		m_romSize			= RomSize::Unknown;
-		m_ramSize			= RamSize::Unknown;
-		m_destinationCode	= DestinationCode::Unknown;
-		m_licenseeCodeOld	= LicenseeCodeOld::Unknown;
-		m_banks.resize(0);
 	}
 
 	bool Rom::load(const uint8_t* data, uint32_t length)
@@ -76,9 +63,21 @@ namespace gbhw
 		return m_cartridgeType;
 	}
 
+	void Rom::reset()
+	{
+		m_romData.resize(0);
+		m_title				= "";
+		m_cartridgeType		= CartridgeType::Unknown;
+		m_hardwareType		= HardwareType::Unknown;
+		m_romSize			= RomSize::Unknown;
+		m_ramSize			= RamSize::Unknown;
+		m_destinationCode	= DestinationCode::Unknown;
+		m_licenseeCodeOld	= LicenseeCodeOld::Unknown;
+		m_banks.resize(0);
+	}
+
 	void Rom::load_header()
 	{
-		// parse the rom header..
 		m_title				= std::string(m_romData.begin() + kTitleOffset, m_romData.begin() + kTitleOffset + kTitleLength);
 		m_cartridgeType		= static_cast<CartridgeType::Type>(m_romData[kCartridgeTypeOffset]);
 		m_romSize			= static_cast<RomSize::Type>(m_romData[kRomSizeOffset]);

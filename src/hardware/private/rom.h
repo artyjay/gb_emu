@@ -12,13 +12,13 @@ namespace gbhw
 		Rom();
 		~Rom();
 
-		void reset();
 		bool load(const uint8_t* data, uint32_t length);
 
 		uint8_t* get_bank(Byte bankIndex);
 		CartridgeType::Type get_cartridge_type() const;
 
 	private:
+		void reset();
 		void load_header();
 		void load_banks();
 

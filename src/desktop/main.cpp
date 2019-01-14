@@ -80,7 +80,7 @@ int main(int argc, char* args[])
 		return -1;
 	}
 
-	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+	SDL_Renderer* renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED /*| SDL_RENDERER_PRESENTVSYNC*/);
 
 	if (!renderer)
 	{
@@ -119,15 +119,15 @@ int main(int argc, char* args[])
 
 				switch (e.key.keysym.sym)
 				{
-				case SDLK_LEFT:			gbhw_set_button_state(hardware, button_dpad_left, state); break;
-				case SDLK_RIGHT:		gbhw_set_button_state(hardware, button_dpad_right, state); break;
-				case SDLK_UP:			gbhw_set_button_state(hardware, button_dpad_up, state); break;
-				case SDLK_DOWN:			gbhw_set_button_state(hardware, button_dpad_down, state); break;
-				case SDLK_RETURN:		gbhw_set_button_state(hardware, button_start, state); break;
-				case SDLK_BACKSPACE:	gbhw_set_button_state(hardware, button_select, state); break;
-				case SDLK_SPACE:		gbhw_set_button_state(hardware, button_a, state); break;
-				case SDLK_b:			gbhw_set_button_state(hardware, button_b, state); break;
-				default: break;
+					case SDLK_LEFT:			gbhw_set_button_state(hardware, button_dpad_left, state); break;
+					case SDLK_RIGHT:		gbhw_set_button_state(hardware, button_dpad_right, state); break;
+					case SDLK_UP:			gbhw_set_button_state(hardware, button_dpad_up, state); break;
+					case SDLK_DOWN:			gbhw_set_button_state(hardware, button_dpad_down, state); break;
+					case SDLK_RETURN:		gbhw_set_button_state(hardware, button_start, state); break;
+					case SDLK_BACKSPACE:	gbhw_set_button_state(hardware, button_select, state); break;
+					case SDLK_SPACE:		gbhw_set_button_state(hardware, button_a, state); break;
+					case SDLK_b:			gbhw_set_button_state(hardware, button_b, state); break;
+					default: break;
 				}
 			}
 		}

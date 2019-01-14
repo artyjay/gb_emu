@@ -46,7 +46,7 @@ namespace gbhw
 
 	struct GPUPalette
 	{
-		void reset();
+		GPUPalette();
 
 		enum Type
 		{
@@ -85,10 +85,10 @@ namespace gbhw
 
 	struct GPUTileRam
 	{
-		void reset();
+		GPUTileRam();
 
 		static const uint32_t kTileDataBankCount		= 2;
-		static const uint32_t kTileDataCount			= 384;	// Addressable range is 0x8000->0x97FF
+		static const uint32_t kTileDataCount			= 384;					// Addressable range is 0x8000->0x97FF
 		static const uint32_t kTileMapWidth				= 32;
 		static const uint32_t kTileMapHeight			= 32;
 		static const uint32_t kTileMapSize				= kTileMapWidth * kTileMapHeight;
@@ -118,11 +118,10 @@ namespace gbhw
 	{
 	public:
 		GPU();
+		~GPU();
 
 		void initialise(CPU* cpu, MMU* mmu);
-
 		void update(uint32_t cycles);
-		void reset();
 
 		void set_lcdc(Byte val);
 		bool reset_vblank_notify();
@@ -134,7 +133,7 @@ namespace gbhw
 		inline const GPUTileRam* get_tile_ram() const;
 
 		// Sprite
-		void set_sprite_data(const Address spriteDataAddress, Byte value);
+		void set_sprite_data(const Address spriteAddress, Byte value);
 
 		// Palette
 		void set_palette(GPUPalette::Type type, Byte index, Byte value);
@@ -162,7 +161,6 @@ namespace gbhw
 			};
 		};
 
-		GPUPixel				m_screenData[kScreenWidth * kScreenHeight];
 		CPU*					m_cpu;
 		MMU*					m_mmu;
 		Mode::Enum				m_mode;
@@ -172,6 +170,7 @@ namespace gbhw
 		Byte					m_currentScanLine;
 		Byte					m_windowPosY;
 		Byte					m_windowReadY;
+		GPUPixel*				m_screenData;
 		GPUTileRam				m_tileRam;
 		std::vector<Byte>		m_scanLineSprites;
 		GPUSpriteData			m_spriteData[40];

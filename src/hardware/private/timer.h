@@ -14,9 +14,10 @@ namespace gbhw
 
 		void initialise(CPU* cpu, MMU* mmu);
 		void update(uint32_t cycles);
-		void reset();
 
 	private:
+		void reset();
+
 		CPU*		m_cpu;
 		MMU*		m_mmu;
 		uint32_t	m_tima;
