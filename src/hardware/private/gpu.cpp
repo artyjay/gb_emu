@@ -49,6 +49,7 @@ namespace gbhw
 		m_modeCycles		= 0;
 		m_bVBlankNotify		= false;
 		m_scanLineSprites.reserve(10);
+		memset(m_scanLinePriority, 0, sizeof(bool) * kScreenWidth);
 	}
 
 	GPU::~GPU()
@@ -355,6 +356,8 @@ namespace gbhw
 			m_windowReadY = 0;	// Reset this. Window drawing will resume drawing from where it last read when disabled between h-blanks.
 		}
 
+		memset(m_scanLinePriority, 0, sizeof(bool) * kScreenWidth);
+
 		if (HWLCDC::bg_enabled(m_lcdc))
 		{
 			scan_line_bg();
@@ -402,6 +405,8 @@ namespace gbhw
 		bool  flipH = attrRow[tileMapX].hFlip;
 		SByte stepH = flipH ? -1 : 1;
 		Byte  tileL = attrRow[tileMapX].vFlip ? 7 - tileY : tileY;
+		bool priority = attrRow[tileMapX].priority;
+			//m_scanLinePriority[]
 
 		if(flipH)
 			tileX = 7 - tileX;
@@ -411,6 +416,7 @@ namespace gbhw
 		for (uint32_t screenX = 0; screenX < kScreenWidth; ++screenX)
 		{
 			m_screenData[lineOffset + screenX] = colours[tileRow[tileX]].pixel;
+			m_scanLinePriority[screenX] = priority;
 
 			if ((flipH && (tileX == 0)) || (!flipH && (tileX == 7)))
 			{
@@ -420,6 +426,7 @@ namespace gbhw
 				tileL = attrRow[tileMapX].vFlip ? 7 - tileY : tileY;
 				stepH = flipH ? -1 : 1;
 				tileX = flipH ? 7 : 0;
+				priority = attrRow[tileMapX].priority;
 
 				tileIndex = mapRow[tileMapX];
 
@@ -558,7 +565,12 @@ namespace gbhw
 			}
 
 			m_scanLineSprites.push_back(spriteIndex);
+
+			if(m_scanLineSprites.size() >= 10)
+				break;
 		}
+
+		// @todo: Re-work sprite flags.
 
 		// Draw each visible sprite
 		const Address lineOffset = m_currentScanLine * kScreenWidth;
@@ -602,8 +614,8 @@ namespace gbhw
 				}
 
 				// Colour 0 is always transparent for sprites.
-				Byte paletteIndex = tileRow[tileXIndex];
-				if (paletteIndex)
+				const Byte paletteIndex = tileRow[tileXIndex];
+				if (paletteIndex && !m_scanLinePriority[spriteX + tileX])
 				{
 					m_screenData[lineOffset + spriteX + tileX] = colours[paletteIndex].pixel;
 				}

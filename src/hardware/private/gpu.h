@@ -173,6 +173,7 @@ namespace gbhw
 		GPUPixel*				m_screenData;
 		GPUTileRam				m_tileRam;
 		std::vector<Byte>		m_scanLineSprites;
+		bool					m_scanLinePriority[kScreenWidth];
 		GPUSpriteData			m_spriteData[40];
 		GPUPalette				m_palette[GPUPalette::Count];
 	};
