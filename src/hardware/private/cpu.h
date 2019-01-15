@@ -74,10 +74,11 @@ namespace gbhw
 
 		uint16_t update(uint16_t maxcycles);
 		void update_stalled();
-		bool is_stalled() const;
 
 		void generate_interrupt(HWInterrupts::Type interrupt);
 
+		inline bool is_stalled() const;
+		inline bool is_bugchecked() const;
 		inline Registers* get_registers();
 		inline Instruction get_instruction(Byte opcode, bool bExtended) const;
 
@@ -294,6 +295,7 @@ namespace gbhw
 		MMU*					m_mmu;
 		Registers				m_registers;
 
+		bool					m_bBugCheck;
 		bool					m_bStopped;
 		bool					m_bHalted;
 		Byte					m_speed;

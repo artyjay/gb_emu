@@ -66,6 +66,7 @@ namespace gbhw
 			case Size_512kB:	return 32;
 			case Size_1024kB:	return 64;
 			case Size_2048kB:	return 128;
+			case Size_4096kB:	return 256;
 			case Size_1152kB:	return 72;
 			case Size_1280kB:	return 80;
 			case Size_1536kB:	return 96;
@@ -87,6 +88,7 @@ namespace gbhw
 			case Size_512kB:	return "512 KB |  32 banks";
 			case Size_1024kB:	return "1 MB   |  64 banks";
 			case Size_2048kB:	return "2 MB   | 128 banks";
+			case Size_4096kB:	return "4 MB   | 256 banks";
 			case Size_1152kB:	return "1.1 MB |  72 banks";
 			case Size_1280kB:	return "1.2 MB |  80 banks";
 			case Size_1536kB:	return "1.5 MB |  96 banks";

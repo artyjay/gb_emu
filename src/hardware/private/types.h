@@ -89,6 +89,7 @@ namespace gbhw
 			Size_512kB = 0x04,
 			Size_1024kB = 0x05,
 			Size_2048kB = 0x06,
+			Size_4096kB = 0x07,
 			Size_1152kB = 0x52,
 			Size_1280kB = 0x53,
 			Size_1536kB = 0x54,

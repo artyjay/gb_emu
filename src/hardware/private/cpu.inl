@@ -60,6 +60,16 @@ namespace gbhw
 	// Helpers
 	//--------------------------------------------------------------------------
 
+	inline bool CPU::is_stalled() const
+	{
+		return m_bStopped || m_bHalted;
+	}
+
+	inline bool CPU::is_bugchecked() const
+	{
+		return m_bBugCheck;
+	}
+
 	inline Registers* CPU::get_registers()
 	{
 		return &m_registers;

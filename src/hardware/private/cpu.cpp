@@ -59,7 +59,8 @@ namespace gbhw
 	//--------------------------------------------------------------------------
 
 	CPU::CPU()
-		: m_bStopped(false)
+		: m_bBugCheck(false)
+		, m_bStopped(false)
 		, m_bHalted(false)
 		, m_speed(0)
 		, m_currentOpcode(0)
@@ -83,6 +84,9 @@ namespace gbhw
 	{
 		uint16_t cycles = 0;
 
+		if(m_bBugCheck)
+			return 0;
+
 		while(cycles < maxcycles)
 		{
 			// Check for interrupts before executing an instruction.
@@ -95,8 +99,19 @@ namespace gbhw
 			InstructionFunction& func = instruction.function();
 
 			Byte instCycles = instruction.cycles((this->*func)());
+
+			if(m_bBugCheck)
+			{
+				log_error("CPU triggered a fatal error, this indicates an emulator bug\n");
+				return 0;
+			}
+
 			if(instCycles == 0)
+			{
 				log_error("Instruction executes zero cycles, this is impossible, indicates unimplemented instruction\n");
+				m_bBugCheck = true;
+				return 0;
+			}
 
 			m_instructionCycles += instCycles;
 
@@ -111,11 +126,6 @@ namespace gbhw
 	void CPU::update_stalled()
 	{
 		handle_interrupts();
-	}
-
-	bool CPU::is_stalled() const
-	{
-		return m_bStopped || m_bHalted;
 	}
 
 	void CPU::generate_interrupt(HWInterrupts::Type interrupt)
@@ -773,7 +783,7 @@ namespace gbhw
 	{
 		Instruction& inst = m_instructions[m_currentOpcode];
 		log_error("Instruction not implemented [Opcode: 0x%02x, Assembly: %s]\n", inst.opcode(), inst.assembly());
-		throw std::runtime_error("Instruction not implemented");
+		m_bBugCheck = true;
 		return InstructionResult::Failed;
 	}
 
@@ -781,7 +791,7 @@ namespace gbhw
 	{
 		Instruction& inst = m_instructionsExt[m_currentOpcodeExt];
 		log_error("Extended instruction not implemented [Opcode: 0x%02x, Assembly: %s]\n", inst.is_extended(), inst.assembly());
-		throw std::runtime_error("Extended instruction not implemented");
+		m_bBugCheck = true;
 		return InstructionResult::Failed;
 	}
 

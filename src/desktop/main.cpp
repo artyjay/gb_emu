@@ -133,9 +133,10 @@ int main(int argc, char* args[])
 		}
 
 		// Tick hardware until there's a vsync.
-		gbhw_step(hardware, step_vsync);
+		if(gbhw_step(hardware, step_vsync) != e_success)
+			return -1;
 
-		// @todo: Rate limit.
+		// @todo: Rate limit according to screen refresh.
 
 		const uint8_t* screen = nullptr;
 		if (gbhw_get_screen(hardware, &screen) != e_success)

@@ -147,16 +147,11 @@ extern "C"
 				ctx->timer.update(cpucycles);
 				ctx->gpu.update(cpucycles);
 
-				if (ctx->cpu.is_stalled())
-				{
-					break;
-				}
+				if(ctx->cpu.is_bugchecked())
+					return e_failed;
 
-				// If a vblank occurred, then we want to sync externally.
-				if (ctx->gpu.reset_vblank_notify())
-				{
+				if (ctx->cpu.is_stalled() || ctx->gpu.reset_vblank_notify())
 					break;
-				}
 
 			} while (bLoop);
 		}
