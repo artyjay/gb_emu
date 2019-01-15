@@ -14,12 +14,18 @@ def log_msg(tag, msg):
 	print(out)
 
 def compile(input_file, output_file, functions):
-	## Bootstap emscripten
-	exec(open(os.path.expanduser('~/.emscripten'), 'r').read())
+	## Bootstap emscripten, either user has explicitly declared
+	## emscripten they want to use through env-var. If not let's
+	## use the generated emscripten config.
+	EMSCRIPTEN_ROOT = os.environ.get("EMSCRIPTEN_ROOT")
+	if not EMSCRIPTEN_ROOT:
+		exec(open(os.path.expanduser('~/.emscripten'), 'r').read())
 	sys.path.append(EMSCRIPTEN_ROOT)
 	import tools.shared as emscripten
 
 	exported_functions = "EXPORTED_FUNCTIONS=[%s]" % (", ".join("\"%s\"" % t for t in functions))
+
+	print("exported functions: {}".format(exported_functions))
 
 	emcc_args = [
 		'-s', exported_functions,
@@ -39,9 +45,11 @@ def compile(input_file, output_file, functions):
 		'-s', 'ALIASING_FUNCTION_POINTERS=1',
 		'-s', 'DISABLE_EXCEPTION_CATCHING=1',
 		'-s', 'WASM=0',
-		'-s', 'TOTAL_MEMORY=134217728'
+		'-s', 'TOTAL_MEMORY=16777216'
 		]
-		
+
+	print("emcc args: {}".format(emcc_args))
+
 	print('emcc {} -> {}'.format(input_file, output_file))
 	return emscripten.Building.emcc(input_file, emcc_args, output_file)
 

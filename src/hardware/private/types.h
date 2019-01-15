@@ -2,6 +2,7 @@
 
 #define __STDC_LIMIT_MACROS
 #define __STDC_FORMAT_MACROS
+#include <algorithm>
 #include <stdint.h>
 #include <stdio.h>
 #include <inttypes.h>

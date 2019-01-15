@@ -42,7 +42,7 @@ if(EMSCRIPTEN)
 		"_gbhw_step"
 		"_gbhw_set_button_state")
 
-	add_custom_command(TARGET hardware POST_BUILD COMMAND python ${PROJECT_SOURCE_DIR}/cmake/scripts/generate_js.py -i ${BC_FILE} -o ${JS_FILE} -f "${HW_FUNCTIONS}")
+	add_custom_command(TARGET hardware POST_BUILD COMMAND python ${PROJECT_SOURCE_DIR}/cmake/scripts/generate_js.py -i ${BC_FILE} -o ${JS_FILE} -f "\"${HW_FUNCTIONS}\"")
 endif()
 
 # Alias
