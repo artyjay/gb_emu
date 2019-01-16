@@ -1,6 +1,7 @@
 #!/usr/bin/python
 import argparse
 import os
+import shutil
 import sys
 
 log_tag_width	= 20
@@ -25,8 +26,6 @@ def compile(input_file, output_file, functions):
 
 	exported_functions = "EXPORTED_FUNCTIONS=[%s]" % (", ".join("\"%s\"" % t for t in functions))
 
-	print("exported functions: {}".format(exported_functions))
-
 	emcc_args = [
 		'-s', exported_functions,
 		'--memory-init-file', '0',
@@ -48,9 +47,7 @@ def compile(input_file, output_file, functions):
 		'-s', 'TOTAL_MEMORY=16777216'
 		]
 
-	print("emcc args: {}".format(emcc_args))
-
-	print('emcc {} -> {}'.format(input_file, output_file))
+	log_msg("Compile", "{} -> {}".format(input_file, output_file))
 	return emscripten.Building.emcc(input_file, emcc_args, output_file)
 
 def main():
@@ -77,8 +74,6 @@ def main():
 
 	for f in functions:
 		log_msg("Export function", f)
-
-	log_msg(None, "")
 
 	if not os.path.exists(input_file):
 		log_msg("Error", "Input file does not exist: {0}".format(input_file))

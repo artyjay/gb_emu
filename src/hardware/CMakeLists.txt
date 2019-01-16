@@ -28,10 +28,10 @@ else()
 		PRIVATE		"${PROJECT_SOURCE_DIR}/src/hardware/debug")
 endif()
 
-# Compile the Javascript bytecode output into a .js file.
+# Compile the Javascript bytecode output into a .js file that ends up in src/web
 if(EMSCRIPTEN)
 	set(BC_FILE ${PLATFORM_BINARIES_PATH}/${CMAKE_STATIC_LIBRARY_PREFIX}gb_hw${CMAKE_STATIC_LIBRARY_SUFFIX})
-	set(JS_FILE ${PLATFORM_BINARIES_PATH}/${CMAKE_STATIC_LIBRARY_PREFIX}gb_hw.js)
+	set(JS_FILE ${PROJECT_SOURCE_DIR}/src/web/${CMAKE_STATIC_LIBRARY_PREFIX}gb_hw.js)
 	set(HW_FUNCTIONS 
 		"_gbhw_create_web"
 		"_gbhw_destroy"
