@@ -38,6 +38,16 @@ namespace gbhw
 		uint8_t* m_memory;
 	};
 
+	// Store details about the current DMA
+	struct DMAState
+	{
+		AddressU	source;
+		AddressU	dest;
+		Byte		length;
+		bool		gdma;
+		bool		active;
+	};
+
 	using MemoryBanks = std::vector<MemoryBank>;
 
 	class MMU
@@ -99,6 +109,8 @@ namespace gbhw
 		const uint8_t* get_memory_ptr_from_addr(Address address);
 
 	private:
+		void perform_gdma();
+
 		void initialise_region(RegionType::Enum type, Address baseaddress, uint16_t size, bool bEnabled, bool bReadOnly);
 		void initialise_ram();
 		void echo_region(RegionType::Enum src, RegionType::Enum dst);
@@ -118,6 +130,7 @@ namespace gbhw
 		MemoryBanks				m_wramBanks;
 		MemoryBanks				m_eramBanks;
 		MemoryBanks				m_vramBanks;
+		DMAState				m_dma;
 
 		Byte					m_buttonColumn;
 		Byte					m_buttonsDirection;

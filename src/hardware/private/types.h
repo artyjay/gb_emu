@@ -27,6 +27,16 @@ namespace gbhw
 	using SWord		= int16_t;
 	using Address	= uint16_t;
 
+	union AddressU
+	{
+		Address addr;
+		struct
+		{
+			Byte low;
+			Byte high;
+		};
+	};
+
 	struct CartridgeType
 	{
 		enum Type

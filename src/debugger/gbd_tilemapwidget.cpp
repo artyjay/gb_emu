@@ -56,7 +56,7 @@ namespace gbd
 
 			const GPUTileRam*			ram			= gpu->get_tile_ram();
 			const Byte*					tileMap		= ram->tileMap[m_map];
-			const GPUTileAttributes*	tileAttr	= ram->tileAttr[m_map];
+			const GPUAttributes*		tileAttr	= ram->tileAttr[m_map];
 			const GPUPalette*			palette		= gpu->get_palette(GPUPalette::BG);
 			QRgb*						destData	= (QRgb*)m_image.scanLine(0);
 

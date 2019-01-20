@@ -140,6 +140,21 @@ namespace gbhw
 			}
 			case RegionType::IO:
 			{
+				switch(address)
+				{
+					case HWRegs::HDMA5:
+					{
+						if(!m_dma.active)
+							return 0xFF;
+
+						return (m_dma.length & 0x7F);
+					}
+					default:
+					{
+						break;
+					}
+				}
+
 				return region->m_memory[regionAddr];
 			}
 			default: break;
@@ -269,16 +284,53 @@ namespace gbhw
 					case HWRegs::OBJ0P:
 					case HWRegs::OBJ1P:
 					{
+						// DMG palette not currently used.
 						region->m_memory[regionAddr] = byte;
 						break;
 					}
 					case HWRegs::HDMA1:
+					{
+						region->m_memory[regionAddr] = byte;
+						m_dma.source.high = byte;
+						break;
+					}
 					case HWRegs::HDMA2:
+					{
+						region->m_memory[regionAddr] = byte;
+						m_dma.source.low = byte;
+						break;
+					}
 					case HWRegs::HDMA3:
+					{
+						region->m_memory[regionAddr] = byte;
+						m_dma.dest.high = byte;
+						break;
+					}
 					case HWRegs::HDMA4:
+					{
+						region->m_memory[regionAddr] = byte;
+						m_dma.dest.low = byte;
+						break;
+					}
 					case HWRegs::HDMA5:
 					{
-						log_debug("HDMA not implemented\n");
+						region->m_memory[regionAddr] = byte;
+
+						m_dma.active = true;
+						m_dma.length = byte & 0x7F;
+
+						if(byte & 0x80)
+						{
+							m_dma.gdma = false;
+							log_debug("HDMA not implemented\n");
+						}
+						else
+						{
+							// Does this need to return cycles?
+							m_dma.gdma = true;
+							perform_gdma();
+						}
+
 						break;
 					}
 					case HWRegs::BGPD:
@@ -448,6 +500,50 @@ namespace gbhw
 		return (region->m_memory + (address - region->m_baseAddress));
 	}
 
+	void MMU::perform_gdma()
+	{
+		log_debug("general-purpose dma. Src=0x%04x, Dst=0x%04x, Len=%u\n", m_dma.source.addr, m_dma.dest.addr, m_dma.length);
+
+		Address src = m_dma.source.addr & 0xFFF0;
+		Address dst = m_dma.dest.addr & 0xFFF0;
+
+		for(Word i = 0; i < m_dma.length + 1; ++i)
+		{
+			for(Byte c = 0; c < 16; ++c)
+			{
+				write_byte(dst++, read_byte(src++));
+			}
+		}
+
+		m_dma.active = false;
+		m_dma.length = 0;
+
+#if 0
+		Bit7=0 - General Purpose DMA
+When using this transfer method, all data is transferred at once. The
+execution of the program is halted until the transfer has completed. Note that
+the General Purpose DMA blindly attempts to copy the data, even if the LCD
+controller is currently accessing VRAM. So General Purpose DMA should be used
+only if the Display is disabled, or during V-Blank, or (for rather short
+blocks) during H-Blank.
+The execution of the program continues when the transfer has been completed,
+and FF55 then contains a value if FFh.
+
+These registers are used to initiate a DMA transfer from ROM or RAM to VRAM.
+The Source Start Address may be located at 0000-7FF0 or A000-DFF0, the lower
+four bits of the address are ignored (treated as zero). The Destination Start
+Address may be located at 8000-9FF0, the lower four bits of the address are
+ignored (treated as zero), the upper 3 bits are ignored either (destination is
+always in VRAM).
+
+Writing to FF55 starts the transfer, the lower 7 bits of FF55 specify the
+Transfer Length (divided by 10h, minus 1). Ie. lengths of 10h-800h bytes can
+be defined by the values 00h-7Fh. And the upper bit of FF55 indicates the
+Transfer Mode:
+
+#endif
+	}
+
 	void MMU::initialise_region(RegionType::Enum type, Address baseaddress, uint16_t size, bool bEnabled, bool bReadOnly)
 	{
 		Region* region = &m_regions[type];
@@ -553,6 +649,8 @@ namespace gbhw
 		m_memory[0xFF4A] = 0x00;
 		m_memory[0xFF4B] = 0x00;
 		m_memory[HWRegs::IE] = 0x00;
+
+		memset(&m_dma, 0, sizeof(DMAState));
 
 		m_buttonColumn = 0;
 		m_buttonsDirection = 0x0F;
