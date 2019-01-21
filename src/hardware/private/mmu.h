@@ -46,6 +46,7 @@ namespace gbhw
 		Byte		length;
 		bool		gdma;
 		bool		active;
+		int16_t		hdma_cycles;
 	};
 
 	using MemoryBanks = std::vector<MemoryBank>;
@@ -89,6 +90,7 @@ namespace gbhw
 
 		void initialise(CPU* cpu, GPU* gpu, Rom* rom);
 		void reset(CartridgeType::Type cartridgeType);
+		void update(uint16_t cycles);
 
 		Byte read_byte(Address address) const;
 		Word read_word(Address address) const;

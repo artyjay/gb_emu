@@ -103,6 +103,31 @@ namespace gbhw
 		load_rom_bank(1);
 	}
 
+	void MMU::update(uint16_t cycles)
+	{
+		if(m_dma.active && !m_dma.gdma)
+		{
+			m_dma.hdma_cycles += cycles;
+
+			while(m_dma.hdma_cycles >= 4)
+			{
+				write_byte(m_dma.dest.addr++, read_byte(m_dma.source.addr++));
+
+				m_dma.hdma_cycles -= 4;
+			}
+
+			if((m_dma.dest.addr & 0xF) == 0)
+			{
+				// Finished DMA.
+				if(--m_dma.length == 0)
+				{
+					m_dma.active = false;
+					m_dma.gdma = true;
+				}
+			}
+		}
+	}
+
 	Byte MMU::read_byte(Address address) const
 	{
 		// @todo Check for out of bounds behaviour
@@ -297,7 +322,7 @@ namespace gbhw
 					case HWRegs::HDMA2:
 					{
 						region->m_memory[regionAddr] = byte;
-						m_dma.source.low = byte;
+						m_dma.source.low = byte & 0xF0;
 						break;
 					}
 					case HWRegs::HDMA3:
@@ -309,7 +334,7 @@ namespace gbhw
 					case HWRegs::HDMA4:
 					{
 						region->m_memory[regionAddr] = byte;
-						m_dma.dest.low = byte;
+						m_dma.dest.low = byte & 0xF0;
 						break;
 					}
 					case HWRegs::HDMA5:
@@ -322,7 +347,6 @@ namespace gbhw
 						if(byte & 0x80)
 						{
 							m_dma.gdma = false;
-							log_debug("HDMA not implemented\n");
 						}
 						else
 						{
@@ -504,8 +528,8 @@ namespace gbhw
 	{
 		log_debug("general-purpose dma. Src=0x%04x, Dst=0x%04x, Len=%u\n", m_dma.source.addr, m_dma.dest.addr, m_dma.length);
 
-		Address src = m_dma.source.addr & 0xFFF0;
-		Address dst = m_dma.dest.addr & 0xFFF0;
+		Address src = m_dma.source.addr;
+		Address dst = m_dma.dest.addr;
 
 		for(Word i = 0; i < m_dma.length + 1; ++i)
 		{

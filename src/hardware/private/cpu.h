@@ -79,6 +79,7 @@ namespace gbhw
 
 		inline bool is_stalled() const;
 		inline bool is_bugchecked() const;
+		inline Byte get_speed() const;
 		inline Registers* get_registers();
 		inline Instruction get_instruction(Byte opcode, bool bExtended) const;
 

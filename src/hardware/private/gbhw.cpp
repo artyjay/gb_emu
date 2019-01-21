@@ -136,15 +136,14 @@ extern "C"
 		}
 		else
 		{
-			// V-sync is 59.73 Hz
-			// 0.016742 seconds
-			// 16.74200569228194 ms per v-blank.
-			// 16742 microseconds
-			// 16742005 nanoseconds.
 			do
 			{
 				cpucycles = ctx->cpu.update(maxcycles);
 				ctx->timer.update(cpucycles);
+
+				cpucycles >>= ctx->cpu.get_speed();
+
+				ctx->mmu.update(cpucycles);
 				ctx->gpu.update(cpucycles);
 
 				if(ctx->cpu.is_bugchecked())

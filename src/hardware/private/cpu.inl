@@ -70,6 +70,11 @@ namespace gbhw
 		return m_bBugCheck;
 	}
 
+	inline Byte CPU::get_speed() const
+	{
+		return m_speed;
+	}
+
 	inline Registers* CPU::get_registers()
 	{
 		return &m_registers;
